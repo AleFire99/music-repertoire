@@ -16,7 +16,11 @@ gh pr create --base main --title "release: x.y.z"
 gh pr merge --merge
 git tag vx.y.z main
 git push origin vx.y.z
-git checkout develop && git merge --no-ff main && git push
+# back-merge via PR — the ruleset blocks direct pushes to develop, even fast-forward merges
+git checkout develop && git checkout -b chore/back-merge-x.y.z
+git merge --no-ff main && git push -u origin chore/back-merge-x.y.z
+gh pr create --base develop --title "chore: back-merge x.y.z into develop"
+gh pr merge --merge
 git branch -d release/x.y.z
 ```
 
