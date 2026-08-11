@@ -70,4 +70,6 @@ Same as release, but branched from `main` instead of `develop`, and merged into 
 
 ## Local safety
 
-`.claude/hooks/guard-git.sh` blocks `git commit` while on `main`/`develop` and warns on force-push. This is a convenience nudge for Claude Code sessions, **not a guaranteed technical boundary** — its exact hook schema is unverified against this Claude Code build (see `CLAUDE.md`). Real enforcement belongs to GitHub branch protection rules, required status checks, and CODEOWNERS — set those up on the remote once the workflow is validated manually.
+`.claude/hooks/guard-git.sh` blocks `git commit` while on `main`/`develop` and warns on force-push, via a `PreToolUse` hook on the Bash tool (`.claude/settings.json`). Verified live: a real `git commit` attempt on `develop` was denied with `permissionDecision: "deny"` and the expected reason text.
+
+This only protects Claude Code sessions working in this checkout — it does not stop a plain `git commit` run outside Claude Code, another tool, or a push from anywhere else. Real enforcement belongs to GitHub branch protection rules, required status checks, and CODEOWNERS — set those up on the remote once the workflow is validated manually.

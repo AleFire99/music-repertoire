@@ -24,4 +24,4 @@ Use judgment — not every item applies to every change. A typo fix in a doc doe
 
 ## Known limitation
 
-The local `.claude/hooks/guard-git.sh` safety hook is a convenience nudge, not a guaranteed technical boundary (see `CLAUDE.md`). Real enforcement of "no direct commits to protected branches" belongs to GitHub branch protection rules — set these up on the remote (Settings → Branches) once the manual workflow is validated.
+The local `.claude/hooks/guard-git.sh` safety hook is verified working for Claude Code sessions (see `CLAUDE.md`), but only covers this checkout — it doesn't stop a commit made outside Claude Code or from another machine. Real enforcement of "no direct commits to protected branches" belongs to GitHub branch protection rules — set these up on the remote (Settings → Branches) once the manual workflow is validated.
