@@ -36,3 +36,58 @@ def test_delete_piece(client: TestClient) -> None:
 def test_get_missing_piece_404(client: TestClient) -> None:
     response = client.get("/api/pieces/999999")
     assert response.status_code == 404
+
+
+def test_create_piece_defaults_status_and_tags(client: TestClient) -> None:
+    created = client.post("/api/pieces", json={"title": "Nocturne"}).json()
+    assert created["status"] == "backlog"
+    assert created["tags"] == []
+
+
+def test_create_piece_with_status_and_tags(client: TestClient) -> None:
+    payload = {"title": "Ballade", "status": "learning", "tags": ["romantic", "chopin"]}
+    created = client.post("/api/pieces", json=payload).json()
+    assert created["status"] == "learning"
+    assert created["tags"] == ["romantic", "chopin"]
+
+
+def test_create_piece_invalid_status_422(client: TestClient) -> None:
+    response = client.post("/api/pieces", json={"title": "Etude", "status": "unknown"})
+    assert response.status_code == 422
+
+
+def test_update_piece_status_and_tags(client: TestClient) -> None:
+    created = client.post("/api/pieces", json={"title": "Sonata"}).json()
+    response = client.patch(
+        f"/api/pieces/{created['id']}",
+        json={"status": "memorized", "tags": ["classical"]},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "memorized"
+    assert body["tags"] == ["classical"]
+
+
+def test_list_pieces_filter_by_status(client: TestClient) -> None:
+    client.post("/api/pieces", json={"title": "A", "status": "learning"})
+    client.post("/api/pieces", json={"title": "B", "status": "archived"})
+
+    response = client.get("/api/pieces", params={"status": "learning"})
+    assert response.status_code == 200
+    titles = [piece["title"] for piece in response.json()]
+    assert titles == ["A"]
+
+
+def test_list_pieces_filter_by_status_invalid_422(client: TestClient) -> None:
+    response = client.get("/api/pieces", params={"status": "unknown"})
+    assert response.status_code == 422
+
+
+def test_list_pieces_filter_by_tag(client: TestClient) -> None:
+    client.post("/api/pieces", json={"title": "A", "tags": ["baroque", "fugue"]})
+    client.post("/api/pieces", json={"title": "B", "tags": ["romantic"]})
+
+    response = client.get("/api/pieces", params={"tag": "fugue"})
+    assert response.status_code == 200
+    titles = [piece["title"] for piece in response.json()]
+    assert titles == ["A"]
