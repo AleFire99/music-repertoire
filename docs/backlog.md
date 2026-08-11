@@ -44,7 +44,7 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 
 - [x] Write architecture/development/git-flow/testing/agent-model/orchestration/definition-of-done docs
 - [x] ADRs 0001–0004
-- [ ] First release: `develop` → `release/0.1.0` → `main`, tag `v0.1.0`
+- [x] First release: `develop` → `release/0.1.0` → `main`, tag `v0.1.0`
 
 ---
 

@@ -59,10 +59,14 @@ gh pr create --base main --title "release: 0.2.0"
 gh pr merge --merge
 git tag v0.2.0 main
 git push origin v0.2.0
-# back-merge into develop
+# back-merge into develop — via PR, not a direct push (the ruleset blocks
+# direct pushes to develop even for a fast-forward-only merge commit)
 git checkout develop
+git checkout -b chore/back-merge-0.2.0
 git merge --no-ff main
-git push
+git push -u origin chore/back-merge-0.2.0
+gh pr create --base develop --title "chore: back-merge 0.2.0 into develop"
+gh pr merge --merge
 ```
 
 ## Hotfix flow
