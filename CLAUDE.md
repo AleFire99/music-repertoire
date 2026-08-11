@@ -69,7 +69,7 @@ If a task seems to need one of these, stop and confirm scope before proceeding r
 
 ## Safety hook
 
-`.claude/hooks/guard-git.sh` blocks `git commit` on `main`/`develop` and warns on force-push. Verified live (a real commit attempt on `develop` was denied with the expected reason). Still a **local convenience nudge**, not a replacement for real enforcement — it only protects Claude Code sessions in this working copy, not other clients or the remote. Real protection belongs to GitHub branch protection rules. Note: editing `.claude/settings.json` hook registration may require a session restart to take effect — the hook body itself (`guard-git.sh`) can be edited and takes effect immediately since the settings.json just points to the file path.
+`.claude/hooks/guard-git.sh` blocks `git commit` on `main`/`develop` and warns on force-push. Verified live (a real commit attempt on `develop` was denied with the expected reason). It's a **local convenience nudge** for Claude Code sessions only — real enforcement is a GitHub ruleset on `main`/`develop` (requires PR + green CI, blocks force-push/deletion, applies to the owner too), also verified live via a rejected direct push. See [docs/git-flow.md](docs/git-flow.md). Note: editing `.claude/settings.json` hook registration may require a session restart to take effect — the hook body itself (`guard-git.sh`) can be edited and takes effect immediately since the settings.json just points to the file path.
 
 ## General rules
 
