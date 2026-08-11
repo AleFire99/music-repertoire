@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import any_
 from sqlalchemy.orm import Session
 
 from repertoire.db import get_db
-from repertoire.models.piece import Piece
+from repertoire.models.piece import Piece, PieceStatus
 from repertoire.schemas.piece import PieceCreate, PieceRead, PieceUpdate
 
 router = APIRouter(prefix="/pieces", tags=["pieces"])
@@ -18,8 +19,17 @@ def create_piece(payload: PieceCreate, db: Session = Depends(get_db)) -> Piece:
 
 
 @router.get("", response_model=list[PieceRead])
-def list_pieces(db: Session = Depends(get_db)) -> list[Piece]:
-    return list(db.query(Piece).order_by(Piece.id).all())
+def list_pieces(
+    status: PieceStatus | None = None,
+    tag: str | None = None,
+    db: Session = Depends(get_db),
+) -> list[Piece]:
+    query = db.query(Piece)
+    if status is not None:
+        query = query.filter(Piece.status == status)
+    if tag is not None:
+        query = query.filter(any_(Piece.tags) == tag)
+    return list(query.order_by(Piece.id).all())
 
 
 def _get_piece_or_404(piece_id: int, db: Session) -> Piece:
