@@ -1,0 +1,20 @@
+name: Infrastructure
+description: CI, Docker, tooling, or repo-config work
+labels: ["infrastructure"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context

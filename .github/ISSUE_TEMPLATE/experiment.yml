@@ -1,0 +1,20 @@
+name: Experiment
+description: A time-boxed spike to learn something, not necessarily ship it
+labels: ["experiment"]
+body:
+  - type: textarea
+    id: hypothesis
+    attributes:
+      label: Hypothesis / question
+    validations:
+      required: true
+  - type: textarea
+    id: success
+    attributes:
+      label: What would make this worth keeping?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context

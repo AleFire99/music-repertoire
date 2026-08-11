@@ -1,0 +1,14 @@
+name: Documentation
+description: Docs that are missing, wrong, or unclear
+labels: ["documentation"]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: What's missing or wrong?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
