@@ -46,12 +46,21 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] ADRs 0001–0004
 - [x] First release: `develop` → `release/0.1.0` → `main`, tag `v0.1.0`
 
+## v0.2.0 — Piece status/tags + image publishing
+
+- [x] Piece `status` field (backlog/learning/memorized/maintaining/performance-ready/archived, default backlog) — issue #18
+- [x] Piece `tags` field (list of strings, default empty) — issue #18
+- [x] `GET /api/pieces` filtering by `status` and by `tag` — issue #18
+- [x] Frontend: status/tags shown per piece, status filter control — issue #18
+- [x] CI workflow publishing `backend`/`frontend` images to GHCR on release/tag — issue #20 (ad hoc, not part of the repertoire-extensions epic)
+- [x] Release: `develop` → `release/0.2.0` → `main`, tag `v0.2.0`
+
 ---
 
 ## Future epics (not implemented, do not start without a new milestone)
 
 ### Repertoire
-Favorites, goals, repertoire lists, performance history, repertoire rotation, sheet-music resources (external URL / physical reference / local document — no complex file storage), piece status field (backlog/learning/memorized/maintaining/performance-ready/archived), tags, key/tempo/difficulty/instrument fields, CRUD UI beyond read-only list.
+Favorites, goals, repertoire lists, performance history, repertoire rotation, sheet-music resources (external URL / physical reference / local document — no complex file storage), key/tempo/difficulty/instrument fields, CRUD UI beyond read-only list.
 
 ### Practice
 Practice session recording (piece, date/time, duration, notes, rating, section), timer, weekly goals, statistics (total time, time per piece, time by week/month, neglected pieces, recently practiced, progress toward goals), practice streaks, section-level practice.
