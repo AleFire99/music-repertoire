@@ -16,6 +16,7 @@ This repo uses Git Flow. See [ADR 0004](adr/0004-git-flow-branching.md) for why 
 - PRs target `develop`, not `main` (except release/hotfix PRs, which target `main`).
 - CI must pass before merge.
 - Merges into `develop`/`main` use `--no-ff` (a merge commit), preserving branch history.
+- Reference the issue in the PR body (e.g. `Closes #12`) for traceability — but note GitHub only **auto-closes** the issue on merges into the repo's *default branch* (`main`). Since feature PRs target `develop`, merging one does **not** auto-close the linked issue; either close it manually (`gh issue close <n>`) once the work is confirmed done, or let it close naturally when the containing release reaches `main`.
 
 **Bootstrap exception:** the very first commits (repo scaffold) were made on `feature/bootstrap-skeleton` off `develop` and merged via a real PR — there was no other way to get initial content onto `develop` without violating "never commit directly to develop." This was a one-time exception, not a precedent.
 
