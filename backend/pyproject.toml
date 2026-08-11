@@ -1,0 +1,49 @@
+[project]
+name = "repertoire"
+version = "0.1.0"
+description = "Backend API for the Music Repertoire app"
+readme = "README.md"
+authors = [
+    { name = "AleFire", email = "alessandro.firetto@nte-process.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "alembic>=1.19.1",
+    "fastapi>=0.141.1",
+    "psycopg[binary]>=3.3.4",
+    "pydantic-settings>=2.15.0",
+    "sqlalchemy>=2.0.51",
+    "uvicorn[standard]>=0.52.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.7,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "mypy>=2.3.0",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.16.2",
+]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["B008"]  # FastAPI's `Depends(...)` default-arg idiom
+
+[tool.mypy]
+python_version = "3.11"
+check_untyped_defs = true
+warn_unused_ignores = true
+mypy_path = "src"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

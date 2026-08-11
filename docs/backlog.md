@@ -1,0 +1,69 @@
+# Backlog
+
+Source of truth until these are transcribed into GitHub Issues (`gh issue create`, one per item below). Milestone: **v0.1 — Repertoire Foundation**.
+
+## Infrastructure
+
+- [x] Init git repo, Git Flow branches (main/develop)
+- [x] `.gitignore` / `.editorconfig` / LICENSE (MIT)
+- [x] docs/ skeleton + CLAUDE.md
+- [x] `.claude/skills/` (6 skills)
+- [x] `.claude/settings.json` local safety hook
+- [x] Backend scaffold via uv (pyproject, ruff/mypy config)
+- [x] Frontend scaffold via Vite+Svelte+TS
+- [x] `docker-compose.yml` (postgres + backend + frontend, all containerized)
+- [x] Backend + frontend Dockerfiles (dev-mode)
+- [x] GitHub Actions CI workflow
+- [x] GitHub issue templates + PR template + CODEOWNERS
+- [x] Install + configure `gh` CLI
+- [x] GitHub milestone, labels, issues, Project (v2) board for kanban tracking
+- [x] Project board automation (card movement on branch push/PR open/CI/merge)
+
+## Domain
+
+- [x] `Piece` SQLAlchemy model
+- [x] Alembic scaffold + `0001_create_pieces_table` migration
+- [x] Pydantic schemas (`PieceCreate`/`PieceUpdate`/`PieceRead`)
+
+## Backend
+
+- [x] FastAPI entrypoint + `/api/health` (DB connectivity check)
+- [x] DB engine/session + `get_db` dependency
+- [x] Piece CRUD routes (create/list/get/update/delete)
+- [x] pytest scaffold: `conftest.py` (test DB fixture + TestClient override)
+- [x] `test_health.py`
+- [x] `test_pieces.py` (CRUD integration tests)
+
+## Frontend
+
+- [x] Vite hello page fetching `/api/health`
+- [x] Read-only Piece list view (`GET /api/pieces`)
+- [x] API base URL config + dev-server proxy
+
+## Workflow
+
+- [x] Write architecture/development/git-flow/testing/agent-model/orchestration/definition-of-done docs
+- [x] ADRs 0001–0004
+- [x] First release: `develop` → `release/0.1.0` → `main`, tag `v0.1.0`
+
+---
+
+## Future epics (not implemented, do not start without a new milestone)
+
+### Repertoire
+Favorites, goals, repertoire lists, performance history, repertoire rotation, sheet-music resources (external URL / physical reference / local document — no complex file storage), piece status field (backlog/learning/memorized/maintaining/performance-ready/archived), tags, key/tempo/difficulty/instrument fields, CRUD UI beyond read-only list.
+
+### Practice
+Practice session recording (piece, date/time, duration, notes, rating, section), timer, weekly goals, statistics (total time, time per piece, time by week/month, neglected pieces, recently practiced, progress toward goals), practice streaks, section-level practice.
+
+### Music representation
+MIDI import, MusicXML import, chord representation, measure representation, sections, annotations. **Audio → MIDI → chord extraction is explicitly out of scope indefinitely** — not a v-next item, a permanent non-goal unless a concrete future requirement changes that.
+
+### Music theory engine
+Deterministic analysis: ii-V-I / ii-V-i, cadences, secondary dominants, substitutions, modulations, repeated harmonic/melodic patterns, transposed patterns, cross-piece relationships. Must stay deterministic — see `docs/architecture.md`'s "LLM is never the source of truth for musical facts" rule.
+
+### Learning assistant
+LLM explanations of theoretical findings (never the source of the findings themselves), piece similarity, related-piece suggestions, focused practice exercise generation, recurring-concept identification across the repertoire.
+
+### Workflow / infra
+Real Gitea Actions experiment (currently GitHub-only), production frontend Dockerfile (nginx static build) once there's a real deployment target, multi-agent orchestrator (see `docs/orchestration.md`), CHANGELOG automation.
