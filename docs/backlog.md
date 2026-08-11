@@ -16,6 +16,8 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] GitHub Actions CI workflow
 - [x] GitHub issue templates + PR template + CODEOWNERS
 - [x] Install + configure `gh` CLI
+- [x] GitHub milestone, labels, issues, Project (v2) board for kanban tracking
+- [x] Project board automation (card movement on branch push/PR open/CI/merge)
 
 ## Domain
 

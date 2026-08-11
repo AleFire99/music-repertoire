@@ -1,0 +1,67 @@
+name: Project board automation
+
+# Moves issue cards on the "Music Repertoire" project board based on generic git/PR lifecycle
+# events. Backlog and Ready are manual (human triage). See docs/orchestration.md for the
+# integration contract a future multi-agent orchestrator must follow.
+#
+# The "CI passed" transition lives in ci.yml (mark-project-ci-passed job), not here — a
+# workflow_run trigger only fires for workflow files present on the default branch, which
+# this file won't reach until the first release, so it'd silently never run until then.
+#
+# Status option IDs (see .github/scripts/move-project-card.js for how to regenerate):
+#   Backlog=94fc0f10 Ready=3811bc38 In Progress=2f9b4144 Review=c90f0020 CI=bbf5aa2b Done=ca9487ed
+
+on:
+  push:
+    branches: ["feature/issue-*", "fix/issue-*"]
+  pull_request:
+    types: [opened, reopened, closed]
+
+jobs:
+  in-progress:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/github-script@v7
+        env:
+          BRANCH: ${{ github.ref_name }}
+          BODY: ""
+          STATUS_OPTION_ID: "2f9b4144"
+        with:
+          github-token: ${{ secrets.PROJECT_AUTOMATION_TOKEN }}
+          script: |
+            const move = require('./.github/scripts/move-project-card.js')
+            await move({ github, context, core })
+
+  review:
+    if: github.event_name == 'pull_request' && (github.event.action == 'opened' || github.event.action == 'reopened')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/github-script@v7
+        env:
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+          BODY: ${{ github.event.pull_request.body }}
+          STATUS_OPTION_ID: "c90f0020"
+        with:
+          github-token: ${{ secrets.PROJECT_AUTOMATION_TOKEN }}
+          script: |
+            const move = require('./.github/scripts/move-project-card.js')
+            await move({ github, context, core })
+
+  done:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/github-script@v7
+        env:
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+          BODY: ${{ github.event.pull_request.body }}
+          STATUS_OPTION_ID: "ca9487ed"
+        with:
+          github-token: ${{ secrets.PROJECT_AUTOMATION_TOKEN }}
+          script: |
+            const move = require('./.github/scripts/move-project-card.js')
+            await move({ github, context, core })

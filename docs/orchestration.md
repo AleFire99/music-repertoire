@@ -35,3 +35,12 @@ The orchestrator (once it exists) must integrate work deliberately — parallel 
 ```
 issue → feature branch → agent (this session) → tests → PR → review (self, or a fresh session) → CI → merge
 ```
+
+## Required integration: project board automation
+
+`.github/workflows/project-board.yml` already moves issue cards on the "Music Repertoire" project board based on generic git/PR lifecycle events (branch push matching `feature/issue-<n>-*` → In Progress, PR opened → Review, CI success → CI, PR merged → Done). This was built deliberately generic — it reacts to git/GitHub state, not to *who* opened the PR, so it keeps working unchanged when an orchestrator starts dispatching agents.
+
+**When the orchestrator is built, it must not duplicate or race this automation.** Specifically:
+- Do not have the orchestrator also write the project board's Status field directly for the same transitions this workflow already covers — two writers on the same field will fight and produce flapping/incorrect state.
+- If the orchestrator needs additional states this workflow doesn't cover (e.g. "agent assigned" before a branch is even pushed), extend `.github/scripts/move-project-card.js` / `project-board.yml` rather than writing a parallel path.
+- If the orchestrator changes the branch naming convention (`feature/issue-<n>-<slug>`) or the PR-closing-keyword convention (`Closes #<n>`), update the regexes in `.github/scripts/move-project-card.js` — the automation depends on both.
