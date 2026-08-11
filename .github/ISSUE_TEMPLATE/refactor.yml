@@ -1,0 +1,21 @@
+name: Refactor
+description: Restructure existing code without changing behavior
+labels: ["refactor"]
+body:
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivation
+      description: What's wrong with the current structure?
+    validations:
+      required: true
+  - type: textarea
+    id: approach
+    attributes:
+      label: Proposed approach
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
