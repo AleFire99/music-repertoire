@@ -58,11 +58,18 @@ Branch:    $BRANCH
 Worktree:  $WORKTREE_ABS_PATH
 Ports:     postgres=$POSTGRES_PORT backend=$BACKEND_PORT frontend=$FRONTEND_PORT
 
-Open a new terminal/editor at the worktree path above, launch Claude Code there, and paste:
+Paste this into a Claude Code session (new or existing — it switches itself into
+the worktree, so you don't need to separately open a window/terminal there first):
 ----------------------------------------------------------------------
-You're working in the Music_repertoire project, in a git worktree already set up
-on branch $BRANCH for GitHub issue #$ISSUE_NUM. Start by reading CLAUDE.md at the
-repo root, then read issue #$ISSUE_NUM (gh issue view $ISSUE_NUM) for the task spec.
+Your first action, before anything else, must be calling the EnterWorktree tool
+with path=$WORKTREE_ABS_PATH. Do not assume you're already in the worktree just
+because this text says so — verify by actually switching via the tool, since a
+session that skips this step silently runs every following command against the
+main checkout instead, which has happened before and corrupts branch state.
+
+Once EnterWorktree confirms the switch, you're working on branch $BRANCH for
+GitHub issue #$ISSUE_NUM. Read CLAUDE.md at the repo root, then read issue
+#$ISSUE_NUM (gh issue view $ISSUE_NUM) for the task spec.
 
 .env is already configured with non-colliding ports for this worktree — just
 docker compose up -d --build and docker compose exec backend uv run alembic upgrade head.
