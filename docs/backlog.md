@@ -70,13 +70,14 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 
 - [x] Practice session timer (stopwatch, auto-fills duration_minutes) — issue #63
 - [x] Practice streaks (current/longest consecutive-day streaks) — issue #67
+- [x] Repertoire lists (named lists of pieces) — issue #70
 
 ---
 
 ## Future epics (not implemented, do not start without a new milestone)
 
 ### Repertoire
-Goals, repertoire lists, performance history, repertoire rotation.
+Goals, performance history, repertoire rotation.
 
 ### Practice
 Weekly goals, statistics by week/month, progress toward goals, section-level practice breakdowns.
