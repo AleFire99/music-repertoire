@@ -53,10 +53,11 @@ WORKTREE_ABS_PATH="$(cd "$WORKTREE_PATH" && pwd -W)"
 
 cat <<EOF
 
-Issue:     $ISSUE_URL
-Branch:    $BRANCH
-Worktree:  $WORKTREE_ABS_PATH
-Ports:     postgres=$POSTGRES_PORT backend=$BACKEND_PORT frontend=$FRONTEND_PORT
+Issue:       $ISSUE_URL
+Branch:      $BRANCH
+Worktree:    $WORKTREE_ABS_PATH
+Ports:       postgres=$POSTGRES_PORT backend=$BACKEND_PORT frontend=$FRONTEND_PORT
+Chat name:   issue-${ISSUE_NUM}-${SLUG}   (name the new chat this, so it's identifiable alongside other open feature chats)
 
 Paste this into a Claude Code session (new or existing — it switches itself into
 the worktree, so you don't need to separately open a window/terminal there first):

@@ -69,6 +69,12 @@ Worktrees live **inside the repo**, under `.worktrees/` (gitignored) — not as 
 scripts/new-feature.sh "Add practice session recording" "Track piece, date, duration, notes per docs/backlog.md" feature
 ```
 
+### One chat per feature, named after its issue
+
+Each feature gets its own Claude Code chat — separate from whatever chat is being used for management (picking the next slice, housekeeping, releases). `scripts/new-feature.sh`'s output includes a suggested chat name (`issue-<n>-<slug>`); name the new chat that when you open it, so it's identifiable at a glance once several feature chats are open alongside the management one.
+
+The management chat should never itself run a feature's implementation via the `Agent` tool — doing so pipes that agent's entire tool-call/output stream into the management chat, cluttering it, and the human loses the direct, granular visibility/control they'd have driving a dedicated chat themselves (found the hard way: a background-dispatched agent crashed from a connection error, and the only signal was a single after-the-fact notification — no way to see it struggling or step in). The management chat's role is to prepare the worktree/issue/prompt and later verify and merge results, not to drive the implementation itself.
+
 ### Manual setup (what the script automates)
 
 ```bash
