@@ -36,11 +36,8 @@ The orchestrator (once it exists) must integrate work deliberately — parallel 
 issue → feature branch → agent (this session) → tests → PR → review (self, or a fresh session) → CI → merge
 ```
 
-## Required integration: project board automation
+## Project board automation
 
-`.github/workflows/project-board.yml` already moves issue cards on the "Music Repertoire" project board based on generic git/PR lifecycle events (branch push matching `feature/issue-<n>-*` → In Progress, PR opened → Review, CI success → CI, PR merged → Done). This was built deliberately generic — it reacts to git/GitHub state, not to *who* opened the PR, so it keeps working unchanged when an orchestrator starts dispatching agents.
+The board (Backlog / In Progress / Done) uses GitHub Projects' **built-in workflow automations** (configured in the Project's UI, not custom code): issue/PR closed and PR merged both auto-set Done; new issues/PRs auto-add via a filter rule. Backlog → In Progress is a manual drag — there's no built-in trigger for "work started" and it wasn't worth custom code for a two-state manual transition.
 
-**When the orchestrator is built, it must not duplicate or race this automation.** Specifically:
-- Do not have the orchestrator also write the project board's Status field directly for the same transitions this workflow already covers — two writers on the same field will fight and produce flapping/incorrect state.
-- If the orchestrator needs additional states this workflow doesn't cover (e.g. "agent assigned" before a branch is even pushed), extend `.github/scripts/move-project-card.js` / `project-board.yml` rather than writing a parallel path.
-- If the orchestrator changes the branch naming convention (`feature/issue-<n>-<slug>`) or the PR-closing-keyword convention (`Closes #<n>`), update the regexes in `.github/scripts/move-project-card.js` — the automation depends on both.
+An earlier custom Actions-based version (`.github/workflows/project-board.yml` + a PAT-scoped secret) covered more granular transitions (branch push → In Progress, PR opened → Review, CI passed → CI) but was replaced — more maintenance surface than a solo project's board needed. If the orchestrator eventually needs those finer-grained states back (e.g. "agent assigned" before a branch exists), it should set the Status field directly via the GraphQL API rather than reintroducing a parallel automation path — there's no existing custom writer left to race against.
