@@ -34,6 +34,20 @@ class PiecePracticeStats(BaseModel):
     last_practiced_at: datetime
 
 
+class RecentlyPracticedPiece(BaseModel):
+    piece_id: int
+    piece_title: str
+    last_practiced_at: datetime
+
+
+class NeglectedPiece(BaseModel):
+    piece_id: int
+    piece_title: str
+    last_practiced_at: datetime | None
+
+
 class PracticeStatsRead(BaseModel):
     total_minutes: int
     pieces: list[PiecePracticeStats]
+    recently_practiced: list[RecentlyPracticedPiece]
+    neglected: list[NeglectedPiece]

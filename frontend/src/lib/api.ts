@@ -185,9 +185,23 @@ export interface PiecePracticeStats {
   last_practiced_at: string
 }
 
+export interface RecentlyPracticedPiece {
+  piece_id: number
+  piece_title: string
+  last_practiced_at: string
+}
+
+export interface NeglectedPiece {
+  piece_id: number
+  piece_title: string
+  last_practiced_at: string | null
+}
+
 export interface PracticeStats {
   total_minutes: number
   pieces: PiecePracticeStats[]
+  recently_practiced: RecentlyPracticedPiece[]
+  neglected: NeglectedPiece[]
 }
 
 export async function getPracticeStats(): Promise<PracticeStats> {
