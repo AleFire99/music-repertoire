@@ -1,8 +1,27 @@
+from datetime import UTC, datetime, timedelta
+
 from fastapi.testclient import TestClient
 
 
 def _create_piece(client: TestClient, title: str) -> int:
     return client.post("/api/pieces", json={"title": title}).json()["id"]
+
+
+def _at_days_ago(days: int, hour: int = 10) -> str:
+    """ISO timestamp on the UTC calendar date `days` before today, at `hour`."""
+    moment = datetime.now(UTC) - timedelta(days=days)
+    return moment.strftime("%Y-%m-%dT") + f"{hour:02d}:00:00Z"
+
+
+def _log_session(client: TestClient, piece_id: int, days_ago: int, hour: int = 10) -> None:
+    client.post(
+        "/api/practice-sessions",
+        json={
+            "piece_id": piece_id,
+            "practiced_at": _at_days_ago(days_ago, hour),
+            "duration_minutes": 10,
+        },
+    )
 
 
 def test_create_and_list_practice_session(client: TestClient) -> None:
@@ -104,6 +123,8 @@ def test_stats_empty(client: TestClient) -> None:
         "pieces": [],
         "recently_practiced": [],
         "neglected": [],
+        "current_streak_days": 0,
+        "longest_streak_days": 0,
     }
 
 
@@ -254,3 +275,100 @@ def test_stats_neglected_capped_at_five(client: TestClient) -> None:
     neglected = response.json()["neglected"]
 
     assert len(neglected) == 5
+
+
+def test_stats_streak_no_sessions(client: TestClient) -> None:
+    response = client.get("/api/practice-sessions/stats")
+    body = response.json()
+
+    assert body["current_streak_days"] == 0
+    assert body["longest_streak_days"] == 0
+
+
+def test_stats_streak_single_day(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Solo")
+    _log_session(client, piece_id, days_ago=0)
+
+    body = client.get("/api/practice-sessions/stats").json()
+
+    assert body["current_streak_days"] == 1
+    assert body["longest_streak_days"] == 1
+
+
+def test_stats_streak_multi_day_consecutive(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Consecutive")
+    for days_ago in (2, 1, 0):
+        _log_session(client, piece_id, days_ago)
+
+    body = client.get("/api/practice-sessions/stats").json()
+
+    assert body["current_streak_days"] == 3
+    assert body["longest_streak_days"] == 3
+
+
+def test_stats_streak_same_day_sessions_counted_once(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Same day")
+    _log_session(client, piece_id, days_ago=0, hour=9)
+    _log_session(client, piece_id, days_ago=0, hour=21)
+
+    body = client.get("/api/practice-sessions/stats").json()
+
+    assert body["current_streak_days"] == 1
+    assert body["longest_streak_days"] == 1
+
+
+def test_stats_streak_broken_by_gap(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Broken")
+    for days_ago in (10, 9, 8):
+        _log_session(client, piece_id, days_ago)
+    _log_session(client, piece_id, days_ago=0)
+
+    body = client.get("/api/practice-sessions/stats").json()
+
+    assert body["longest_streak_days"] == 3
+    assert body["current_streak_days"] == 1
+
+
+def test_stats_streak_current_vs_longest_distinction(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Past peak")
+    for days_ago in (20, 19, 18, 17):
+        _log_session(client, piece_id, days_ago)
+    _log_session(client, piece_id, days_ago=0)
+
+    body = client.get("/api/practice-sessions/stats").json()
+
+    assert body["longest_streak_days"] == 4
+    assert body["current_streak_days"] == 1
+
+
+def test_stats_streak_zero_when_gap_since_last_session(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Stale")
+    _log_session(client, piece_id, days_ago=5)
+
+    body = client.get("/api/practice-sessions/stats").json()
+
+    assert body["current_streak_days"] == 0
+    assert body["longest_streak_days"] == 1
+
+
+def test_stats_streak_counts_from_yesterday(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Yesterday")
+    _log_session(client, piece_id, days_ago=1)
+
+    body = client.get("/api/practice-sessions/stats").json()
+
+    assert body["current_streak_days"] == 1
+    assert body["longest_streak_days"] == 1
+
+
+def test_stats_streak_spans_across_pieces(client: TestClient) -> None:
+    piece_a = _create_piece(client, "A")
+    piece_b = _create_piece(client, "B")
+    _log_session(client, piece_a, days_ago=2)
+    _log_session(client, piece_b, days_ago=1)
+    _log_session(client, piece_a, days_ago=0)
+
+    body = client.get("/api/practice-sessions/stats").json()
+
+    assert body["current_streak_days"] == 3
+    assert body["longest_streak_days"] == 3
