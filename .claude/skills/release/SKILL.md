@@ -16,6 +16,11 @@ gh pr create --base main --title "release: x.y.z"
 gh pr merge --merge
 git tag vx.y.z main
 git push origin vx.y.z
+# a pushed tag alone is NOT a GitHub Release — create one explicitly, or it
+# silently doesn't show up under the repo's Releases page (found live: v0.3.0
+# had only a bare tag until this was added). Match the "## Highlights" /
+# "## Images" format of prior releases (gh release view vX.Y.Z to check).
+gh release create vx.y.z --title "vx.y.z" --notes "..."
 # back-merge via PR — the ruleset blocks direct pushes to develop, even fast-forward merges
 git checkout develop && git checkout -b chore/back-merge-x.y.z
 git merge --no-ff main && git push -u origin chore/back-merge-x.y.z

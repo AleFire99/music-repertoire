@@ -59,6 +59,10 @@ gh pr create --base main --title "release: 0.2.0"
 gh pr merge --merge
 git tag v0.2.0 main
 git push origin v0.2.0
+# a pushed tag alone is NOT a GitHub Release — create one explicitly (found
+# live: v0.3.0 shipped with only a bare tag, no Release, until caught and fixed).
+# Match prior releases' "## Highlights" / "## Images" format (gh release view v0.2.0).
+gh release create v0.2.0 --title "v0.2.0" --notes "..."
 # back-merge into develop — via PR, not a direct push (the ruleset blocks
 # direct pushes to develop even for a fast-forward-only merge commit)
 git checkout develop
