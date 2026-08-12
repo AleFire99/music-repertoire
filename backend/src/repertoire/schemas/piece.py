@@ -10,6 +10,7 @@ class PieceCreate(BaseModel):
     composer: str | None = None
     status: PieceStatus = PieceStatus.BACKLOG
     tags: list[str] = []
+    is_favorite: bool = False
 
 
 class PieceUpdate(BaseModel):
@@ -17,6 +18,7 @@ class PieceUpdate(BaseModel):
     composer: str | None = None
     status: PieceStatus | None = None
     tags: list[str] | None = None
+    is_favorite: bool | None = None
 
 
 class PieceRead(BaseModel):
@@ -27,5 +29,6 @@ class PieceRead(BaseModel):
     composer: str | None
     status: PieceStatus
     tags: list[str]
+    is_favorite: bool
     created_at: datetime
     updated_at: datetime

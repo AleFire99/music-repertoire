@@ -21,6 +21,7 @@ export interface Piece {
   composer: string | null
   status: PieceStatus
   tags: string[]
+  is_favorite: boolean
   created_at: string
   updated_at: string
 }
@@ -30,6 +31,7 @@ export interface PieceCreateInput {
   composer?: string | null
   status?: PieceStatus
   tags?: string[]
+  is_favorite?: boolean
 }
 
 export interface PieceUpdateInput {
@@ -37,6 +39,7 @@ export interface PieceUpdateInput {
   composer?: string | null
   status?: PieceStatus
   tags?: string[]
+  is_favorite?: boolean
 }
 
 export async function getHealth(): Promise<{ status: string }> {
@@ -45,9 +48,12 @@ export async function getHealth(): Promise<{ status: string }> {
   return response.json()
 }
 
-export async function listPieces(filters?: { status?: PieceStatus }): Promise<Piece[]> {
+export async function listPieces(
+  filters?: { status?: PieceStatus; favorite?: boolean },
+): Promise<Piece[]> {
   const params = new URLSearchParams()
   if (filters?.status) params.set('status', filters.status)
+  if (filters?.favorite) params.set('favorite', 'true')
   const query = params.toString()
   const response = await fetch(`/api/pieces${query ? `?${query}` : ''}`)
   if (!response.ok) throw new Error(`failed to list pieces: ${response.status}`)
