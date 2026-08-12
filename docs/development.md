@@ -82,7 +82,14 @@ docker compose up -d --build
 docker compose exec backend uv run alembic upgrade head
 ```
 
-This creates a working directory and branch sharing the same `.git` history/objects as the main checkout — no need to re-clone or re-authenticate `gh`. Open a new Claude Code session with that folder as its working directory (new terminal/window, `cd` into it, or open it as a separate folder in your editor).
+This creates a working directory and branch sharing the same `.git` history/objects as the main checkout — no need to re-clone or re-authenticate `gh`.
+
+**Getting a Claude Code session actually into that folder is not optional or automatic.** In the VSCode extension, a new session's working directory is not necessarily the worktree just because a human meant it to be — a session that isn't told to switch will simply run every command against wherever it started (usually the main checkout), silently corrupting branch/file state there instead. Two ways to get it right:
+
+- Have the session call the `EnterWorktree` tool with `path=<absolute worktree path>` as its first action (this is what `scripts/new-feature.sh`'s generated prompt now instructs it to do) — the session must not assume it's already there just because it was told so in text.
+- Or open the worktree folder directly as its own VSCode window/workspace (not a tab within the main repo's window) before starting Claude Code in it.
+
+This was found the hard way: a feature session ended up making uncommitted model/API/frontend changes directly in the main checkout instead of its `.worktrees/issue-<n>` folder, because nothing forced the working-directory switch.
 
 ### Cleanup after merge
 
