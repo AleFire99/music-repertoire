@@ -57,19 +57,30 @@ See [git-flow.md](git-flow.md) and the `git-flow` skill (`.claude/skills/git-flo
 
 ## Working on multiple features in parallel
 
-A single checkout can only have one branch checked out at a time — two Claude Code sessions (or two terminals) working in the *same* folder will fight over branch switches and uncommitted changes. To genuinely work on two features at once (e.g. one Claude Code session per feature), use a separate **git worktree** per feature instead of a second clone:
+A single checkout can only have one branch checked out at a time — two Claude Code sessions (or two terminals) working in the *same* folder will fight over branch switches and uncommitted changes. To genuinely work on two features at once (e.g. one Claude Code session per feature), use a separate **git worktree** per feature instead of a second clone.
+
+Worktrees live **inside the repo**, under `.worktrees/` (gitignored) — not as sibling folders next to the repo, which would clutter the parent directory alongside unrelated projects. `docker compose`'s automatic project naming still works fine since it's based on each worktree's own leaf directory name (`issue-12`, `issue-31`, ...), which stays unique.
+
+### Automated setup
+
+`scripts/new-feature.sh "<issue title>" "<issue body>" [label]` does the boilerplate for you: creates the GitHub issue, a worktree at `.worktrees/issue-<n>` with the correctly-numbered branch off `develop`, a `.env` with ports derived from the issue number (so they never collide across worktrees without any scanning), and prints a ready-to-paste prompt for a new Claude Code session. It does **not** launch the session, watch its PR, merge it, or clean it up afterwards — those stay manual/human-supervised (see [orchestration.md](orchestration.md) for why).
+
+```bash
+scripts/new-feature.sh "Add practice session recording" "Track piece, date, duration, notes per docs/backlog.md" feature
+```
+
+### One chat per feature, named after its issue
+
+Each feature gets its own Claude Code chat — separate from whatever chat is being used for management (picking the next slice, housekeeping, releases). `scripts/new-feature.sh`'s output includes a suggested chat name (`issue-<n>-<slug>`); name the new chat that when you open it, so it's identifiable at a glance once several feature chats are open alongside the management one.
+
+The management chat should never itself run a feature's implementation via the `Agent` tool — doing so pipes that agent's entire tool-call/output stream into the management chat, cluttering it, and the human loses the direct, granular visibility/control they'd have driving a dedicated chat themselves (found the hard way: a background-dispatched agent crashed from a connection error, and the only signal was a single after-the-fact notification — no way to see it struggling or step in). The management chat's role is to prepare the worktree/issue/prompt and later verify and merge results, not to drive the implementation itself.
+
+### Manual setup (what the script automates)
 
 ```bash
 # from the main checkout
-git worktree add ../music-repertoire-issue-12 -b feature/issue-12-<slug> develop
-```
-
-This creates a sibling folder with its own working directory and branch, sharing the same `.git` history/objects — no need to re-clone or re-authenticate `gh`. Open a new Claude Code session with that folder as its working directory (new terminal/window, `cd` into it, or open it as a separate folder in your editor).
-
-Each worktree needs its own `.env` with distinct host ports, since `docker compose up` binds to host ports and two worktrees both trying to bind `8000`/`5173`/`5432` will collide (container/volume/network names are already namespaced automatically by Compose using the folder name, so only ports need overriding):
-
-```bash
-# in the new worktree
+git worktree add .worktrees/issue-12 -b feature/issue-12-<slug> develop
+cd .worktrees/issue-12
 cp .env.example .env
 # edit .env: set POSTGRES_HOST_PORT/BACKEND_HOST_PORT/FRONTEND_HOST_PORT to unused ports,
 # e.g. 5433/8001/5174
@@ -77,11 +88,39 @@ docker compose up -d --build
 docker compose exec backend uv run alembic upgrade head
 ```
 
-When the feature's PR is merged, clean up from the main checkout:
+This creates a working directory and branch sharing the same `.git` history/objects as the main checkout — no need to re-clone or re-authenticate `gh`.
+
+**Getting a Claude Code session actually into that folder is not optional or automatic.** In the VSCode extension, a new session's working directory is not necessarily the worktree just because a human meant it to be — a session that isn't told to switch will simply run every command against wherever it started (usually the main checkout), silently corrupting branch/file state there instead. Two ways to get it right:
+
+- Have the session call the `EnterWorktree` tool with `path=<absolute worktree path>` as its first action (this is what `scripts/new-feature.sh`'s generated prompt now instructs it to do) — the session must not assume it's already there just because it was told so in text.
+- Or open the worktree folder directly as its own VSCode window/workspace (not a tab within the main repo's window) before starting Claude Code in it.
+
+This was found the hard way: a feature session ended up making uncommitted model/API/frontend changes directly in the main checkout instead of its `.worktrees/issue-<n>` folder, because nothing forced the working-directory switch.
+
+### Cleanup after merge
+
+Docker teardown for a merged feature happens at two layers, so a session that forgets doesn't leave containers/images running indefinitely:
+
+1. **Automatic, per-session:** `.claude/hooks/check-docker-teardown.sh` runs as a `Stop` hook — every time a Claude Code session finishes a turn while working in a `.worktrees/issue-<n>` checkout, it checks whether that worktree's docker compose stack is still running *and* its branch already has a merged PR. If both are true, it tears the stack down right then (`docker compose down --rmi local --volumes --remove-orphans`) — no waiting for someone to run the housekeeping script. It never touches a stack whose branch isn't merged yet, and it never blocks the session from stopping (always exits 0) since this is a side effect, not a permission decision. Verified live with a disposable worktree + stubbed `gh`: merged branch → torn down automatically; unmerged branch → left running untouched.
+2. **Manual backstop:** `scripts/cleanup-worktrees.sh` removes any worktree whose branch has an actual **merged PR on GitHub** and no uncommitted changes — run it any time, it's safe to call repeatedly and skips (with a reason) anything not ready. This also removes the worktree folder itself and deletes the branch, which the Stop hook deliberately doesn't do (it only touches docker, not git state):
 
 ```bash
-git worktree remove ../music-repertoire-issue-12
+scripts/cleanup-worktrees.sh
+```
+
+It deliberately doesn't trust "branch is merged into develop" as the sole signal — a freshly created worktree with no commits yet trivially satisfies that too, and would be wrongly deleted right after `new-feature.sh` creates it. Requiring a real merged PR avoids that.
+
+Before deleting a worktree it also tears down its docker compose stack — `docker compose down --rmi local --volumes --remove-orphans` from inside the worktree, removing that worktree's containers, its locally-built `backend`/`frontend` images, and its postgres volume (never the shared pulled `postgres:16-alpine` base image). If Docker isn't running it skips this step with a note rather than failing.
+
+**Windows caveat, live-verified while building this:** deleting the worktree folder afterward can fail if something still has a file handle open on it — most often an editor's file watcher indexing `.worktrees/` (it's inside the open workspace, unlike the old sibling-folder layout), occasionally Docker Desktop's file-sharing layer briefly after teardown. The script retries a few times; if it still can't delete the folder, it says so plainly and leaves it for you to remove by hand once whatever's holding it releases, followed by `git worktree prune` — it does not loop forever or pretend success.
+
+Manual equivalent, if you'd rather do it by hand:
+
+```bash
+git worktree remove .worktrees/issue-12
 git branch -d feature/issue-12-<slug>
 ```
 
-See [orchestration.md](orchestration.md) for the worktree conventions this is based on (written for a future multi-agent orchestrator, but the same rules apply to two humans/sessions working manually — one worktree, one branch, never shared).
+If `git worktree remove` fails on Windows with `Function not implemented`, it's usually an npm-created symlink/reparse point inside `node_modules` that git-bash's `rm` can't handle — delete the folder with PowerShell instead (`Remove-Item -Recurse -Force <path>`), then `git worktree prune`. `cleanup-worktrees.sh` already does this fallback automatically.
+
+See [orchestration.md](orchestration.md) for the worktree conventions this is based on, and for guidance on when running features in parallel is actually worth it versus working sequentially.

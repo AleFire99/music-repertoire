@@ -7,6 +7,13 @@
           { "type": "command", "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/guard-git.sh\"", "timeout": 5 }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/check-docker-teardown.sh\"", "timeout": 30 }
+        ]
+      }
     ]
   }
 }

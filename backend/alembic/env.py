@@ -5,7 +5,11 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 from repertoire.config import settings
 from repertoire.db import Base
-from repertoire.models import piece  # noqa: F401  registers Piece on Base.metadata
+from repertoire.models import (
+    piece,  # noqa: F401  registers Piece on Base.metadata
+    practice_session,  # noqa: F401  registers PracticeSession on Base.metadata
+    sheet_resource,  # noqa: F401  registers SheetResource on Base.metadata
+)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

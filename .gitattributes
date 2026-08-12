@@ -1,0 +1,5 @@
+# Normalize line endings to LF regardless of platform/core.autocrlf. Without this,
+# Windows checkouts convert LF-committed files (shell scripts especially — they must
+# stay LF to run inside the Linux containers) to CRLF, which then shows as a spurious
+# "modified" diff the moment anything touches the file, with no real content change.
+* text=auto eol=lf

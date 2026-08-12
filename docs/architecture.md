@@ -1,8 +1,8 @@
 # Architecture
 
-## v0.1 scope boundary
+## Scope boundary
 
-v0.1 ("Repertoire Foundation") is intentionally small: Piece CRUD only. It does **not** include practice tracking, sheet-music resources, or the music-analysis engine — those are documented in [backlog.md](backlog.md) as future milestones, not implemented yet. Complexity in this project lives in the engineering workflow (Git Flow, CI, multi-agent conventions), not in the application.
+v0.1 ("Repertoire Foundation") started intentionally small: Piece CRUD only. v0.2.0 added Piece status/tags and image publishing. Practice-session recording (basic create + list, no statistics/timer/streaks) landed as the first slice of the practice-tracking epic. Sheet-music resources and the music-analysis engine remain future milestones — see [backlog.md](backlog.md). Complexity in this project lives in the engineering workflow (Git Flow, CI, multi-agent conventions), not in the application.
 
 ## Stack
 

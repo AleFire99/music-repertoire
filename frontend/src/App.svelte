@@ -1,14 +1,62 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { getHealth, listPieces, PIECE_STATUSES, type Piece, type PieceStatus } from './lib/api'
+  import {
+    getHealth,
+    getPracticeStats,
+    listPieces,
+    listPracticeSessions,
+    listSheetResources,
+    PIECE_STATUSES,
+    PIECE_DIFFICULTIES,
+    type Piece,
+    type PieceStatus,
+    type PieceDifficulty,
+    type PracticeSession,
+    type PracticeStats,
+    type SheetResource,
+  } from './lib/api'
+  import PieceForm from './lib/PieceForm.svelte'
+  import PieceList from './lib/PieceList.svelte'
+  import PracticeSessionForm from './lib/PracticeSessionForm.svelte'
+  import PracticeSessionList from './lib/PracticeSessionList.svelte'
+  import PracticeStatsView from './lib/PracticeStats.svelte'
+  import SheetResourceForm from './lib/SheetResourceForm.svelte'
+  import SheetResourceList from './lib/SheetResourceList.svelte'
 
   let health = $state<string>('checking...')
   let pieces = $state<Piece[]>([])
   let error = $state<string | null>(null)
   let statusFilter = $state<PieceStatus | ''>('')
+  let favoritesOnly = $state<boolean>(false)
+  let difficultyFilter = $state<PieceDifficulty | ''>('')
+  let editingPiece = $state<Piece | null>(null)
+  let sessions = $state<PracticeSession[]>([])
+  let stats = $state<PracticeStats>({
+    total_minutes: 0,
+    pieces: [],
+    recently_practiced: [],
+    neglected: [],
+  })
+  let sheetResources = $state<SheetResource[]>([])
 
   async function refreshPieces(): Promise<void> {
-    pieces = await listPieces({ status: statusFilter || undefined })
+    pieces = await listPieces({
+      status: statusFilter || undefined,
+      favorite: favoritesOnly || undefined,
+      difficulty: difficultyFilter || undefined,
+    })
+  }
+
+  async function refreshSessions(): Promise<void> {
+    sessions = await listPracticeSessions()
+  }
+
+  async function refreshStats(): Promise<void> {
+    stats = await getPracticeStats()
+  }
+
+  async function refreshSheetResources(): Promise<void> {
+    sheetResources = await listSheetResources()
   }
 
   onMount(async () => {
@@ -16,10 +64,22 @@
       const healthResult = await getHealth()
       health = healthResult.status
       await refreshPieces()
+      await refreshSessions()
+      await refreshStats()
+      await refreshSheetResources()
     } catch (err) {
       error = err instanceof Error ? err.message : String(err)
     }
   })
+
+  async function handleSessionSaved(saved: PracticeSession): Promise<void> {
+    sessions = [...sessions, saved].sort((a, b) => b.practiced_at.localeCompare(a.practiced_at))
+    try {
+      await refreshStats()
+    } catch (err) {
+      error = err instanceof Error ? err.message : String(err)
+    }
+  }
 
   async function onStatusFilterChange(): Promise<void> {
     try {
@@ -27,6 +87,26 @@
     } catch (err) {
       error = err instanceof Error ? err.message : String(err)
     }
+  }
+
+  function handlePieceSaved(saved: Piece): void {
+    const exists = pieces.some((p) => p.id === saved.id)
+    pieces = exists ? pieces.map((p) => (p.id === saved.id ? saved : p)) : [...pieces, saved]
+    editingPiece = null
+  }
+
+  function handlePieceDeleted(id: number): void {
+    pieces = pieces.filter((p) => p.id !== id)
+    if (editingPiece?.id === id) editingPiece = null
+    sheetResources = sheetResources.filter((r) => r.piece_id !== id)
+  }
+
+  function handleSheetResourceSaved(saved: SheetResource): void {
+    sheetResources = [saved, ...sheetResources]
+  }
+
+  function handleSheetResourceDeleted(id: number): void {
+    sheetResources = sheetResources.filter((r) => r.id !== id)
   }
 </script>
 
@@ -38,6 +118,13 @@
     <p class="error">{error}</p>
   {/if}
 
+  <h2>{editingPiece ? 'Edit Piece' : 'Add Piece'}</h2>
+  <PieceForm
+    piece={editingPiece}
+    onSaved={handlePieceSaved}
+    onCancel={() => (editingPiece = null)}
+  />
+
   <h2>Pieces</h2>
   <label>
     Filter by status:
@@ -48,22 +135,39 @@
       {/each}
     </select>
   </label>
-
-  {#if pieces.length === 0}
-    <p>No pieces yet.</p>
-  {:else}
-    <ul>
-      {#each pieces as piece (piece.id)}
-        <li>
-          {piece.title}{piece.composer ? ` — ${piece.composer}` : ''}
-          <span class="status">{piece.status}</span>
-          {#if piece.tags.length > 0}
-            <span class="tags">{piece.tags.join(', ')}</span>
-          {/if}
-        </li>
+  <label>
+    <input type="checkbox" bind:checked={favoritesOnly} onchange={onStatusFilterChange} />
+    Favorites only
+  </label>
+  <label>
+    Filter by difficulty:
+    <select bind:value={difficultyFilter} onchange={onStatusFilterChange}>
+      <option value="">All</option>
+      {#each PIECE_DIFFICULTIES as d (d)}
+        <option value={d}>{d}</option>
       {/each}
-    </ul>
-  {/if}
+    </select>
+  </label>
+
+  <PieceList
+    {pieces}
+    onEdit={(p) => (editingPiece = p)}
+    onDeleted={handlePieceDeleted}
+    onUpdated={handlePieceSaved}
+  />
+
+  <h2>Log Practice Session</h2>
+  <PracticeSessionForm {pieces} onSaved={handleSessionSaved} />
+
+  <h2>Recent Sessions</h2>
+  <PracticeSessionList {sessions} {pieces} />
+
+  <h2>Practice Statistics</h2>
+  <PracticeStatsView {stats} />
+
+  <h2>Sheet Music Resources</h2>
+  <SheetResourceForm {pieces} onSaved={handleSheetResourceSaved} />
+  <SheetResourceList resources={sheetResources} {pieces} onDeleted={handleSheetResourceDeleted} />
 </main>
 
 <style>
@@ -74,17 +178,5 @@
   }
   .error {
     color: #b00020;
-  }
-  .status {
-    margin-left: 0.5rem;
-    padding: 0.1rem 0.5rem;
-    border-radius: 0.75rem;
-    background: #e0e0e0;
-    font-size: 0.8rem;
-  }
-  .tags {
-    margin-left: 0.5rem;
-    color: #666;
-    font-size: 0.8rem;
   }
 </style>

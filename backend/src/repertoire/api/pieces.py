@@ -3,7 +3,7 @@ from sqlalchemy import any_
 from sqlalchemy.orm import Session
 
 from repertoire.db import get_db
-from repertoire.models.piece import Piece, PieceStatus
+from repertoire.models.piece import Piece, PieceDifficulty, PieceStatus
 from repertoire.schemas.piece import PieceCreate, PieceRead, PieceUpdate
 
 router = APIRouter(prefix="/pieces", tags=["pieces"])
@@ -22,6 +22,9 @@ def create_piece(payload: PieceCreate, db: Session = Depends(get_db)) -> Piece:
 def list_pieces(
     status: PieceStatus | None = None,
     tag: str | None = None,
+    favorite: bool | None = None,
+    difficulty: PieceDifficulty | None = None,
+    instrument: str | None = None,
     db: Session = Depends(get_db),
 ) -> list[Piece]:
     query = db.query(Piece)
@@ -29,6 +32,12 @@ def list_pieces(
         query = query.filter(Piece.status == status)
     if tag is not None:
         query = query.filter(any_(Piece.tags) == tag)
+    if favorite is not None:
+        query = query.filter(Piece.is_favorite == favorite)
+    if difficulty is not None:
+        query = query.filter(Piece.difficulty == difficulty)
+    if instrument is not None:
+        query = query.filter(Piece.instrument == instrument)
     return list(query.order_by(Piece.id).all())
 
 
