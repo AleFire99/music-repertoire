@@ -32,7 +32,9 @@ ISSUE_NUM=$(basename "$ISSUE_URL")
 
 SLUG=$(echo "$TITLE" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g' | cut -c1-40)
 BRANCH="feature/issue-${ISSUE_NUM}-${SLUG}"
-WORKTREE_PATH="../$(basename "$REPO_ROOT")-issue-${ISSUE_NUM}"
+WORKTREE_PATH="$REPO_ROOT/.worktrees/issue-${ISSUE_NUM}"
+
+mkdir -p "$REPO_ROOT/.worktrees"
 
 git worktree add "$WORKTREE_PATH" -b "$BRANCH" develop
 
