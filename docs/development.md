@@ -93,7 +93,10 @@ This was found the hard way: a feature session ended up making uncommitted model
 
 ### Cleanup after merge
 
-`scripts/cleanup-worktrees.sh` removes any worktree whose branch has an actual **merged PR on GitHub** and no uncommitted changes — run it any time, it's safe to call repeatedly and skips (with a reason) anything not ready:
+Docker teardown for a merged feature happens at two layers, so a session that forgets doesn't leave containers/images running indefinitely:
+
+1. **Automatic, per-session:** `.claude/hooks/check-docker-teardown.sh` runs as a `Stop` hook — every time a Claude Code session finishes a turn while working in a `.worktrees/issue-<n>` checkout, it checks whether that worktree's docker compose stack is still running *and* its branch already has a merged PR. If both are true, it tears the stack down right then (`docker compose down --rmi local --volumes --remove-orphans`) — no waiting for someone to run the housekeeping script. It never touches a stack whose branch isn't merged yet, and it never blocks the session from stopping (always exits 0) since this is a side effect, not a permission decision. Verified live with a disposable worktree + stubbed `gh`: merged branch → torn down automatically; unmerged branch → left running untouched.
+2. **Manual backstop:** `scripts/cleanup-worktrees.sh` removes any worktree whose branch has an actual **merged PR on GitHub** and no uncommitted changes — run it any time, it's safe to call repeatedly and skips (with a reason) anything not ready. This also removes the worktree folder itself and deletes the branch, which the Stop hook deliberately doesn't do (it only touches docker, not git state):
 
 ```bash
 scripts/cleanup-worktrees.sh
