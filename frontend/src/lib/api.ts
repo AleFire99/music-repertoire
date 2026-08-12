@@ -96,3 +96,49 @@ export async function deletePiece(id: number): Promise<void> {
   const response = await fetch(`/api/pieces/${id}`, { method: 'DELETE' })
   if (!response.ok) throw new Error(await describeError('failed to delete piece', response))
 }
+
+export interface PracticeSession {
+  id: number
+  piece_id: number
+  practiced_at: string
+  duration_minutes: number
+  notes: string | null
+  rating: number | null
+  section: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface PracticeSessionCreateInput {
+  piece_id: number
+  practiced_at: string
+  duration_minutes: number
+  notes?: string | null
+  rating?: number | null
+  section?: string | null
+}
+
+export async function listPracticeSessions(
+  filters?: { piece_id?: number },
+): Promise<PracticeSession[]> {
+  const params = new URLSearchParams()
+  if (filters?.piece_id) params.set('piece_id', String(filters.piece_id))
+  const query = params.toString()
+  const response = await fetch(`/api/practice-sessions${query ? `?${query}` : ''}`)
+  if (!response.ok) throw new Error(`failed to list practice sessions: ${response.status}`)
+  return response.json()
+}
+
+export async function createPracticeSession(
+  input: PracticeSessionCreateInput,
+): Promise<PracticeSession> {
+  const response = await fetch('/api/practice-sessions', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  if (!response.ok) {
+    throw new Error(await describeError('failed to create practice session', response))
+  }
+  return response.json()
+}
