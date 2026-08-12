@@ -11,7 +11,7 @@ Personal music-learning and repertoire-management app: pieces, sheet-music sourc
 ```
 backend/          ← FastAPI + SQLAlchemy + Alembic (uv-managed), src/repertoire/
 frontend/         ← Svelte + TypeScript + Vite
-docs/             ← architecture, git-flow, testing, agent-model, orchestration, DoD, backlog, adr/
+docs/             ← architecture, git-flow, testing, agent-model, orchestration, DoD, backlog, roadmap, adr/
 .claude/          ← skills, hooks, settings.json
 .github/          ← CI workflow, issue templates, PR template, CODEOWNERS
 docker-compose.yml ← 3 services: postgres, backend, frontend
