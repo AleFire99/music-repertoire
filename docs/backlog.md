@@ -55,13 +55,16 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] CI workflow publishing `backend`/`frontend` images to GHCR on release/tag — issue #20 (ad hoc, not part of the repertoire-extensions epic)
 - [x] Release: `develop` → `release/0.2.0` → `main`, tag `v0.2.0`
 
-## Post-0.2.0 slices (not yet cut into a release)
+## v0.3.0 — Practice insights, sheet resources, and Piece descriptive fields
 
 - [x] Full Piece CRUD UI (create/edit/delete forms, not just read-only list) — issue #28
 - [x] Practice session recording (piece, date/time, duration, notes, rating, section) — issue #31
 - [x] Practice statistics (total minutes, per-piece totals, session counts, last-practiced) — issue #41
 - [x] Sheet-music resources for a Piece (external URL / physical reference / local document, no file storage) — issue #43
 - [x] Piece favorites (toggle + filter) — issue #46
+- [x] Piece key/tempo/difficulty/instrument fields — issue #50
+- [x] Recently-practiced and neglected pieces in practice stats — issue #56
+- [ ] Release: `develop` → `release/0.3.0` → `main`, tag `v0.3.0`
 
 ---
 
