@@ -6,6 +6,12 @@
 # `git branch --merged develop` isn't a safe signal on its own (a freshly
 # created, not-yet-started worktree is trivially "merged" too, since it has no
 # commits yet).
+#
+# Before deleting a worktree, tears down its docker compose stack (containers,
+# locally-built backend/frontend images, the postgres volume) — `--rmi local`
+# only removes images compose built itself (backend/frontend), never a shared
+# pulled base image like postgres:16-alpine. Must run from inside the worktree
+# while the compose file still exists, so this happens before removal, not after.
 set -euo pipefail
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
@@ -29,9 +35,33 @@ while read -r WT_PATH WT_REF; do
   fi
 
   echo "REMOVE $BRANCH — merged via PR #$MERGED_PR"
+
+  if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+    if [[ -f "$WT_PATH/docker-compose.yml" ]]; then
+      echo "  tearing down docker compose stack (containers, local images, volumes)"
+      (cd "$WT_PATH" && docker compose down --rmi local --volumes --remove-orphans) 2>&1 | sed 's/^/  /'
+    fi
+  else
+    echo "  docker not running — skipping container/image cleanup for $WT_PATH (run 'docker compose down --rmi local -v' there manually once it's up)"
+  fi
+
+  cd "$REPO_ROOT"  # never attempt to delete a directory we're currently inside — Windows locks it
   if ! git worktree remove "$WT_PATH" 2>/dev/null; then
     echo "  git worktree remove failed (Windows symlink quirk?) — falling back to manual delete"
-    rm -rf "$WT_PATH" 2>/dev/null || powershell.exe -NoProfile -Command "Remove-Item -Recurse -Force '$WT_PATH'"
+    REMOVED=0
+    for attempt in 1 2 3; do
+      if rm -rf "$WT_PATH" 2>/dev/null || powershell.exe -NoProfile -Command "Remove-Item -Recurse -Force '$WT_PATH'" 2>/dev/null; then
+        REMOVED=1
+        break
+      fi
+      sleep 2
+    done
+    if [[ "$REMOVED" == "0" ]]; then
+      echo "  could not delete $WT_PATH after 3 attempts — something still has a handle on it"
+      echo "  (an editor's file watcher indexing .worktrees/, or Docker Desktop's file-sharing layer, are the usual suspects on Windows)"
+      echo "  git already unregistered it as a worktree; delete the folder by hand once it's released, then 'git worktree prune'"
+      continue
+    fi
     git worktree prune
   fi
   git branch -d "$BRANCH" 2>/dev/null || echo "  (local branch $BRANCH already gone or has unmerged commits — left as-is)"
