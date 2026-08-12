@@ -31,7 +31,12 @@
   let difficultyFilter = $state<PieceDifficulty | ''>('')
   let editingPiece = $state<Piece | null>(null)
   let sessions = $state<PracticeSession[]>([])
-  let stats = $state<PracticeStats>({ total_minutes: 0, pieces: [] })
+  let stats = $state<PracticeStats>({
+    total_minutes: 0,
+    pieces: [],
+    recently_practiced: [],
+    neglected: [],
+  })
   let sheetResources = $state<SheetResource[]>([])
 
   async function refreshPieces(): Promise<void> {

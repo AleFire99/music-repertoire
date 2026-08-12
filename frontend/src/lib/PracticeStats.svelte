@@ -23,6 +23,32 @@
   </ul>
 {/if}
 
+{#if stats.recently_practiced.length > 0}
+  <h3>Recently practiced</h3>
+  <ul>
+    {#each stats.recently_practiced as piece (piece.piece_id)}
+      <li>
+        {piece.piece_title}
+        <span class="when">{formatDate(piece.last_practiced_at)}</span>
+      </li>
+    {/each}
+  </ul>
+{/if}
+
+{#if stats.neglected.length > 0}
+  <h3>Neglected</h3>
+  <ul>
+    {#each stats.neglected as piece (piece.piece_id)}
+      <li>
+        {piece.piece_title}
+        <span class="when">
+          {piece.last_practiced_at ? `last: ${formatDate(piece.last_practiced_at)}` : 'never practiced'}
+        </span>
+      </li>
+    {/each}
+  </ul>
+{/if}
+
 <style>
   ul {
     padding-left: 0;
