@@ -69,6 +69,7 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 ## Post-0.3.0 slices (not yet cut into a release)
 
 - [x] Practice session timer (stopwatch, auto-fills duration_minutes) — issue #63
+- [x] Practice streaks (current/longest consecutive-day streaks) — issue #67
 
 ---
 
@@ -78,7 +79,7 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 Goals, repertoire lists, performance history, repertoire rotation.
 
 ### Practice
-Weekly goals, statistics by week/month, progress toward goals, practice streaks, section-level practice breakdowns.
+Weekly goals, statistics by week/month, progress toward goals, section-level practice breakdowns.
 
 ### Music representation
 MIDI import, MusicXML import, chord representation, measure representation, sections, annotations. **Audio → MIDI → chord extraction is explicitly out of scope indefinitely** — not a v-next item, a permanent non-goal unless a concrete future requirement changes that.
