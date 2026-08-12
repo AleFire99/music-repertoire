@@ -49,7 +49,7 @@ cp "$REPO_ROOT/.env.example" "$WORKTREE_PATH/.env"
   echo "FRONTEND_HOST_PORT=${FRONTEND_PORT}"
 } >> "$WORKTREE_PATH/.env"
 
-WORKTREE_ABS_PATH="$(cd "$WORKTREE_PATH" && pwd)"
+WORKTREE_ABS_PATH="$(cd "$WORKTREE_PATH" && pwd -W)"
 
 cat <<EOF
 
