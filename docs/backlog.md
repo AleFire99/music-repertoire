@@ -61,6 +61,7 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] Practice session recording (piece, date/time, duration, notes, rating, section) — issue #31
 - [x] Practice statistics (total minutes, per-piece totals, session counts, last-practiced) — issue #41
 - [x] Sheet-music resources for a Piece (external URL / physical reference / local document, no file storage) — issue #43
+- [x] Piece favorites (toggle + filter) — issue #46
 
 ---
 
