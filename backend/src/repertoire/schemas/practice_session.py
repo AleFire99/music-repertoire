@@ -24,3 +24,16 @@ class PracticeSessionRead(BaseModel):
     section: str | None
     created_at: datetime
     updated_at: datetime
+
+
+class PiecePracticeStats(BaseModel):
+    piece_id: int
+    piece_title: str
+    total_minutes: int
+    session_count: int
+    last_practiced_at: datetime
+
+
+class PracticeStatsRead(BaseModel):
+    total_minutes: int
+    pieces: list[PiecePracticeStats]

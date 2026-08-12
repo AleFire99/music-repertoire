@@ -142,3 +142,22 @@ export async function createPracticeSession(
   }
   return response.json()
 }
+
+export interface PiecePracticeStats {
+  piece_id: number
+  piece_title: string
+  total_minutes: number
+  session_count: number
+  last_practiced_at: string
+}
+
+export interface PracticeStats {
+  total_minutes: number
+  pieces: PiecePracticeStats[]
+}
+
+export async function getPracticeStats(): Promise<PracticeStats> {
+  const response = await fetch('/api/practice-sessions/stats')
+  if (!response.ok) throw new Error(`failed to load practice stats: ${response.status}`)
+  return response.json()
+}

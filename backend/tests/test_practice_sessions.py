@@ -94,3 +94,43 @@ def test_list_sessions_ordered_newest_first(client: TestClient) -> None:
     response = client.get("/api/practice-sessions")
     dates = [s["practiced_at"] for s in response.json()]
     assert dates == sorted(dates, reverse=True)
+
+
+def test_stats_empty(client: TestClient) -> None:
+    response = client.get("/api/practice-sessions/stats")
+    assert response.status_code == 200
+    assert response.json() == {"total_minutes": 0, "pieces": []}
+
+
+def test_stats_aggregates_across_pieces(client: TestClient) -> None:
+    piece_a = _create_piece(client, "Clair de Lune")
+    piece_b = _create_piece(client, "Sonata")
+
+    client.post(
+        "/api/practice-sessions",
+        json={"piece_id": piece_a, "practiced_at": "2026-08-01T10:00:00Z", "duration_minutes": 20},
+    )
+    client.post(
+        "/api/practice-sessions",
+        json={"piece_id": piece_a, "practiced_at": "2026-08-03T10:00:00Z", "duration_minutes": 15},
+    )
+    client.post(
+        "/api/practice-sessions",
+        json={"piece_id": piece_b, "practiced_at": "2026-08-02T10:00:00Z", "duration_minutes": 30},
+    )
+
+    response = client.get("/api/practice-sessions/stats")
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["total_minutes"] == 65
+
+    by_id = {p["piece_id"]: p for p in body["pieces"]}
+    assert by_id[piece_a]["total_minutes"] == 35
+    assert by_id[piece_a]["session_count"] == 2
+    assert by_id[piece_a]["last_practiced_at"] == "2026-08-03T10:00:00Z"
+    assert by_id[piece_b]["total_minutes"] == 30
+    assert by_id[piece_b]["session_count"] == 1
+
+    # ordered by last_practiced_at desc: piece_a (Aug 3) before piece_b (Aug 2)
+    assert [p["piece_id"] for p in body["pieces"]] == [piece_a, piece_b]
