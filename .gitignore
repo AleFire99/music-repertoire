@@ -26,3 +26,6 @@ Thumbs.db
 
 # Docker
 *.pid
+
+# Git worktrees (scripts/new-feature.sh)
+.worktrees/

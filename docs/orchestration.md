@@ -8,6 +8,16 @@
 
 Build the orchestrator only once issue → feature branch → agent → tests → PR → review → CI → merge has been run manually enough times to know what actually needs automating.
 
+## When it's actually worth running features in parallel
+
+Parallel worktrees have real overhead — each running stack is its own postgres+backend+frontend containers (real RAM/CPU), and every parallel session is one more thing to check in on. Worth it when:
+
+- **The features touch disjoint files/areas.** Piece status+tags (#18, backend model+schema+API+App.svelte) and GHCR publishing (#20, a new standalone workflow file) ran in parallel with zero conflict because they shared almost nothing. Practice session recording (#31, new model/router/frontend view) was deliberately started only *after* confirming the in-flight Piece CRUD UI work (#28) wasn't also mid-rewrite of the same `App.svelte` — running both at once would have guaranteed a merge conflict on that file.
+- **Each slice is small enough to review/merge independently** — a whole multi-week epic handed to one worktree isn't a parallel-friendly unit; break it into the same kind of focused slices used for solo work first (see `docs/backlog.md`'s pattern of one epic → several scoped issues).
+- **You're not choosing between exploring an approach and committing to one.** If a feature's design is genuinely uncertain, let one session settle it first rather than parallelizing something that might get thrown away.
+
+Don't parallelize when: two candidate slices would both need to edit the same core file heavily (shared schema, shared main layout component, shared router registration) — sequence them instead, or split the shared-file change out as its own small prerequisite PR first. Rule of thumb from experience so far: 2-3 concurrent worktrees is comfortable; more than that turns into more context-switching than the parallelism saves.
+
 ## Worktree rules (for when multi-agent work starts)
 
 - Each implementation agent works in its **own** Git worktree and branch — never a shared mutable worktree.
