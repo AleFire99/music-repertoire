@@ -1,11 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import { getHealth, listPieces, PIECE_STATUSES, type Piece, type PieceStatus } from './lib/api'
+  import PieceForm from './lib/PieceForm.svelte'
+  import PieceList from './lib/PieceList.svelte'
 
   let health = $state<string>('checking...')
   let pieces = $state<Piece[]>([])
   let error = $state<string | null>(null)
   let statusFilter = $state<PieceStatus | ''>('')
+  let editingPiece = $state<Piece | null>(null)
 
   async function refreshPieces(): Promise<void> {
     pieces = await listPieces({ status: statusFilter || undefined })
@@ -28,6 +31,17 @@
       error = err instanceof Error ? err.message : String(err)
     }
   }
+
+  function handlePieceSaved(saved: Piece): void {
+    const exists = pieces.some((p) => p.id === saved.id)
+    pieces = exists ? pieces.map((p) => (p.id === saved.id ? saved : p)) : [...pieces, saved]
+    editingPiece = null
+  }
+
+  function handlePieceDeleted(id: number): void {
+    pieces = pieces.filter((p) => p.id !== id)
+    if (editingPiece?.id === id) editingPiece = null
+  }
 </script>
 
 <main>
@@ -37,6 +51,13 @@
   {#if error}
     <p class="error">{error}</p>
   {/if}
+
+  <h2>{editingPiece ? 'Edit Piece' : 'Add Piece'}</h2>
+  <PieceForm
+    piece={editingPiece}
+    onSaved={handlePieceSaved}
+    onCancel={() => (editingPiece = null)}
+  />
 
   <h2>Pieces</h2>
   <label>
@@ -49,21 +70,7 @@
     </select>
   </label>
 
-  {#if pieces.length === 0}
-    <p>No pieces yet.</p>
-  {:else}
-    <ul>
-      {#each pieces as piece (piece.id)}
-        <li>
-          {piece.title}{piece.composer ? ` — ${piece.composer}` : ''}
-          <span class="status">{piece.status}</span>
-          {#if piece.tags.length > 0}
-            <span class="tags">{piece.tags.join(', ')}</span>
-          {/if}
-        </li>
-      {/each}
-    </ul>
-  {/if}
+  <PieceList {pieces} onEdit={(p) => (editingPiece = p)} onDeleted={handlePieceDeleted} />
 </main>
 
 <style>
@@ -74,17 +81,5 @@
   }
   .error {
     color: #b00020;
-  }
-  .status {
-    margin-left: 0.5rem;
-    padding: 0.1rem 0.5rem;
-    border-radius: 0.75rem;
-    background: #e0e0e0;
-    font-size: 0.8rem;
-  }
-  .tags {
-    margin-left: 0.5rem;
-    color: #666;
-    font-size: 0.8rem;
   }
 </style>
