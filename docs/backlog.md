@@ -66,15 +66,19 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] Recently-practiced and neglected pieces in practice stats — issue #56
 - [x] Release: `develop` → `release/0.3.0` → `main`, tag `v0.3.0`
 
+## Post-0.3.0 slices (not yet cut into a release)
+
+- [x] Practice session timer (stopwatch, auto-fills duration_minutes) — issue #63
+
 ---
 
 ## Future epics (not implemented, do not start without a new milestone)
 
 ### Repertoire
-Favorites, goals, repertoire lists, performance history, repertoire rotation, key/tempo/difficulty/instrument fields.
+Goals, repertoire lists, performance history, repertoire rotation.
 
 ### Practice
-Timer, weekly goals, statistics by week/month, neglected pieces, recently practiced, progress toward goals, practice streaks, section-level practice breakdowns.
+Weekly goals, statistics by week/month, progress toward goals, practice streaks, section-level practice breakdowns.
 
 ### Music representation
 MIDI import, MusicXML import, chord representation, measure representation, sections, annotations. **Audio → MIDI → chord extraction is explicitly out of scope indefinitely** — not a v-next item, a permanent non-goal unless a concrete future requirement changes that.
