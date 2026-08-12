@@ -71,8 +71,20 @@
         </button>
         {piece.title}{piece.composer ? ` — ${piece.composer}` : ''}
         <span class="status">{piece.status}</span>
+        {#if piece.difficulty}
+          <span class="status">{piece.difficulty}</span>
+        {/if}
         {#if piece.tags.length > 0}
           <span class="tags">{piece.tags.join(', ')}</span>
+        {/if}
+        {#if piece.key}
+          <span class="tags">Key: {piece.key}</span>
+        {/if}
+        {#if piece.tempo_bpm != null}
+          <span class="tags">{piece.tempo_bpm} BPM</span>
+        {/if}
+        {#if piece.instrument}
+          <span class="tags">{piece.instrument}</span>
         {/if}
         <span class="row-actions">
           <button type="button" onclick={() => onEdit(piece)} disabled={deletingId === piece.id}>

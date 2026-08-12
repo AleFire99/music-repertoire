@@ -15,10 +15,23 @@ export const PIECE_STATUSES: PieceStatus[] = [
   'archived',
 ]
 
+export type PieceDifficulty = 'beginner' | 'intermediate' | 'advanced' | 'expert'
+
+export const PIECE_DIFFICULTIES: PieceDifficulty[] = [
+  'beginner',
+  'intermediate',
+  'advanced',
+  'expert',
+]
+
 export interface Piece {
   id: number
   title: string
   composer: string | null
+  key: string | null
+  tempo_bpm: number | null
+  difficulty: PieceDifficulty | null
+  instrument: string | null
   status: PieceStatus
   tags: string[]
   is_favorite: boolean
@@ -29,6 +42,10 @@ export interface Piece {
 export interface PieceCreateInput {
   title: string
   composer?: string | null
+  key?: string | null
+  tempo_bpm?: number | null
+  difficulty?: PieceDifficulty | null
+  instrument?: string | null
   status?: PieceStatus
   tags?: string[]
   is_favorite?: boolean
@@ -37,6 +54,10 @@ export interface PieceCreateInput {
 export interface PieceUpdateInput {
   title?: string
   composer?: string | null
+  key?: string | null
+  tempo_bpm?: number | null
+  difficulty?: PieceDifficulty | null
+  instrument?: string | null
   status?: PieceStatus
   tags?: string[]
   is_favorite?: boolean
@@ -49,11 +70,18 @@ export async function getHealth(): Promise<{ status: string }> {
 }
 
 export async function listPieces(
-  filters?: { status?: PieceStatus; favorite?: boolean },
+  filters?: {
+    status?: PieceStatus
+    favorite?: boolean
+    difficulty?: PieceDifficulty
+    instrument?: string
+  },
 ): Promise<Piece[]> {
   const params = new URLSearchParams()
   if (filters?.status) params.set('status', filters.status)
   if (filters?.favorite) params.set('favorite', 'true')
+  if (filters?.difficulty) params.set('difficulty', filters.difficulty)
+  if (filters?.instrument) params.set('instrument', filters.instrument)
   const query = params.toString()
   const response = await fetch(`/api/pieces${query ? `?${query}` : ''}`)
   if (!response.ok) throw new Error(`failed to list pieces: ${response.status}`)

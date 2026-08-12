@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import Boolean, DateTime, String, func
+from sqlalchemy import Boolean, DateTime, Integer, String, func
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
@@ -18,12 +18,30 @@ class PieceStatus(StrEnum):
     ARCHIVED = "archived"
 
 
+class PieceDifficulty(StrEnum):
+    BEGINNER = "beginner"
+    INTERMEDIATE = "intermediate"
+    ADVANCED = "advanced"
+    EXPERT = "expert"
+
+
 class Piece(Base):
     __tablename__ = "pieces"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(200))
     composer: Mapped[str | None] = mapped_column(String(200), default=None)
+    key: Mapped[str | None] = mapped_column(String(50), default=None)
+    tempo_bpm: Mapped[int | None] = mapped_column(Integer, default=None)
+    difficulty: Mapped[PieceDifficulty | None] = mapped_column(
+        SAEnum(
+            PieceDifficulty,
+            name="piece_difficulty",
+            values_callable=lambda obj: [e.value for e in obj],
+        ),
+        default=None,
+    )
+    instrument: Mapped[str | None] = mapped_column(String(100), default=None)
     status: Mapped[PieceStatus] = mapped_column(
         SAEnum(
             PieceStatus,
