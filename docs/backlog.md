@@ -64,7 +64,7 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] Piece favorites (toggle + filter) — issue #46
 - [x] Piece key/tempo/difficulty/instrument fields — issue #50
 - [x] Recently-practiced and neglected pieces in practice stats — issue #56
-- [ ] Release: `develop` → `release/0.3.0` → `main`, tag `v0.3.0`
+- [x] Release: `develop` → `release/0.3.0` → `main`, tag `v0.3.0`
 
 ---
 
