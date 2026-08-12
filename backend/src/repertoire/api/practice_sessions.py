@@ -1,10 +1,16 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from repertoire.db import get_db
 from repertoire.models.piece import Piece
 from repertoire.models.practice_session import PracticeSession
-from repertoire.schemas.practice_session import PracticeSessionCreate, PracticeSessionRead
+from repertoire.schemas.practice_session import (
+    PiecePracticeStats,
+    PracticeSessionCreate,
+    PracticeSessionRead,
+    PracticeStatsRead,
+)
 
 router = APIRouter(prefix="/practice-sessions", tags=["practice-sessions"])
 
@@ -30,3 +36,35 @@ def list_practice_sessions(
     if piece_id is not None:
         query = query.filter(PracticeSession.piece_id == piece_id)
     return list(query.order_by(PracticeSession.practiced_at.desc()).all())
+
+
+@router.get("/stats", response_model=PracticeStatsRead)
+def get_practice_stats(db: Session = Depends(get_db)) -> PracticeStatsRead:
+    total_minutes = db.query(func.sum(PracticeSession.duration_minutes)).scalar() or 0
+
+    rows = (
+        db.query(
+            PracticeSession.piece_id,
+            Piece.title,
+            func.sum(PracticeSession.duration_minutes),
+            func.count(PracticeSession.id),
+            func.max(PracticeSession.practiced_at),
+        )
+        .join(Piece, Piece.id == PracticeSession.piece_id)
+        .group_by(PracticeSession.piece_id, Piece.title)
+        .order_by(func.max(PracticeSession.practiced_at).desc())
+        .all()
+    )
+
+    pieces = [
+        PiecePracticeStats(
+            piece_id=piece_id,
+            piece_title=title,
+            total_minutes=piece_total_minutes,
+            session_count=session_count,
+            last_practiced_at=last_practiced_at,
+        )
+        for piece_id, title, piece_total_minutes, session_count, last_practiced_at in rows
+    ]
+
+    return PracticeStatsRead(total_minutes=total_minutes, pieces=pieces)

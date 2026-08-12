@@ -2,17 +2,20 @@
   import { onMount } from 'svelte'
   import {
     getHealth,
+    getPracticeStats,
     listPieces,
     listPracticeSessions,
     PIECE_STATUSES,
     type Piece,
     type PieceStatus,
     type PracticeSession,
+    type PracticeStats,
   } from './lib/api'
   import PieceForm from './lib/PieceForm.svelte'
   import PieceList from './lib/PieceList.svelte'
   import PracticeSessionForm from './lib/PracticeSessionForm.svelte'
   import PracticeSessionList from './lib/PracticeSessionList.svelte'
+  import PracticeStatsView from './lib/PracticeStats.svelte'
 
   let health = $state<string>('checking...')
   let pieces = $state<Piece[]>([])
@@ -20,6 +23,7 @@
   let statusFilter = $state<PieceStatus | ''>('')
   let editingPiece = $state<Piece | null>(null)
   let sessions = $state<PracticeSession[]>([])
+  let stats = $state<PracticeStats>({ total_minutes: 0, pieces: [] })
 
   async function refreshPieces(): Promise<void> {
     pieces = await listPieces({ status: statusFilter || undefined })
@@ -29,19 +33,29 @@
     sessions = await listPracticeSessions()
   }
 
+  async function refreshStats(): Promise<void> {
+    stats = await getPracticeStats()
+  }
+
   onMount(async () => {
     try {
       const healthResult = await getHealth()
       health = healthResult.status
       await refreshPieces()
       await refreshSessions()
+      await refreshStats()
     } catch (err) {
       error = err instanceof Error ? err.message : String(err)
     }
   })
 
-  function handleSessionSaved(saved: PracticeSession): void {
+  async function handleSessionSaved(saved: PracticeSession): Promise<void> {
     sessions = [...sessions, saved].sort((a, b) => b.practiced_at.localeCompare(a.practiced_at))
+    try {
+      await refreshStats()
+    } catch (err) {
+      error = err instanceof Error ? err.message : String(err)
+    }
   }
 
   async function onStatusFilterChange(): Promise<void> {
@@ -97,6 +111,9 @@
 
   <h2>Recent Sessions</h2>
   <PracticeSessionList {sessions} {pieces} />
+
+  <h2>Practice Statistics</h2>
+  <PracticeStatsView {stats} />
 </main>
 
 <style>
