@@ -36,6 +36,8 @@
     pieces: [],
     recently_practiced: [],
     neglected: [],
+    current_streak_days: 0,
+    longest_streak_days: 0,
   })
   let sheetResources = $state<SheetResource[]>([])
 

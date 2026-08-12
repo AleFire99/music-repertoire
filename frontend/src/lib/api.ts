@@ -202,6 +202,8 @@ export interface PracticeStats {
   pieces: PiecePracticeStats[]
   recently_practiced: RecentlyPracticedPiece[]
   neglected: NeglectedPiece[]
+  current_streak_days: number
+  longest_streak_days: number
 }
 
 export async function getPracticeStats(): Promise<PracticeStats> {
