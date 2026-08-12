@@ -91,3 +91,25 @@ def test_list_pieces_filter_by_tag(client: TestClient) -> None:
     assert response.status_code == 200
     titles = [piece["title"] for piece in response.json()]
     assert titles == ["A"]
+
+
+def test_create_piece_defaults_favorite(client: TestClient) -> None:
+    created = client.post("/api/pieces", json={"title": "Impromptu"}).json()
+    assert created["is_favorite"] is False
+
+
+def test_update_piece_favorite(client: TestClient) -> None:
+    created = client.post("/api/pieces", json={"title": "Waltz"}).json()
+    response = client.patch(f"/api/pieces/{created['id']}", json={"is_favorite": True})
+    assert response.status_code == 200
+    assert response.json()["is_favorite"] is True
+
+
+def test_list_pieces_filter_by_favorite(client: TestClient) -> None:
+    client.post("/api/pieces", json={"title": "A", "is_favorite": True})
+    client.post("/api/pieces", json={"title": "B", "is_favorite": False})
+
+    response = client.get("/api/pieces", params={"favorite": "true"})
+    assert response.status_code == 200
+    titles = [piece["title"] for piece in response.json()]
+    assert titles == ["A"]

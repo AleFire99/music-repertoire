@@ -22,6 +22,7 @@ def create_piece(payload: PieceCreate, db: Session = Depends(get_db)) -> Piece:
 def list_pieces(
     status: PieceStatus | None = None,
     tag: str | None = None,
+    favorite: bool | None = None,
     db: Session = Depends(get_db),
 ) -> list[Piece]:
     query = db.query(Piece)
@@ -29,6 +30,8 @@ def list_pieces(
         query = query.filter(Piece.status == status)
     if tag is not None:
         query = query.filter(any_(Piece.tags) == tag)
+    if favorite is not None:
+        query = query.filter(Piece.is_favorite == favorite)
     return list(query.order_by(Piece.id).all())
 
 

@@ -25,13 +25,14 @@
   let pieces = $state<Piece[]>([])
   let error = $state<string | null>(null)
   let statusFilter = $state<PieceStatus | ''>('')
+  let favoritesOnly = $state<boolean>(false)
   let editingPiece = $state<Piece | null>(null)
   let sessions = $state<PracticeSession[]>([])
   let stats = $state<PracticeStats>({ total_minutes: 0, pieces: [] })
   let sheetResources = $state<SheetResource[]>([])
 
   async function refreshPieces(): Promise<void> {
-    pieces = await listPieces({ status: statusFilter || undefined })
+    pieces = await listPieces({ status: statusFilter || undefined, favorite: favoritesOnly || undefined })
   }
 
   async function refreshSessions(): Promise<void> {
@@ -122,8 +123,17 @@
       {/each}
     </select>
   </label>
+  <label>
+    <input type="checkbox" bind:checked={favoritesOnly} onchange={onStatusFilterChange} />
+    Favorites only
+  </label>
 
-  <PieceList {pieces} onEdit={(p) => (editingPiece = p)} onDeleted={handlePieceDeleted} />
+  <PieceList
+    {pieces}
+    onEdit={(p) => (editingPiece = p)}
+    onDeleted={handlePieceDeleted}
+    onUpdated={handlePieceSaved}
+  />
 
   <h2>Log Practice Session</h2>
   <PracticeSessionForm {pieces} onSaved={handleSessionSaved} />

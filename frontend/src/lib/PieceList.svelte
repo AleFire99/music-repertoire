@@ -1,18 +1,22 @@
 <script lang="ts">
-  import { deletePiece, type Piece } from './api'
+  import { deletePiece, updatePiece, type Piece } from './api'
 
   let {
     pieces,
     onEdit,
     onDeleted,
+    onUpdated,
   }: {
     pieces: Piece[]
     onEdit: (piece: Piece) => void
     onDeleted: (id: number) => void
+    onUpdated: (piece: Piece) => void
   } = $props()
 
   let deletingId = $state<number | null>(null)
   let deleteError = $state<string | null>(null)
+  let togglingFavoriteId = $state<number | null>(null)
+  let favoriteError = $state<string | null>(null)
 
   async function handleDelete(piece: Piece): Promise<void> {
     if (!window.confirm(`Delete "${piece.title}"? This cannot be undone.`)) return
@@ -27,10 +31,26 @@
       deletingId = null
     }
   }
+
+  async function toggleFavorite(piece: Piece): Promise<void> {
+    togglingFavoriteId = piece.id
+    favoriteError = null
+    try {
+      const updated = await updatePiece(piece.id, { is_favorite: !piece.is_favorite })
+      onUpdated(updated)
+    } catch (err) {
+      favoriteError = err instanceof Error ? err.message : String(err)
+    } finally {
+      togglingFavoriteId = null
+    }
+  }
 </script>
 
 {#if deleteError}
   <p class="error">{deleteError}</p>
+{/if}
+{#if favoriteError}
+  <p class="error">{favoriteError}</p>
 {/if}
 
 {#if pieces.length === 0}
@@ -39,6 +59,16 @@
   <ul>
     {#each pieces as piece (piece.id)}
       <li>
+        <button
+          type="button"
+          class="favorite"
+          class:favorited={piece.is_favorite}
+          onclick={() => toggleFavorite(piece)}
+          disabled={togglingFavoriteId === piece.id}
+          aria-label={piece.is_favorite ? 'Unmark as favorite' : 'Mark as favorite'}
+        >
+          {piece.is_favorite ? '★' : '☆'}
+        </button>
         {piece.title}{piece.composer ? ` — ${piece.composer}` : ''}
         <span class="status">{piece.status}</span>
         {#if piece.tags.length > 0}
@@ -87,5 +117,17 @@
   }
   .delete {
     color: #b00020;
+  }
+  .favorite {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    font-size: 1rem;
+    color: #999;
+    vertical-align: middle;
+  }
+  .favorite.favorited {
+    color: #d4a017;
   }
 </style>
