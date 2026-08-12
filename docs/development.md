@@ -94,6 +94,10 @@ scripts/cleanup-worktrees.sh
 
 It deliberately doesn't trust "branch is merged into develop" as the sole signal — a freshly created worktree with no commits yet trivially satisfies that too, and would be wrongly deleted right after `new-feature.sh` creates it. Requiring a real merged PR avoids that.
 
+Before deleting a worktree it also tears down its docker compose stack — `docker compose down --rmi local --volumes --remove-orphans` from inside the worktree, removing that worktree's containers, its locally-built `backend`/`frontend` images, and its postgres volume (never the shared pulled `postgres:16-alpine` base image). If Docker isn't running it skips this step with a note rather than failing.
+
+**Windows caveat, live-verified while building this:** deleting the worktree folder afterward can fail if something still has a file handle open on it — most often an editor's file watcher indexing `.worktrees/` (it's inside the open workspace, unlike the old sibling-folder layout), occasionally Docker Desktop's file-sharing layer briefly after teardown. The script retries a few times; if it still can't delete the folder, it says so plainly and leaves it for you to remove by hand once whatever's holding it releases, followed by `git worktree prune` — it does not loop forever or pretend success.
+
 Manual equivalent, if you'd rather do it by hand:
 
 ```bash
