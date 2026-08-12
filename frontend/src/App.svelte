@@ -7,8 +7,10 @@
     listPracticeSessions,
     listSheetResources,
     PIECE_STATUSES,
+    PIECE_DIFFICULTIES,
     type Piece,
     type PieceStatus,
+    type PieceDifficulty,
     type PracticeSession,
     type PracticeStats,
     type SheetResource,
@@ -26,13 +28,18 @@
   let error = $state<string | null>(null)
   let statusFilter = $state<PieceStatus | ''>('')
   let favoritesOnly = $state<boolean>(false)
+  let difficultyFilter = $state<PieceDifficulty | ''>('')
   let editingPiece = $state<Piece | null>(null)
   let sessions = $state<PracticeSession[]>([])
   let stats = $state<PracticeStats>({ total_minutes: 0, pieces: [] })
   let sheetResources = $state<SheetResource[]>([])
 
   async function refreshPieces(): Promise<void> {
-    pieces = await listPieces({ status: statusFilter || undefined, favorite: favoritesOnly || undefined })
+    pieces = await listPieces({
+      status: statusFilter || undefined,
+      favorite: favoritesOnly || undefined,
+      difficulty: difficultyFilter || undefined,
+    })
   }
 
   async function refreshSessions(): Promise<void> {
@@ -126,6 +133,15 @@
   <label>
     <input type="checkbox" bind:checked={favoritesOnly} onchange={onStatusFilterChange} />
     Favorites only
+  </label>
+  <label>
+    Filter by difficulty:
+    <select bind:value={difficultyFilter} onchange={onStatusFilterChange}>
+      <option value="">All</option>
+      {#each PIECE_DIFFICULTIES as d (d)}
+        <option value={d}>{d}</option>
+      {/each}
+    </select>
   </label>
 
   <PieceList

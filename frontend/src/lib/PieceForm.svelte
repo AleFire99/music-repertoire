@@ -3,8 +3,10 @@
     createPiece,
     updatePiece,
     PIECE_STATUSES,
+    PIECE_DIFFICULTIES,
     type Piece,
     type PieceStatus,
+    type PieceDifficulty,
   } from './api'
 
   let {
@@ -19,6 +21,10 @@
 
   let title = $state('')
   let composer = $state('')
+  let key = $state('')
+  let tempoBpmRaw = $state('')
+  let difficulty = $state<PieceDifficulty | ''>('')
+  let instrument = $state('')
   let status = $state<PieceStatus>('backlog')
   let tagsRaw = $state('')
   let submitting = $state(false)
@@ -27,6 +33,10 @@
   $effect(() => {
     title = piece?.title ?? ''
     composer = piece?.composer ?? ''
+    key = piece?.key ?? ''
+    tempoBpmRaw = piece?.tempo_bpm != null ? String(piece.tempo_bpm) : ''
+    difficulty = piece?.difficulty ?? ''
+    instrument = piece?.instrument ?? ''
     status = piece?.status ?? 'backlog'
     tagsRaw = piece?.tags.join(', ') ?? ''
     formError = null
@@ -45,9 +55,14 @@
     submitting = true
     formError = null
     try {
+      const tempoBpmParsed = tempoBpmRaw.trim() === '' ? null : Number(tempoBpmRaw.trim())
       const payload = {
         title: title.trim(),
         composer: composer.trim() || null,
+        key: key.trim() || null,
+        tempo_bpm: tempoBpmParsed != null && Number.isNaN(tempoBpmParsed) ? null : tempoBpmParsed,
+        difficulty: difficulty || null,
+        instrument: instrument.trim() || null,
         status,
         tags: parseTags(tagsRaw),
       }
@@ -69,6 +84,27 @@
   <label>
     Composer
     <input type="text" bind:value={composer} maxlength="200" />
+  </label>
+  <label>
+    Key
+    <input type="text" bind:value={key} maxlength="50" />
+  </label>
+  <label>
+    Tempo (BPM)
+    <input type="number" min="1" bind:value={tempoBpmRaw} />
+  </label>
+  <label>
+    Difficulty
+    <select bind:value={difficulty}>
+      <option value="">Unset</option>
+      {#each PIECE_DIFFICULTIES as d (d)}
+        <option value={d}>{d}</option>
+      {/each}
+    </select>
+  </label>
+  <label>
+    Instrument
+    <input type="text" bind:value={instrument} maxlength="100" />
   </label>
   <label>
     Status
