@@ -1,6 +1,6 @@
 # Orchestration (Future)
 
-**Status: aspirational, manual-only today.** No orchestrator exists. This document describes the conventions to follow *when* multi-agent parallelism is introduced — do not build automation around this until the manual workflow below has been validated by hand across a few real features.
+**Status: setup is scripted, dispatch/merge/integration is still manual.** No orchestrator exists. The manual workflow below has now been run enough times — including two features built by a genuinely independent, parallel Claude Code session with no collisions — to validate the pattern itself. `scripts/new-feature.sh` automates the repetitive, safe part of it (issue + worktree + ports + prompt). It deliberately stops there: launching the session, watching CI, merging, and cleanup stay human-supervised, because that manual step has already caught real bugs (a stale local `main` ref silently no-opping a back-merge; a Windows-specific `git worktree remove` failure) that fully automating this would have baked in without anyone noticing. Don't build the next layer (auto-launch, auto-merge, auto-cleanup) without an explicit request — see CLAUDE.md's agent-roles section.
 
 ## Why wait
 

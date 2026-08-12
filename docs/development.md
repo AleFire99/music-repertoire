@@ -57,19 +57,22 @@ See [git-flow.md](git-flow.md) and the `git-flow` skill (`.claude/skills/git-flo
 
 ## Working on multiple features in parallel
 
-A single checkout can only have one branch checked out at a time — two Claude Code sessions (or two terminals) working in the *same* folder will fight over branch switches and uncommitted changes. To genuinely work on two features at once (e.g. one Claude Code session per feature), use a separate **git worktree** per feature instead of a second clone:
+A single checkout can only have one branch checked out at a time — two Claude Code sessions (or two terminals) working in the *same* folder will fight over branch switches and uncommitted changes. To genuinely work on two features at once (e.g. one Claude Code session per feature), use a separate **git worktree** per feature instead of a second clone.
+
+### Automated setup
+
+`scripts/new-feature.sh "<issue title>" "<issue body>" [label]` does the boilerplate for you: creates the GitHub issue, a worktree with the correctly-numbered branch off `develop`, a `.env` with ports derived from the issue number (so they never collide across worktrees without any scanning), and prints a ready-to-paste prompt for a new Claude Code session. It does **not** launch the session, watch its PR, merge it, or clean up afterwards — those stay manual/human-supervised (see [orchestration.md](orchestration.md) for why).
+
+```bash
+scripts/new-feature.sh "Add practice session recording" "Track piece, date, duration, notes per docs/backlog.md" feature
+```
+
+### Manual setup (what the script automates)
 
 ```bash
 # from the main checkout
 git worktree add ../music-repertoire-issue-12 -b feature/issue-12-<slug> develop
-```
-
-This creates a sibling folder with its own working directory and branch, sharing the same `.git` history/objects — no need to re-clone or re-authenticate `gh`. Open a new Claude Code session with that folder as its working directory (new terminal/window, `cd` into it, or open it as a separate folder in your editor).
-
-Each worktree needs its own `.env` with distinct host ports, since `docker compose up` binds to host ports and two worktrees both trying to bind `8000`/`5173`/`5432` will collide (container/volume/network names are already namespaced automatically by Compose using the folder name, so only ports need overriding):
-
-```bash
-# in the new worktree
+cd ../music-repertoire-issue-12
 cp .env.example .env
 # edit .env: set POSTGRES_HOST_PORT/BACKEND_HOST_PORT/FRONTEND_HOST_PORT to unused ports,
 # e.g. 5433/8001/5174
@@ -77,11 +80,15 @@ docker compose up -d --build
 docker compose exec backend uv run alembic upgrade head
 ```
 
-When the feature's PR is merged, clean up from the main checkout:
+This creates a sibling folder with its own working directory and branch, sharing the same `.git` history/objects — no need to re-clone or re-authenticate `gh`. Open a new Claude Code session with that folder as its working directory (new terminal/window, `cd` into it, or open it as a separate folder in your editor). Container/volume/network names are already namespaced automatically by Compose using the folder name, so only ports need overriding.
+
+### Cleanup after merge
 
 ```bash
 git worktree remove ../music-repertoire-issue-12
 git branch -d feature/issue-12-<slug>
 ```
+
+If `git worktree remove` fails on Windows with `Function not implemented`, it's usually an npm-created symlink/reparse point inside `node_modules` that git-bash's `rm` can't handle — delete the folder with PowerShell instead (`Remove-Item -Recurse -Force <path>`), then `git worktree prune`.
 
 See [orchestration.md](orchestration.md) for the worktree conventions this is based on (written for a future multi-agent orchestrator, but the same rules apply to two humans/sessions working manually — one worktree, one branch, never shared).
