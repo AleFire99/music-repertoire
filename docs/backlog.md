@@ -55,15 +55,22 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] CI workflow publishing `backend`/`frontend` images to GHCR on release/tag — issue #20 (ad hoc, not part of the repertoire-extensions epic)
 - [x] Release: `develop` → `release/0.2.0` → `main`, tag `v0.2.0`
 
+## Post-0.2.0 slices (not yet cut into a release)
+
+- [x] Full Piece CRUD UI (create/edit/delete forms, not just read-only list) — issue #28
+- [x] Practice session recording (piece, date/time, duration, notes, rating, section) — issue #31
+- [x] Practice statistics (total minutes, per-piece totals, session counts, last-practiced) — issue #41
+- [x] Sheet-music resources for a Piece (external URL / physical reference / local document, no file storage) — issue #43
+
 ---
 
 ## Future epics (not implemented, do not start without a new milestone)
 
 ### Repertoire
-Favorites, goals, repertoire lists, performance history, repertoire rotation, sheet-music resources (external URL / physical reference / local document — no complex file storage), key/tempo/difficulty/instrument fields, CRUD UI beyond read-only list.
+Favorites, goals, repertoire lists, performance history, repertoire rotation, key/tempo/difficulty/instrument fields.
 
 ### Practice
-Practice session recording (piece, date/time, duration, notes, rating, section), timer, weekly goals, statistics (total time, time per piece, time by week/month, neglected pieces, recently practiced, progress toward goals), practice streaks, section-level practice.
+Timer, weekly goals, statistics by week/month, neglected pieces, recently practiced, progress toward goals, practice streaks, section-level practice breakdowns.
 
 ### Music representation
 MIDI import, MusicXML import, chord representation, measure representation, sections, annotations. **Audio → MIDI → chord extraction is explicitly out of scope indefinitely** — not a v-next item, a permanent non-goal unless a concrete future requirement changes that.
