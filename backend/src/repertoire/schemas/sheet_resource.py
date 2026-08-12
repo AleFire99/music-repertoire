@@ -1,0 +1,26 @@
+from datetime import datetime
+
+from pydantic import BaseModel, ConfigDict
+
+from repertoire.models.sheet_resource import SheetResourceKind
+
+
+class SheetResourceCreate(BaseModel):
+    piece_id: int
+    kind: SheetResourceKind
+    reference: str
+    label: str | None = None
+    notes: str | None = None
+
+
+class SheetResourceRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    piece_id: int
+    kind: SheetResourceKind
+    reference: str
+    label: str | None
+    notes: str | None
+    created_at: datetime
+    updated_at: datetime

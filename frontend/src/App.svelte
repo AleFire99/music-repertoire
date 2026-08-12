@@ -5,17 +5,21 @@
     getPracticeStats,
     listPieces,
     listPracticeSessions,
+    listSheetResources,
     PIECE_STATUSES,
     type Piece,
     type PieceStatus,
     type PracticeSession,
     type PracticeStats,
+    type SheetResource,
   } from './lib/api'
   import PieceForm from './lib/PieceForm.svelte'
   import PieceList from './lib/PieceList.svelte'
   import PracticeSessionForm from './lib/PracticeSessionForm.svelte'
   import PracticeSessionList from './lib/PracticeSessionList.svelte'
   import PracticeStatsView from './lib/PracticeStats.svelte'
+  import SheetResourceForm from './lib/SheetResourceForm.svelte'
+  import SheetResourceList from './lib/SheetResourceList.svelte'
 
   let health = $state<string>('checking...')
   let pieces = $state<Piece[]>([])
@@ -24,6 +28,7 @@
   let editingPiece = $state<Piece | null>(null)
   let sessions = $state<PracticeSession[]>([])
   let stats = $state<PracticeStats>({ total_minutes: 0, pieces: [] })
+  let sheetResources = $state<SheetResource[]>([])
 
   async function refreshPieces(): Promise<void> {
     pieces = await listPieces({ status: statusFilter || undefined })
@@ -37,6 +42,10 @@
     stats = await getPracticeStats()
   }
 
+  async function refreshSheetResources(): Promise<void> {
+    sheetResources = await listSheetResources()
+  }
+
   onMount(async () => {
     try {
       const healthResult = await getHealth()
@@ -44,6 +53,7 @@
       await refreshPieces()
       await refreshSessions()
       await refreshStats()
+      await refreshSheetResources()
     } catch (err) {
       error = err instanceof Error ? err.message : String(err)
     }
@@ -75,6 +85,15 @@
   function handlePieceDeleted(id: number): void {
     pieces = pieces.filter((p) => p.id !== id)
     if (editingPiece?.id === id) editingPiece = null
+    sheetResources = sheetResources.filter((r) => r.piece_id !== id)
+  }
+
+  function handleSheetResourceSaved(saved: SheetResource): void {
+    sheetResources = [saved, ...sheetResources]
+  }
+
+  function handleSheetResourceDeleted(id: number): void {
+    sheetResources = sheetResources.filter((r) => r.id !== id)
   }
 </script>
 
@@ -114,6 +133,10 @@
 
   <h2>Practice Statistics</h2>
   <PracticeStatsView {stats} />
+
+  <h2>Sheet Music Resources</h2>
+  <SheetResourceForm {pieces} onSaved={handleSheetResourceSaved} />
+  <SheetResourceList resources={sheetResources} {pieces} onDeleted={handleSheetResourceDeleted} />
 </main>
 
 <style>

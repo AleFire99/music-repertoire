@@ -8,6 +8,7 @@ from repertoire.db import Base
 from repertoire.models import (
     piece,  # noqa: F401  registers Piece on Base.metadata
     practice_session,  # noqa: F401  registers PracticeSession on Base.metadata
+    sheet_resource,  # noqa: F401  registers SheetResource on Base.metadata
 )
 
 # this is the Alembic Config object, which provides
