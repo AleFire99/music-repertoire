@@ -5,6 +5,7 @@
     getPracticeStats,
     listPieces,
     listPracticeSessions,
+    listRepertoireLists,
     listSheetResources,
     PIECE_STATUSES,
     PIECE_DIFFICULTIES,
@@ -13,6 +14,7 @@
     type PieceDifficulty,
     type PracticeSession,
     type PracticeStats,
+    type RepertoireList,
     type SheetResource,
   } from './lib/api'
   import PieceForm from './lib/PieceForm.svelte'
@@ -20,6 +22,8 @@
   import PracticeSessionForm from './lib/PracticeSessionForm.svelte'
   import PracticeSessionList from './lib/PracticeSessionList.svelte'
   import PracticeStatsView from './lib/PracticeStats.svelte'
+  import RepertoireListForm from './lib/RepertoireListForm.svelte'
+  import RepertoireListList from './lib/RepertoireListList.svelte'
   import SheetResourceForm from './lib/SheetResourceForm.svelte'
   import SheetResourceList from './lib/SheetResourceList.svelte'
 
@@ -40,6 +44,8 @@
     longest_streak_days: 0,
   })
   let sheetResources = $state<SheetResource[]>([])
+  let repertoireLists = $state<RepertoireList[]>([])
+  let editingRepertoireList = $state<RepertoireList | null>(null)
 
   async function refreshPieces(): Promise<void> {
     pieces = await listPieces({
@@ -61,6 +67,10 @@
     sheetResources = await listSheetResources()
   }
 
+  async function refreshRepertoireLists(): Promise<void> {
+    repertoireLists = await listRepertoireLists()
+  }
+
   onMount(async () => {
     try {
       const healthResult = await getHealth()
@@ -69,6 +79,7 @@
       await refreshSessions()
       await refreshStats()
       await refreshSheetResources()
+      await refreshRepertoireLists()
     } catch (err) {
       error = err instanceof Error ? err.message : String(err)
     }
@@ -101,6 +112,9 @@
     pieces = pieces.filter((p) => p.id !== id)
     if (editingPiece?.id === id) editingPiece = null
     sheetResources = sheetResources.filter((r) => r.piece_id !== id)
+    refreshRepertoireLists().catch((err) => {
+      error = err instanceof Error ? err.message : String(err)
+    })
   }
 
   function handleSheetResourceSaved(saved: SheetResource): void {
@@ -109,6 +123,23 @@
 
   function handleSheetResourceDeleted(id: number): void {
     sheetResources = sheetResources.filter((r) => r.id !== id)
+  }
+
+  function handleRepertoireListSaved(saved: RepertoireList): void {
+    const exists = repertoireLists.some((l) => l.id === saved.id)
+    repertoireLists = exists
+      ? repertoireLists.map((l) => (l.id === saved.id ? saved : l))
+      : [...repertoireLists, saved]
+    editingRepertoireList = null
+  }
+
+  function handleRepertoireListDeleted(id: number): void {
+    repertoireLists = repertoireLists.filter((l) => l.id !== id)
+    if (editingRepertoireList?.id === id) editingRepertoireList = null
+  }
+
+  function handleRepertoireListCountChanged(id: number, pieceCount: number): void {
+    repertoireLists = repertoireLists.map((l) => (l.id === id ? { ...l, piece_count: pieceCount } : l))
   }
 </script>
 
@@ -170,6 +201,22 @@
   <h2>Sheet Music Resources</h2>
   <SheetResourceForm {pieces} onSaved={handleSheetResourceSaved} />
   <SheetResourceList resources={sheetResources} {pieces} onDeleted={handleSheetResourceDeleted} />
+
+  <h2>{editingRepertoireList ? 'Rename List' : 'Add Repertoire List'}</h2>
+  <RepertoireListForm
+    list={editingRepertoireList}
+    onSaved={handleRepertoireListSaved}
+    onCancel={() => (editingRepertoireList = null)}
+  />
+
+  <h2>Repertoire Lists</h2>
+  <RepertoireListList
+    lists={repertoireLists}
+    {pieces}
+    onEdit={(l) => (editingRepertoireList = l)}
+    onDeleted={handleRepertoireListDeleted}
+    onCountChanged={handleRepertoireListCountChanged}
+  />
 </main>
 
 <style>
