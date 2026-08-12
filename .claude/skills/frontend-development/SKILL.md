@@ -16,6 +16,14 @@ description: Use when adding or changing a Svelte component or frontend feature 
 - Router library (single page in v0.1)
 - CSS framework
 
+## Interim styling convention (see docs/roadmap.md)
+
+Visual design is deliberately deferred until the Repertoire/Practice epics are
+substantially built out. Until that dedicated pass starts, keep new feature
+UI functional-only: reuse the minimal styling already in `App.svelte`
+(system-ui font stack, single `max-width` container, `.error` class) rather
+than introducing new visual patterns or per-feature polish.
+
 ## Before considering a change done
 
 `docker compose exec frontend npm run check` (svelte-check — this is the lint+typecheck gate, there's no separate ESLint setup yet) and `npm run build`.
