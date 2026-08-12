@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte'
   import { createPracticeSession, type Piece, type PracticeSession } from './api'
 
   let {
@@ -15,6 +16,12 @@
     return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
   }
 
+  function formatElapsed(totalSeconds: number): string {
+    const minutes = Math.floor(totalSeconds / 60)
+    const seconds = totalSeconds % 60
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+  }
+
   let pieceId = $state<number | ''>('')
   let practicedAt = $state(nowLocalInputValue())
   let durationMinutes = $state('')
@@ -23,6 +30,40 @@
   let section = $state('')
   let submitting = $state(false)
   let formError = $state<string | null>(null)
+
+  let timerRunning = $state(false)
+  let elapsedSeconds = $state(0)
+  let timerStartedAt: number | null = null
+  let timerHandle: ReturnType<typeof setInterval> | null = null
+
+  function startTimer(): void {
+    if (timerRunning) return
+    timerRunning = true
+    timerStartedAt = Date.now() - elapsedSeconds * 1000
+    timerHandle = setInterval(() => {
+      elapsedSeconds = Math.floor((Date.now() - timerStartedAt!) / 1000)
+    }, 1000)
+  }
+
+  function stopTimer(): void {
+    if (!timerRunning) return
+    timerRunning = false
+    if (timerHandle !== null) clearInterval(timerHandle)
+    timerHandle = null
+    durationMinutes = String(Math.max(1, Math.round(elapsedSeconds / 60)))
+  }
+
+  function resetTimer(): void {
+    if (timerHandle !== null) clearInterval(timerHandle)
+    timerHandle = null
+    timerRunning = false
+    elapsedSeconds = 0
+    timerStartedAt = null
+  }
+
+  onDestroy(() => {
+    if (timerHandle !== null) clearInterval(timerHandle)
+  })
 
   async function handleSubmit(event: SubmitEvent): Promise<void> {
     event.preventDefault()
@@ -70,6 +111,12 @@
     Duration (minutes)
     <input type="number" bind:value={durationMinutes} min="1" required />
   </label>
+  <div class="timer">
+    <span class="timer-display">{formatElapsed(elapsedSeconds)}</span>
+    <button type="button" onclick={startTimer} disabled={timerRunning}>Start</button>
+    <button type="button" onclick={stopTimer} disabled={!timerRunning}>Stop</button>
+    <button type="button" onclick={resetTimer} disabled={timerRunning}>Reset</button>
+  </div>
   <label>
     Section (optional)
     <input type="text" bind:value={section} maxlength="200" placeholder="measures 1-16" />
@@ -116,6 +163,14 @@
     display: flex;
     gap: 0.5rem;
     margin-top: 0.25rem;
+  }
+  .timer {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .timer-display {
+    font-variant-numeric: tabular-nums;
   }
   .error {
     color: #b00020;
