@@ -113,3 +113,75 @@ def test_list_pieces_filter_by_favorite(client: TestClient) -> None:
     assert response.status_code == 200
     titles = [piece["title"] for piece in response.json()]
     assert titles == ["A"]
+
+
+def test_create_piece_defaults_key_tempo_difficulty_instrument(client: TestClient) -> None:
+    created = client.post("/api/pieces", json={"title": "Arabesque"}).json()
+    assert created["key"] is None
+    assert created["tempo_bpm"] is None
+    assert created["difficulty"] is None
+    assert created["instrument"] is None
+
+
+def test_create_piece_with_key_tempo_difficulty_instrument(client: TestClient) -> None:
+    payload = {
+        "title": "Gymnopedie",
+        "key": "D major",
+        "tempo_bpm": 66,
+        "difficulty": "intermediate",
+        "instrument": "Piano",
+    }
+    created = client.post("/api/pieces", json=payload).json()
+    assert created["key"] == "D major"
+    assert created["tempo_bpm"] == 66
+    assert created["difficulty"] == "intermediate"
+    assert created["instrument"] == "Piano"
+
+
+def test_create_piece_invalid_difficulty_422(client: TestClient) -> None:
+    response = client.post("/api/pieces", json={"title": "Etude", "difficulty": "unknown"})
+    assert response.status_code == 422
+
+
+def test_update_piece_key_tempo_difficulty_instrument(client: TestClient) -> None:
+    created = client.post("/api/pieces", json={"title": "Reverie"}).json()
+    response = client.patch(
+        f"/api/pieces/{created['id']}",
+        json={
+            "key": "B flat minor",
+            "tempo_bpm": 120,
+            "difficulty": "advanced",
+            "instrument": "Classical guitar",
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["key"] == "B flat minor"
+    assert body["tempo_bpm"] == 120
+    assert body["difficulty"] == "advanced"
+    assert body["instrument"] == "Classical guitar"
+
+
+def test_list_pieces_filter_by_difficulty(client: TestClient) -> None:
+    client.post("/api/pieces", json={"title": "A", "difficulty": "beginner"})
+    client.post("/api/pieces", json={"title": "B", "difficulty": "expert"})
+
+    response = client.get("/api/pieces", params={"difficulty": "beginner"})
+    assert response.status_code == 200
+    titles = [piece["title"] for piece in response.json()]
+    assert titles == ["A"]
+
+
+def test_list_pieces_filter_by_difficulty_invalid_422(client: TestClient) -> None:
+    response = client.get("/api/pieces", params={"difficulty": "unknown"})
+    assert response.status_code == 422
+
+
+def test_list_pieces_filter_by_instrument(client: TestClient) -> None:
+    client.post("/api/pieces", json={"title": "A", "instrument": "Violin"})
+    client.post("/api/pieces", json={"title": "B", "instrument": "Cello"})
+
+    response = client.get("/api/pieces", params={"instrument": "Violin"})
+    assert response.status_code == 200
+    titles = [piece["title"] for piece in response.json()]
+    assert titles == ["A"]
