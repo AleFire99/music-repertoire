@@ -161,3 +161,58 @@ export async function getPracticeStats(): Promise<PracticeStats> {
   if (!response.ok) throw new Error(`failed to load practice stats: ${response.status}`)
   return response.json()
 }
+
+export type SheetResourceKind = 'url' | 'physical' | 'local-doc'
+
+export const SHEET_RESOURCE_KINDS: SheetResourceKind[] = ['url', 'physical', 'local-doc']
+
+export interface SheetResource {
+  id: number
+  piece_id: number
+  kind: SheetResourceKind
+  reference: string
+  label: string | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface SheetResourceCreateInput {
+  piece_id: number
+  kind: SheetResourceKind
+  reference: string
+  label?: string | null
+  notes?: string | null
+}
+
+export async function listSheetResources(
+  filters?: { piece_id?: number },
+): Promise<SheetResource[]> {
+  const params = new URLSearchParams()
+  if (filters?.piece_id) params.set('piece_id', String(filters.piece_id))
+  const query = params.toString()
+  const response = await fetch(`/api/sheet-resources${query ? `?${query}` : ''}`)
+  if (!response.ok) throw new Error(`failed to list sheet resources: ${response.status}`)
+  return response.json()
+}
+
+export async function createSheetResource(
+  input: SheetResourceCreateInput,
+): Promise<SheetResource> {
+  const response = await fetch('/api/sheet-resources', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  if (!response.ok) {
+    throw new Error(await describeError('failed to create sheet resource', response))
+  }
+  return response.json()
+}
+
+export async function deleteSheetResource(id: number): Promise<void> {
+  const response = await fetch(`/api/sheet-resources/${id}`, { method: 'DELETE' })
+  if (!response.ok) {
+    throw new Error(await describeError('failed to delete sheet resource', response))
+  }
+}
