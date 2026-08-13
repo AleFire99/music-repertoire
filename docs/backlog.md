@@ -73,7 +73,7 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] Repertoire lists (named lists of pieces) — issue #70
 - [x] Release: `develop` → `release/0.4.0` → `main`, tag `v0.4.0`
 
-## Post-0.4.0 slices (not yet cut into a release)
+## v0.5.0 — Practice epic completion, Repertoire epic completion
 
 - [x] Practice statistics by week and month — issue #78
 - [x] Section-level practice breakdowns — issue #81
@@ -81,6 +81,7 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] Piece-level learning goals (goal text + target date) — issue #88
 - [x] Practice time goals (weekly target + progress) — issue #91
 - [x] Repertoire rotation planner (in-focus pieces view) — issue #95
+- [ ] Release: `develop` → `release/0.5.0` → `main`, tag `v0.5.0`
 
 ---
 
