@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, time, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
@@ -26,6 +26,36 @@ def _to_utc_date(moment: datetime) -> date:
     if moment.tzinfo is not None:
         moment = moment.astimezone(UTC)
     return moment.date()
+
+
+def _start_of_utc_day(moment: date) -> datetime:
+    return datetime.combine(moment, time.min, tzinfo=UTC)
+
+
+def _current_week_bounds(today: date) -> tuple[datetime, datetime]:
+    """[start, end) for the current ISO week (Monday-start), in UTC.
+
+    A session exactly at Monday 00:00:00 UTC counts as this week; a session
+    at the following Monday 00:00:00 UTC belongs to next week (excluded).
+    """
+    start_date = today - timedelta(days=today.weekday())
+    end_date = start_date + timedelta(days=7)
+    return _start_of_utc_day(start_date), _start_of_utc_day(end_date)
+
+
+def _current_month_bounds(today: date) -> tuple[datetime, datetime]:
+    """[start, end) for the current calendar month, in UTC.
+
+    A session exactly at the 1st 00:00:00 UTC counts as this month; a
+    session at the 1st of next month 00:00:00 UTC is excluded.
+    """
+    start_date = today.replace(day=1)
+    end_date = (
+        start_date.replace(year=start_date.year + 1, month=1)
+        if start_date.month == 12
+        else start_date.replace(month=start_date.month + 1)
+    )
+    return _start_of_utc_day(start_date), _start_of_utc_day(end_date)
 
 
 def _compute_streaks(practice_days: set[date], today: date) -> tuple[int, int]:
@@ -151,8 +181,29 @@ def get_practice_stats(db: Session = Depends(get_db)) -> PracticeStatsRead:
 
     practiced_at_values = db.query(PracticeSession.practiced_at).distinct().all()
     practice_days = {_to_utc_date(row[0]) for row in practiced_at_values}
-    current_streak_days, longest_streak_days = _compute_streaks(
-        practice_days, today=datetime.now(UTC).date()
+    today = datetime.now(UTC).date()
+    current_streak_days, longest_streak_days = _compute_streaks(practice_days, today=today)
+
+    week_start, week_end = _current_week_bounds(today)
+    minutes_this_week = (
+        db.query(func.sum(PracticeSession.duration_minutes))
+        .filter(
+            PracticeSession.practiced_at >= week_start,
+            PracticeSession.practiced_at < week_end,
+        )
+        .scalar()
+        or 0
+    )
+
+    month_start, month_end = _current_month_bounds(today)
+    minutes_this_month = (
+        db.query(func.sum(PracticeSession.duration_minutes))
+        .filter(
+            PracticeSession.practiced_at >= month_start,
+            PracticeSession.practiced_at < month_end,
+        )
+        .scalar()
+        or 0
     )
 
     return PracticeStatsRead(
@@ -162,4 +213,6 @@ def get_practice_stats(db: Session = Depends(get_db)) -> PracticeStatsRead:
         neglected=neglected,
         current_streak_days=current_streak_days,
         longest_streak_days=longest_streak_days,
+        minutes_this_week=minutes_this_week,
+        minutes_this_month=minutes_this_month,
     )

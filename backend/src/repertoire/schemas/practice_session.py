@@ -53,3 +53,5 @@ class PracticeStatsRead(BaseModel):
     neglected: list[NeglectedPiece]
     current_streak_days: int
     longest_streak_days: int
+    minutes_this_week: int
+    minutes_this_month: int

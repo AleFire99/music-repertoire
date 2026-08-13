@@ -13,6 +13,11 @@
 {:else}
   <p>Total practice time: <strong>{stats.total_minutes} min</strong></p>
   <p>
+    This week: <strong>{stats.minutes_this_week} min</strong>
+    &middot;
+    This month: <strong>{stats.minutes_this_month} min</strong>
+  </p>
+  <p>
     Current streak: <strong>{stats.current_streak_days} day{stats.current_streak_days === 1 ? '' : 's'}</strong>
     &middot;
     Longest streak: <strong>{stats.longest_streak_days} day{stats.longest_streak_days === 1 ? '' : 's'}</strong>
