@@ -1,5 +1,6 @@
 <script lang="ts">
   import { deletePiece, updatePiece, type Piece } from './api'
+  import Icon from './Icon.svelte'
 
   let {
     pieces,
@@ -62,47 +63,48 @@
         <div class="line">
           <button
             type="button"
-            class="favorite"
+            class="icon-btn favorite"
             class:favorited={piece.is_favorite}
             onclick={() => toggleFavorite(piece)}
             disabled={togglingFavoriteId === piece.id}
             aria-label={piece.is_favorite ? 'Unmark as favorite' : 'Mark as favorite'}
           >
-            {piece.is_favorite ? '★' : '☆'}
+            <Icon name={piece.is_favorite ? 'bookmark-filled' : 'bookmark'} />
           </button>
-          <span class="title">{piece.title}{piece.composer ? ` — ${piece.composer}` : ''}</span>
-          <span class="chip chip-accent">{piece.status}</span>
-          {#if piece.difficulty}
-            <span class="chip">{piece.difficulty}</span>
-          {/if}
+          <span class="title">{piece.title}</span>
+          {#if piece.composer}<span class="composer">{piece.composer}</span>{/if}
+          <span class="status small-caps">
+            {piece.status}{#if piece.difficulty}<span class="dot-sep"> &middot; </span>{piece.difficulty}{/if}
+          </span>
           <span class="row-actions">
-            <button type="button" class="secondary" onclick={() => onEdit(piece)} disabled={deletingId === piece.id}>
-              Edit
+            <button
+              type="button"
+              class="icon-btn"
+              onclick={() => onEdit(piece)}
+              disabled={deletingId === piece.id}
+              aria-label="Edit"
+            >
+              <Icon name="edit" />
             </button>
             <button
               type="button"
-              class="danger"
+              class="icon-btn danger"
               onclick={() => handleDelete(piece)}
               disabled={deletingId === piece.id}
+              aria-label="Delete"
             >
-              {deletingId === piece.id ? 'Deleting…' : 'Delete'}
+              <Icon name="delete" />
             </button>
           </span>
         </div>
-        <div class="meta">
-          {#if piece.key}
-            <span class="chip chip-quiet">{piece.key}</span>
-          {/if}
-          {#if piece.tempo_bpm != null}
-            <span class="chip chip-quiet tempo">&#9833; = {piece.tempo_bpm}</span>
-          {/if}
-          {#if piece.instrument}
-            <span class="chip chip-quiet">{piece.instrument}</span>
-          {/if}
-          {#each piece.tags as tag (tag)}
-            <span class="chip chip-quiet">{tag}</span>
-          {/each}
-        </div>
+        {#if piece.key || piece.tempo_bpm != null || piece.instrument || piece.tags.length > 0}
+          <div class="meta-line">
+            {#if piece.key}<span>{piece.key}</span>{/if}
+            {#if piece.tempo_bpm != null}<span><span class="readout">{piece.tempo_bpm}</span> bpm</span>{/if}
+            {#if piece.instrument}<span>{piece.instrument}</span>{/if}
+            {#each piece.tags as tag (tag)}<span>{tag}</span>{/each}
+          </div>
+        {/if}
         {#if piece.goal_text || piece.goal_target_date}
           <p class="goal">
             Goal: {piece.goal_text ?? ''}{piece.goal_text && piece.goal_target_date
@@ -118,28 +120,31 @@
 <style>
   .line {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     flex-wrap: wrap;
-    gap: var(--space-1);
+    gap: var(--space-2);
   }
   .title {
-    font-weight: 600;
+    font-family: var(--font-serif);
+    font-size: var(--text-md);
   }
-  .meta {
-    margin-top: var(--space-1);
+  .composer {
+    font-style: italic;
+    color: var(--ink-soft);
+    font-size: var(--text-sm);
   }
-  .meta .chip {
-    margin-left: 0;
-    margin-right: var(--space-2);
+  .status {
+    color: var(--ink-faint);
+    font-size: var(--text-sm);
   }
-  .tempo {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
+  .dot-sep {
+    color: var(--ink-faint);
   }
   .row-actions {
     margin-left: auto;
     display: flex;
     gap: var(--space-1);
+    align-self: center;
   }
   .goal {
     margin: var(--space-1) 0 0;
@@ -148,16 +153,10 @@
     font-style: italic;
   }
   .favorite {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
-    font-size: 1.05rem;
+    opacity: 1;
     color: var(--ink-faint);
-    vertical-align: middle;
   }
   .favorite:hover:not(:disabled) {
-    background: none;
     color: var(--accent);
   }
   .favorite.favorited {

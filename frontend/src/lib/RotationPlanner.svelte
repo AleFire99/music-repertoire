@@ -17,13 +17,15 @@
   <ul class="row-list">
     {#each pieces as piece (piece.id)}
       <li class="accented">
-        <span class="title">{piece.title}</span>
-        <span class="chip chip-accent">{piece.status}</span>
-        {#if piece.goal_text}
-          <span class="goal">{piece.goal_text}</span>
-        {/if}
-        {#if piece.goal_target_date}
-          <span class="goal-date">by {piece.goal_target_date}</span>
+        <div class="line">
+          <span class="title">{piece.title}</span>
+          <span class="status small-caps">{piece.status}</span>
+        </div>
+        {#if piece.goal_text || piece.goal_target_date}
+          <div class="meta-line">
+            {#if piece.goal_text}<span>{piece.goal_text}</span>{/if}
+            {#if piece.goal_target_date}<span>by {piece.goal_target_date}</span>{/if}
+          </div>
         {/if}
       </li>
     {/each}
@@ -31,15 +33,18 @@
 {/if}
 
 <style>
-  .title {
-    font-weight: 600;
+  .line {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
   }
-  .goal,
-  .goal-date {
-    margin-left: var(--space-2);
-    color: var(--ink-soft);
+  .title {
+    font-family: var(--font-serif);
+    font-size: var(--text-md);
+  }
+  .status {
+    color: var(--accent);
     font-size: var(--text-sm);
-    font-style: italic;
   }
   .note {
     color: var(--ink-soft);

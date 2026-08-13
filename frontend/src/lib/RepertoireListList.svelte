@@ -8,6 +8,7 @@
     type RepertoireList,
     type RepertoireListDetail,
   } from './api'
+  import Icon from './Icon.svelte'
 
   let {
     lists,
@@ -120,23 +121,32 @@
   <ul class="row-list">
     {#each lists as list (list.id)}
       <li>
-        <div class="row">
+        <div class="line">
           <button type="button" class="expand" onclick={() => toggleExpand(list)}>
-            <span class="disclosure" aria-hidden="true">{expandedId === list.id ? '▾' : '▸'}</span>
-            {list.name}
+            <span class="disclosure" class:open={expandedId === list.id} aria-hidden="true">
+              <Icon name="disclose" size={14} />
+            </span>
+            <span class="title">{list.name}</span>
           </button>
-          <span class="chip">{list.piece_count} piece{list.piece_count === 1 ? '' : 's'}</span>
+          <span class="tag small-caps">{list.piece_count} piece{list.piece_count === 1 ? '' : 's'}</span>
           <span class="row-actions">
-            <button type="button" class="secondary" onclick={() => onEdit(list)} disabled={deletingId === list.id}>
-              Rename
+            <button
+              type="button"
+              class="icon-btn"
+              onclick={() => onEdit(list)}
+              disabled={deletingId === list.id}
+              aria-label="Rename"
+            >
+              <Icon name="edit" />
             </button>
             <button
               type="button"
-              class="danger"
+              class="icon-btn danger"
               onclick={() => handleDelete(list)}
               disabled={deletingId === list.id}
+              aria-label="Delete"
             >
-              {deletingId === list.id ? 'Deleting…' : 'Delete'}
+              <Icon name="delete" />
             </button>
           </span>
         </div>
@@ -153,14 +163,15 @@
                 <ul class="pieces">
                   {#each expandedDetail.pieces as piece (piece.id)}
                     <li>
-                      <span>{piece.title}{piece.composer ? ` — ${piece.composer}` : ''}</span>
+                      <span class="piece-title">{piece.title}{piece.composer ? ` — ${piece.composer}` : ''}</span>
                       <button
                         type="button"
-                        class="danger"
+                        class="icon-btn danger always"
                         onclick={() => handleRemovePiece(piece.id)}
                         disabled={removingPieceId === piece.id}
+                        aria-label="Remove"
                       >
-                        {removingPieceId === piece.id ? 'Removing…' : 'Remove'}
+                        <Icon name="close" size={16} />
                       </button>
                     </li>
                   {/each}
@@ -200,10 +211,10 @@
 {/if}
 
 <style>
-  .row {
+  .line {
     display: flex;
-    align-items: center;
-    gap: var(--space-1);
+    align-items: baseline;
+    gap: var(--space-2);
   }
   .expand {
     background: none;
@@ -211,18 +222,37 @@
     cursor: pointer;
     padding: 0;
     color: var(--ink);
-    font-weight: 600;
-    font-size: var(--text-md);
     text-align: left;
+    display: inline-flex;
+    align-items: baseline;
+    gap: var(--space-1);
   }
   .expand:hover:not(:disabled) {
     background: none;
-    color: var(--accent-strong);
+  }
+  .expand:hover:not(:disabled) .title {
+    text-decoration: underline;
+  }
+  .title {
+    font-family: var(--font-serif);
+    font-size: var(--text-md);
   }
   .disclosure {
-    display: inline-block;
-    width: 1em;
+    display: inline-flex;
     color: var(--ink-faint);
+    transition: transform 150ms ease;
+  }
+  .disclosure.open {
+    transform: rotate(90deg);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .disclosure {
+      transition: none;
+    }
+  }
+  .tag {
+    color: var(--ink-faint);
+    font-size: var(--text-sm);
   }
   .row-actions {
     margin-left: auto;
@@ -232,7 +262,7 @@
   .detail {
     margin: var(--space-3) 0 var(--space-2) var(--space-5);
     padding-left: var(--space-3);
-    border-left: 2px solid var(--border);
+    border-left: 1px solid var(--border);
   }
   .pieces {
     list-style: none;
@@ -245,6 +275,12 @@
     justify-content: space-between;
     gap: var(--space-2);
     padding: var(--space-1) 0;
+  }
+  .piece-title {
+    font-family: var(--font-serif);
+  }
+  .icon-btn.always {
+    opacity: 1;
   }
   .add-piece {
     display: flex;
