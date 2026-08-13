@@ -85,7 +85,7 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 ## Future epics (not implemented, do not start without a new milestone)
 
 ### Repertoire
-Performance history, repertoire rotation.
+Repertoire rotation: a soft cap of ~3 pieces "actively in focus" at once (e.g. status=learning/maintaining with a goal set, #88), surfaced as a distinct planner view — a visual/organizational aid, not an enforced limit.
 
 ### Practice
 Practice time goals (a target measured against PracticeSession data, e.g. "5 hours this week") and progress tracking against them.
