@@ -86,6 +86,13 @@
         {#if piece.instrument}
           <span class="tags">{piece.instrument}</span>
         {/if}
+        {#if piece.goal_text || piece.goal_target_date}
+          <span class="tags"
+            >Goal: {piece.goal_text ?? ''}{piece.goal_text && piece.goal_target_date
+              ? ' — '
+              : ''}{piece.goal_target_date ?? ''}</span
+          >
+        {/if}
         <span class="row-actions">
           <button type="button" onclick={() => onEdit(piece)} disabled={deletingId === piece.id}>
             Edit

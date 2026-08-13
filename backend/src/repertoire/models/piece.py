@@ -1,7 +1,7 @@
-from datetime import datetime
+from datetime import date, datetime
 from enum import StrEnum
 
-from sqlalchemy import Boolean, DateTime, Integer, String, func
+from sqlalchemy import Boolean, Date, DateTime, Integer, String, Text, func
 from sqlalchemy import Enum as SAEnum
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column
@@ -42,6 +42,8 @@ class Piece(Base):
         default=None,
     )
     instrument: Mapped[str | None] = mapped_column(String(100), default=None)
+    goal_text: Mapped[str | None] = mapped_column(Text, default=None)
+    goal_target_date: Mapped[date | None] = mapped_column(Date, default=None)
     status: Mapped[PieceStatus] = mapped_column(
         SAEnum(
             PieceStatus,

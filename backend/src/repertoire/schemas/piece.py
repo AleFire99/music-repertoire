@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict
 
@@ -12,6 +12,8 @@ class PieceCreate(BaseModel):
     tempo_bpm: int | None = None
     difficulty: PieceDifficulty | None = None
     instrument: str | None = None
+    goal_text: str | None = None
+    goal_target_date: date | None = None
     status: PieceStatus = PieceStatus.BACKLOG
     tags: list[str] = []
     is_favorite: bool = False
@@ -24,6 +26,8 @@ class PieceUpdate(BaseModel):
     tempo_bpm: int | None = None
     difficulty: PieceDifficulty | None = None
     instrument: str | None = None
+    goal_text: str | None = None
+    goal_target_date: date | None = None
     status: PieceStatus | None = None
     tags: list[str] | None = None
     is_favorite: bool | None = None
@@ -39,6 +43,8 @@ class PieceRead(BaseModel):
     tempo_bpm: int | None
     difficulty: PieceDifficulty | None
     instrument: str | None
+    goal_text: str | None
+    goal_target_date: date | None
     status: PieceStatus
     tags: list[str]
     is_favorite: bool

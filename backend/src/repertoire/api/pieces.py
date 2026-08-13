@@ -25,6 +25,7 @@ def list_pieces(
     favorite: bool | None = None,
     difficulty: PieceDifficulty | None = None,
     instrument: str | None = None,
+    has_goal: bool | None = None,
     db: Session = Depends(get_db),
 ) -> list[Piece]:
     query = db.query(Piece)
@@ -38,6 +39,11 @@ def list_pieces(
         query = query.filter(Piece.difficulty == difficulty)
     if instrument is not None:
         query = query.filter(Piece.instrument == instrument)
+    if has_goal is not None:
+        if has_goal:
+            query = query.filter(Piece.goal_target_date.isnot(None))
+        else:
+            query = query.filter(Piece.goal_target_date.is_(None))
     return list(query.order_by(Piece.id).all())
 
 

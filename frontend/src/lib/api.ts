@@ -32,6 +32,8 @@ export interface Piece {
   tempo_bpm: number | null
   difficulty: PieceDifficulty | null
   instrument: string | null
+  goal_text: string | null
+  goal_target_date: string | null
   status: PieceStatus
   tags: string[]
   is_favorite: boolean
@@ -46,6 +48,8 @@ export interface PieceCreateInput {
   tempo_bpm?: number | null
   difficulty?: PieceDifficulty | null
   instrument?: string | null
+  goal_text?: string | null
+  goal_target_date?: string | null
   status?: PieceStatus
   tags?: string[]
   is_favorite?: boolean
@@ -58,6 +62,8 @@ export interface PieceUpdateInput {
   tempo_bpm?: number | null
   difficulty?: PieceDifficulty | null
   instrument?: string | null
+  goal_text?: string | null
+  goal_target_date?: string | null
   status?: PieceStatus
   tags?: string[]
   is_favorite?: boolean
