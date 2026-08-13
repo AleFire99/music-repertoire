@@ -84,10 +84,10 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 ## Future epics (not implemented, do not start without a new milestone)
 
 ### Repertoire
-Goals, performance history, repertoire rotation.
+Piece-level learning goals (a target tied to a specific Piece, e.g. "performance-ready by March" — works alongside the existing `status` field), performance history, repertoire rotation.
 
 ### Practice
-Weekly goals, progress toward goals.
+Practice time goals (a target measured against PracticeSession data, e.g. "5 hours this week") and progress tracking against them.
 
 ### Music representation
 MIDI import, MusicXML import, chord representation, measure representation, sections, annotations. **Audio → MIDI → chord extraction is explicitly out of scope indefinitely** — not a v-next item, a permanent non-goal unless a concrete future requirement changes that.
