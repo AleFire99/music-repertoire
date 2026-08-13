@@ -27,6 +27,7 @@
   import PracticeStatsView from './lib/PracticeStats.svelte'
   import RepertoireListForm from './lib/RepertoireListForm.svelte'
   import RepertoireListList from './lib/RepertoireListList.svelte'
+  import RotationPlanner from './lib/RotationPlanner.svelte'
   import SheetResourceForm from './lib/SheetResourceForm.svelte'
   import SheetResourceList from './lib/SheetResourceList.svelte'
 
@@ -52,6 +53,7 @@
   let sheetResources = $state<SheetResource[]>([])
   let repertoireLists = $state<RepertoireList[]>([])
   let editingRepertoireList = $state<RepertoireList | null>(null)
+  let focusPieces = $state<Piece[]>([])
 
   async function refreshPieces(): Promise<void> {
     pieces = await listPieces({
@@ -81,6 +83,10 @@
     repertoireLists = await listRepertoireLists()
   }
 
+  async function refreshFocusPieces(): Promise<void> {
+    focusPieces = await listPieces({ inFocus: true })
+  }
+
   onMount(async () => {
     try {
       const healthResult = await getHealth()
@@ -91,6 +97,7 @@
       await refreshGoal()
       await refreshSheetResources()
       await refreshRepertoireLists()
+      await refreshFocusPieces()
     } catch (err) {
       error = err instanceof Error ? err.message : String(err)
     }
@@ -122,6 +129,9 @@
     const exists = pieces.some((p) => p.id === saved.id)
     pieces = exists ? pieces.map((p) => (p.id === saved.id ? saved : p)) : [...pieces, saved]
     editingPiece = null
+    refreshFocusPieces().catch((err) => {
+      error = err instanceof Error ? err.message : String(err)
+    })
   }
 
   function handlePieceDeleted(id: number): void {
@@ -129,6 +139,9 @@
     if (editingPiece?.id === id) editingPiece = null
     sheetResources = sheetResources.filter((r) => r.piece_id !== id)
     refreshRepertoireLists().catch((err) => {
+      error = err instanceof Error ? err.message : String(err)
+    })
+    refreshFocusPieces().catch((err) => {
       error = err instanceof Error ? err.message : String(err)
     })
   }
@@ -204,6 +217,9 @@
     onDeleted={handlePieceDeleted}
     onUpdated={handlePieceSaved}
   />
+
+  <h2>Currently in Focus</h2>
+  <RotationPlanner pieces={focusPieces} />
 
   <h2>Log Practice Session</h2>
   <PracticeSessionForm {pieces} onSaved={handleSessionSaved} />

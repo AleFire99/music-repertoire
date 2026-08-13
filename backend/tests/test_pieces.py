@@ -269,3 +269,68 @@ def test_list_pieces_filter_by_has_goal(client: TestClient) -> None:
     assert response.status_code == 200
     titles = [piece["title"] for piece in response.json()]
     assert titles == ["B"]
+
+
+def test_list_pieces_in_focus_empty(client: TestClient) -> None:
+    client.post("/api/pieces", json={"title": "A", "status": "backlog"})
+    client.post(
+        "/api/pieces",
+        json={"title": "B", "status": "archived", "goal_target_date": "2026-06-01"},
+    )
+
+    response = client.get("/api/pieces", params={"in_focus": "true"})
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_list_pieces_in_focus_under_cap(client: TestClient) -> None:
+    client.post(
+        "/api/pieces",
+        json={"title": "A", "status": "learning", "goal_target_date": "2026-06-01"},
+    )
+    client.post(
+        "/api/pieces",
+        json={"title": "B", "status": "maintaining", "goal_text": "keep it performance-ready"},
+    )
+    client.post("/api/pieces", json={"title": "C", "status": "backlog"})
+
+    response = client.get("/api/pieces", params={"in_focus": "true"})
+    assert response.status_code == 200
+    titles = [piece["title"] for piece in response.json()]
+    assert titles == ["A", "B"]
+
+
+def test_list_pieces_in_focus_over_cap_not_blocked(client: TestClient) -> None:
+    for title in ["A", "B", "C", "D"]:
+        client.post(
+            "/api/pieces",
+            json={"title": title, "status": "learning", "goal_target_date": "2026-06-01"},
+        )
+
+    response = client.get("/api/pieces", params={"in_focus": "true"})
+    assert response.status_code == 200
+    titles = [piece["title"] for piece in response.json()]
+    assert titles == ["A", "B", "C", "D"]
+
+
+def test_list_pieces_in_focus_status_without_goal_excluded(client: TestClient) -> None:
+    client.post("/api/pieces", json={"title": "A", "status": "learning"})
+
+    response = client.get("/api/pieces", params={"in_focus": "true"})
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_list_pieces_in_focus_goal_without_matching_status_excluded(client: TestClient) -> None:
+    client.post(
+        "/api/pieces",
+        json={"title": "A", "status": "backlog", "goal_target_date": "2026-06-01"},
+    )
+    client.post(
+        "/api/pieces",
+        json={"title": "B", "status": "performance-ready", "goal_text": "keep it sharp"},
+    )
+
+    response = client.get("/api/pieces", params={"in_focus": "true"})
+    assert response.status_code == 200
+    assert response.json() == []

@@ -81,6 +81,7 @@ export async function listPieces(
     favorite?: boolean
     difficulty?: PieceDifficulty
     instrument?: string
+    inFocus?: boolean
   },
 ): Promise<Piece[]> {
   const params = new URLSearchParams()
@@ -88,6 +89,7 @@ export async function listPieces(
   if (filters?.favorite) params.set('favorite', 'true')
   if (filters?.difficulty) params.set('difficulty', filters.difficulty)
   if (filters?.instrument) params.set('instrument', filters.instrument)
+  if (filters?.inFocus) params.set('in_focus', 'true')
   const query = params.toString()
   const response = await fetch(`/api/pieces${query ? `?${query}` : ''}`)
   if (!response.ok) throw new Error(`failed to list pieces: ${response.status}`)

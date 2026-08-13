@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import any_
+from sqlalchemy import any_, or_
 from sqlalchemy.orm import Session
 
 from repertoire.db import get_db
@@ -18,6 +18,9 @@ def create_piece(payload: PieceCreate, db: Session = Depends(get_db)) -> Piece:
     return piece
 
 
+IN_FOCUS_STATUSES = (PieceStatus.LEARNING, PieceStatus.MAINTAINING)
+
+
 @router.get("", response_model=list[PieceRead])
 def list_pieces(
     status: PieceStatus | None = None,
@@ -26,6 +29,7 @@ def list_pieces(
     difficulty: PieceDifficulty | None = None,
     instrument: str | None = None,
     has_goal: bool | None = None,
+    in_focus: bool | None = None,
     db: Session = Depends(get_db),
 ) -> list[Piece]:
     query = db.query(Piece)
@@ -44,6 +48,11 @@ def list_pieces(
             query = query.filter(Piece.goal_target_date.isnot(None))
         else:
             query = query.filter(Piece.goal_target_date.is_(None))
+    if in_focus:
+        query = query.filter(
+            Piece.status.in_(IN_FOCUS_STATUSES),
+            or_(Piece.goal_text.isnot(None), Piece.goal_target_date.isnot(None)),
+        )
     return list(query.order_by(Piece.id).all())
 
 
