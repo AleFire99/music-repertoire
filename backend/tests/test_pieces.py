@@ -33,6 +33,26 @@ def test_delete_piece(client: TestClient) -> None:
     assert client.get(f"/api/pieces/{created['id']}").status_code == 404
 
 
+def test_delete_piece_with_practice_sessions_cascades(client: TestClient) -> None:
+    piece = client.post("/api/pieces", json={"title": "Etude"}).json()
+    session = client.post(
+        "/api/practice-sessions",
+        json={
+            "piece_id": piece["id"],
+            "practiced_at": "2026-08-01T10:00:00Z",
+            "duration_minutes": 20,
+        },
+    ).json()
+
+    delete_response = client.delete(f"/api/pieces/{piece['id']}")
+    assert delete_response.status_code == 204
+
+    remaining_sessions = client.get(
+        "/api/practice-sessions", params={"piece_id": piece["id"]}
+    ).json()
+    assert session["id"] not in [s["id"] for s in remaining_sessions]
+
+
 def test_get_missing_piece_404(client: TestClient) -> None:
     response = client.get("/api/pieces/999999")
     assert response.status_code == 404
