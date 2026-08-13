@@ -42,6 +42,8 @@
     neglected: [],
     current_streak_days: 0,
     longest_streak_days: 0,
+    minutes_this_week: 0,
+    minutes_this_month: 0,
   })
   let sheetResources = $state<SheetResource[]>([])
   let repertoireLists = $state<RepertoireList[]>([])

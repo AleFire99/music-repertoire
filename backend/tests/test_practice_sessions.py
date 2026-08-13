@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from fastapi.testclient import TestClient
 
@@ -22,6 +22,30 @@ def _log_session(client: TestClient, piece_id: int, days_ago: int, hour: int = 1
             "duration_minutes": 10,
         },
     )
+
+
+def _log_session_at(
+    client: TestClient, piece_id: int, practiced_at: str, duration_minutes: int
+) -> None:
+    client.post(
+        "/api/practice-sessions",
+        json={
+            "piece_id": piece_id,
+            "practiced_at": practiced_at,
+            "duration_minutes": duration_minutes,
+        },
+    )
+
+
+def _week_start_utc_date() -> date:
+    """Monday of the current UTC calendar week (matches the endpoint's convention)."""
+    today = datetime.now(UTC).date()
+    return today - timedelta(days=today.weekday())
+
+
+def _month_start_utc_date() -> date:
+    today = datetime.now(UTC).date()
+    return today.replace(day=1)
 
 
 def test_create_and_list_practice_session(client: TestClient) -> None:
@@ -125,6 +149,8 @@ def test_stats_empty(client: TestClient) -> None:
         "neglected": [],
         "current_streak_days": 0,
         "longest_streak_days": 0,
+        "minutes_this_week": 0,
+        "minutes_this_month": 0,
     }
 
 
@@ -372,3 +398,65 @@ def test_stats_streak_spans_across_pieces(client: TestClient) -> None:
 
     assert body["current_streak_days"] == 3
     assert body["longest_streak_days"] == 3
+
+
+def test_stats_minutes_this_week_and_month_count_current_sessions(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Current")
+    _log_session_at(client, piece_id, _at_days_ago(0), duration_minutes=25)
+
+    body = client.get("/api/practice-sessions/stats").json()
+
+    assert body["minutes_this_week"] == 25
+    assert body["minutes_this_month"] == 25
+
+
+def test_stats_minutes_this_week_excludes_prior_week(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Prior week")
+    # 7 days ago is always before this week's Monday, regardless of today's weekday.
+    _log_session_at(client, piece_id, _at_days_ago(7), duration_minutes=40)
+
+    body = client.get("/api/practice-sessions/stats").json()
+
+    assert body["minutes_this_week"] == 0
+
+
+def test_stats_minutes_this_month_excludes_prior_month(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Prior month")
+    # 32 days ago is always before this month's 1st, since no month has 32 days.
+    _log_session_at(client, piece_id, _at_days_ago(32), duration_minutes=50)
+
+    body = client.get("/api/practice-sessions/stats").json()
+
+    assert body["minutes_this_month"] == 0
+
+
+def test_stats_minutes_this_week_boundary(client: TestClient) -> None:
+    """Monday 00:00:00 UTC counts as this week; the following Monday does not."""
+    piece_id = _create_piece(client, "Week boundary")
+    week_start = _week_start_utc_date()
+    next_week_start = week_start + timedelta(days=7)
+
+    _log_session_at(client, piece_id, f"{week_start.isoformat()}T00:00:00Z", 15)
+    _log_session_at(client, piece_id, f"{next_week_start.isoformat()}T00:00:00Z", 99)
+
+    body = client.get("/api/practice-sessions/stats").json()
+
+    assert body["minutes_this_week"] == 15
+
+
+def test_stats_minutes_this_month_boundary(client: TestClient) -> None:
+    """The 1st at 00:00:00 UTC counts as this month; the 1st of next month does not."""
+    piece_id = _create_piece(client, "Month boundary")
+    month_start = _month_start_utc_date()
+    next_month_start = (
+        month_start.replace(year=month_start.year + 1, month=1)
+        if month_start.month == 12
+        else month_start.replace(month=month_start.month + 1)
+    )
+
+    _log_session_at(client, piece_id, f"{month_start.isoformat()}T00:00:00Z", 12)
+    _log_session_at(client, piece_id, f"{next_month_start.isoformat()}T00:00:00Z", 88)
+
+    body = client.get("/api/practice-sessions/stats").json()
+
+    assert body["minutes_this_month"] == 12

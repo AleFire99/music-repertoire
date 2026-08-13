@@ -204,6 +204,8 @@ export interface PracticeStats {
   neglected: NeglectedPiece[]
   current_streak_days: number
   longest_streak_days: number
+  minutes_this_week: number
+  minutes_this_month: number
 }
 
 export async function getPracticeStats(): Promise<PracticeStats> {
