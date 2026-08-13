@@ -79,6 +79,7 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] Section-level practice breakdowns — issue #81
 - [x] Fix: cascade-delete practice sessions when their piece is deleted — issue #83
 - [x] Piece-level learning goals (goal text + target date) — issue #88
+- [x] Practice time goals (weekly target + progress) — issue #91
 
 ---
 
@@ -88,7 +89,7 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 Repertoire rotation: a soft cap of ~3 pieces "actively in focus" at once (e.g. status=learning/maintaining with a goal set, #88), surfaced as a distinct planner view — a visual/organizational aid, not an enforced limit.
 
 ### Practice
-Practice time goals (a target measured against PracticeSession data, e.g. "5 hours this week") and progress tracking against them.
+Fully delivered — see issue #6 for the shipped-item checklist. No remaining scope; new Practice-epic ideas need their own scoping discussion before being added here.
 
 ### Music representation
 MIDI import, MusicXML import, chord representation, measure representation, sections, annotations. **Audio → MIDI → chord extraction is explicitly out of scope indefinitely** — not a v-next item, a permanent non-goal unless a concrete future requirement changes that.
