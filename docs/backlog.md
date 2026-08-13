@@ -80,13 +80,14 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] Fix: cascade-delete practice sessions when their piece is deleted — issue #83
 - [x] Piece-level learning goals (goal text + target date) — issue #88
 - [x] Practice time goals (weekly target + progress) — issue #91
+- [x] Repertoire rotation planner (in-focus pieces view) — issue #95
 
 ---
 
 ## Future epics (not implemented, do not start without a new milestone)
 
 ### Repertoire
-Repertoire rotation: a soft cap of ~3 pieces "actively in focus" at once (e.g. status=learning/maintaining with a goal set, #88), surfaced as a distinct planner view — a visual/organizational aid, not an enforced limit.
+Fully delivered — see issue #5 for the shipped-item checklist. No remaining scope; new Repertoire-epic ideas need their own scoping discussion before being added here.
 
 ### Practice
 Fully delivered — see issue #6 for the shipped-item checklist. No remaining scope; new Practice-epic ideas need their own scoping discussion before being added here.
