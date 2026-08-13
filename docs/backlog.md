@@ -78,13 +78,14 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] Practice statistics by week and month — issue #78
 - [x] Section-level practice breakdowns — issue #81
 - [x] Fix: cascade-delete practice sessions when their piece is deleted — issue #83
+- [x] Piece-level learning goals (goal text + target date) — issue #88
 
 ---
 
 ## Future epics (not implemented, do not start without a new milestone)
 
 ### Repertoire
-Piece-level learning goals (a target tied to a specific Piece, e.g. "performance-ready by March" — works alongside the existing `status` field), performance history, repertoire rotation.
+Performance history, repertoire rotation.
 
 ### Practice
 Practice time goals (a target measured against PracticeSession data, e.g. "5 hours this week") and progress tracking against them.
