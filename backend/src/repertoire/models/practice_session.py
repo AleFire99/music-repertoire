@@ -10,7 +10,9 @@ class PracticeSession(Base):
     __tablename__ = "practice_sessions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    piece_id: Mapped[int] = mapped_column(ForeignKey("pieces.id"), index=True)
+    piece_id: Mapped[int] = mapped_column(
+        ForeignKey("pieces.id", ondelete="CASCADE"), index=True
+    )
     practiced_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     duration_minutes: Mapped[int] = mapped_column()
     notes: Mapped[str | None] = mapped_column(String(2000), default=None)
