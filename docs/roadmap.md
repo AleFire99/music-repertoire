@@ -28,27 +28,38 @@ styling something that might still change shape.
 Work continues one small slice at a time via `scripts/new-feature.sh`, same
 cadence as issues #18–#46.
 
-## Interim UI guideline (while the epics above are in progress)
+## UI design system (established by the #102 design pass)
 
-No dedicated design/styling investment yet. Each feature slice's frontend
-work should stay functional-only:
+The interim "stay minimal" convention is retired — issue #102 delivered a
+real design system, applied to every existing view. New feature UI should
+follow it rather than reintroducing ad hoc styling:
 
-- Reuse the minimal styling already established in `App.svelte` (system-ui
-  font stack, single `max-width` container, `.error` class) — don't
-  introduce new visual patterns, layout systems, or component libraries per
-  feature.
-- Don't hand-polish one view more than another. Consistent plainness beats
-  partial, mismatched polish that would need to be undone later.
-- See the `frontend-development` skill's "Do NOT add without explicit
-  sign-off" list — CSS frameworks are excluded there for the same reason.
+- **Direction**: a "manuscript" theme grounded in printed sheet music —
+  warm paper background, ink text, a sealing-wax red accent for actions,
+  aged brass for annotations. Light/dark are both first-class (via
+  `prefers-color-scheme`), not an afterthought.
+- **Tokens**: all colors, type, and spacing are CSS custom properties
+  defined once in `frontend/src/app.css` (`--paper`, `--ink`, `--accent`,
+  `--brass`, `--space-*`, `--text-*`, etc.) — components consume tokens,
+  they don't hardcode hex values or ad hoc sizes.
+- **Type**: a serif display face (`--font-display`) for headings, a plain
+  sans body face (`--font-body`) for content and forms, tabular numerals
+  (`--font-mono`) for tempo/timer/durations.
+- **Recurring patterns**: `.sheet` (card wrapping each section),
+  `SectionHeader.svelte` (the barline + 5-line staff-rule divider used on
+  every section heading — the system's one signature device),
+  `.manuscript-list` (list items with a left accent bar), `.chip` (the
+  small-caps badge used for status/difficulty/tags/kind/counts, echoing
+  engraved performance directions), and shared `button`/`input`/`select`/
+  `textarea` base styles plus `.secondary`/`.danger` button variants.
+- **Adding a new view**: reuse these tokens and patterns rather than
+  inventing new ones. If a new recurring element doesn't fit an existing
+  pattern, add it to `app.css` as a token-driven utility class, not a
+  one-off inline style.
 
-## Design / UI polish pass (next epic after Repertoire + Practice substantially land)
-
-Once the two epics above are substantially built out — or sooner if the bare
-styling becomes actively confusing to use — start a dedicated pass: layout
-system, typography, spacing, color, component consistency across every
-shipped view (pieces, practice sessions, stats, sheet resources, favorites,
-etc.). Treat it as its own epic/issue(s), not a side effect of a feature PR.
+This was intentionally a single cross-cutting pass (not spread across
+feature PRs) because a design system only holds together if it's applied
+consistently everywhere at once.
 
 ## Longer-term (future epics, unchanged from docs/backlog.md)
 

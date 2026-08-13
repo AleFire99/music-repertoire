@@ -13,39 +13,42 @@
 </script>
 
 {#if goal}
-  <p>
-    Weekly goal progress:
-    <strong>{formatHours(goal.minutes_this_week)} / {formatHours(goal.target_minutes)} hours</strong>
-    this week
+  <p class="goal-progress">
+    Weekly goal:
+    <strong>{formatHours(goal.minutes_this_week)} / {formatHours(goal.target_minutes)} hrs</strong>
+    <span class="bar" style={`--pct: ${Math.min(100, (goal.minutes_this_week / goal.target_minutes) * 100)}%`}
+      ><span class="bar-fill"></span></span
+    >
   </p>
 {/if}
 
 {#if stats.pieces.length === 0}
-  <p>No practice sessions logged yet.</p>
+  <p class="empty">No practice sessions logged yet.</p>
 {:else}
-  <p>Total practice time: <strong>{stats.total_minutes} min</strong></p>
-  <p>
-    This week: <strong>{stats.minutes_this_week} min</strong>
-    &middot;
-    This month: <strong>{stats.minutes_this_month} min</strong>
-  </p>
-  <p>
-    Current streak: <strong>{stats.current_streak_days} day{stats.current_streak_days === 1 ? '' : 's'}</strong>
-    &middot;
-    Longest streak: <strong>{stats.longest_streak_days} day{stats.longest_streak_days === 1 ? '' : 's'}</strong>
-  </p>
-  <ul>
+  <div class="totals">
+    <div class="stat"><strong>{stats.total_minutes}</strong><span>min total</span></div>
+    <div class="stat"><strong>{stats.minutes_this_week}</strong><span>min this week</span></div>
+    <div class="stat"><strong>{stats.minutes_this_month}</strong><span>min this month</span></div>
+    <div class="stat">
+      <strong>{stats.current_streak_days}</strong><span>day{stats.current_streak_days === 1 ? '' : 's'} streak</span>
+    </div>
+    <div class="stat">
+      <strong>{stats.longest_streak_days}</strong><span>best streak</span>
+    </div>
+  </div>
+  <ul class="manuscript-list">
     {#each stats.pieces as piece (piece.piece_id)}
       <li>
-        {piece.piece_title} — {piece.total_minutes} min
-        <span class="count">{piece.session_count} session{piece.session_count === 1 ? '' : 's'}</span>
+        <span class="title">{piece.piece_title}</span>
+        <span class="chip chip-accent">{piece.total_minutes} min</span>
+        <span class="chip">{piece.session_count} session{piece.session_count === 1 ? '' : 's'}</span>
         <span class="when">last: {formatDate(piece.last_practiced_at)}</span>
         {#if piece.sections.length > 0}
           <details>
             <summary>By section</summary>
-            <ul>
+            <ul class="sections">
               {#each piece.sections as section (section.section)}
-                <li>{section.section} — {section.total_minutes} min</li>
+                <li>{section.section} <span class="chip chip-quiet">{section.total_minutes} min</span></li>
               {/each}
             </ul>
           </details>
@@ -57,7 +60,7 @@
 
 {#if stats.recently_practiced.length > 0}
   <h3>Recently practiced</h3>
-  <ul>
+  <ul class="manuscript-list">
     {#each stats.recently_practiced as piece (piece.piece_id)}
       <li>
         {piece.piece_title}
@@ -69,7 +72,7 @@
 
 {#if stats.neglected.length > 0}
   <h3>Neglected</h3>
-  <ul>
+  <ul class="manuscript-list">
     {#each stats.neglected as piece (piece.piece_id)}
       <li>
         {piece.piece_title}
@@ -82,25 +85,78 @@
 {/if}
 
 <style>
-  ul {
-    padding-left: 0;
-    list-style: none;
+  h3 {
+    margin-top: var(--space-5);
+    margin-bottom: var(--space-2);
   }
-  li {
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #e0e0e0;
+  .goal-progress {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
   }
-  .count {
-    margin-left: 0.5rem;
-    padding: 0.1rem 0.5rem;
-    border-radius: 0.75rem;
-    background: #e0e0e0;
-    font-size: 0.8rem;
+  .bar {
+    --pct: 0%;
+    flex: 1 1 8rem;
+    min-width: 6rem;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--brass-soft);
+    overflow: hidden;
+  }
+  .bar-fill {
+    display: block;
+    height: 100%;
+    width: var(--pct);
+    background: var(--accent);
+    border-radius: 999px;
+  }
+  .totals {
+    display: flex;
+    gap: var(--space-5);
+    flex-wrap: wrap;
+    margin-bottom: var(--space-4);
+    padding-bottom: var(--space-3);
+    border-bottom: 1px solid var(--line);
+  }
+  .stat {
+    display: flex;
+    flex-direction: column;
+  }
+  .stat strong {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    line-height: 1.1;
+  }
+  .stat span {
+    font-size: var(--text-xs);
+    color: var(--ink-soft);
+    font-variant-caps: all-small-caps;
+    letter-spacing: 0.03em;
+  }
+  .title {
+    font-weight: 600;
   }
   .when {
-    margin-left: 0.5rem;
-    color: #666;
-    font-size: 0.8rem;
+    margin-left: var(--space-2);
+    color: var(--ink-faint);
+    font-size: var(--text-xs);
+  }
+  details {
+    margin-top: var(--space-2);
+  }
+  summary {
+    cursor: pointer;
+    font-size: var(--text-sm);
+    color: var(--ink-soft);
+  }
+  .sections {
+    list-style: none;
+    padding-left: var(--space-4);
+    margin: var(--space-1) 0 0;
+  }
+  .sections li {
+    padding: var(--space-1) 0;
+    border-bottom: none;
   }
 </style>

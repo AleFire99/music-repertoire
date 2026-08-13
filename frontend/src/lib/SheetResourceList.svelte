@@ -38,26 +38,28 @@
 {/if}
 
 {#if resources.length === 0}
-  <p>No sheet resources yet.</p>
+  <p class="empty">No sheet resources yet.</p>
 {:else}
-  <ul>
+  <ul class="manuscript-list">
     {#each resources as resource (resource.id)}
       <li>
-        {pieceTitle(resource.piece_id)}
-        <span class="kind">{resource.kind}</span>
-        {#if resource.label}
-          <strong>{resource.label}</strong>
-        {/if}
-        <span class="row-actions">
-          <button
-            type="button"
-            class="delete"
-            onclick={() => handleDelete(resource)}
-            disabled={deletingId === resource.id}
-          >
-            {deletingId === resource.id ? 'Deleting…' : 'Delete'}
-          </button>
-        </span>
+        <div class="line">
+          <span class="title">{pieceTitle(resource.piece_id)}</span>
+          <span class="chip">{resource.kind}</span>
+          {#if resource.label}
+            <span class="label">{resource.label}</span>
+          {/if}
+          <span class="row-actions">
+            <button
+              type="button"
+              class="danger"
+              onclick={() => handleDelete(resource)}
+              disabled={deletingId === resource.id}
+            >
+              {deletingId === resource.id ? 'Deleting…' : 'Delete'}
+            </button>
+          </span>
+        </div>
         <p class="reference">{resource.reference}</p>
         {#if resource.notes}
           <p class="notes">{resource.notes}</p>
@@ -68,43 +70,30 @@
 {/if}
 
 <style>
-  .error {
-    color: #b00020;
+  .line {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-1);
   }
-  ul {
-    padding-left: 0;
-    list-style: none;
+  .title {
+    font-weight: 600;
   }
-  li {
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #e0e0e0;
-  }
-  .kind {
-    margin-left: 0.5rem;
-    padding: 0.1rem 0.5rem;
-    border-radius: 0.75rem;
-    background: #e0e0e0;
-    font-size: 0.8rem;
+  .label {
+    color: var(--ink-soft);
+    font-style: italic;
   }
   .row-actions {
-    margin-left: 0.5rem;
-  }
-  .row-actions button {
-    margin-left: 0.25rem;
-    font-size: 0.8rem;
-  }
-  .delete {
-    color: #b00020;
+    margin-left: auto;
   }
   .reference {
-    margin: 0.25rem 0 0;
-    color: #444;
-    font-size: 0.9rem;
+    margin: var(--space-1) 0 0;
+    color: var(--ink);
+    font-size: var(--text-sm);
   }
   .notes {
-    margin: 0.25rem 0 0;
-    color: #666;
-    font-size: 0.8rem;
+    margin: var(--space-1) 0 0;
+    color: var(--ink-soft);
+    font-size: var(--text-xs);
   }
 </style>

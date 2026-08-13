@@ -16,13 +16,23 @@ description: Use when adding or changing a Svelte component or frontend feature 
 - Router library (single page in v0.1)
 - CSS framework
 
-## Interim styling convention (see docs/roadmap.md)
+## Styling convention (see docs/roadmap.md)
 
-Visual design is deliberately deferred until the Repertoire/Practice epics are
-substantially built out. Until that dedicated pass starts, keep new feature
-UI functional-only: reuse the minimal styling already in `App.svelte`
-(system-ui font stack, single `max-width` container, `.error` class) rather
-than introducing new visual patterns or per-feature polish.
+A real design system landed in issue #102 — the "manuscript" theme
+(warm paper/ink palette, serif display type, brass/red accents). Reuse it
+rather than reintroducing ad hoc styling:
+
+- Tokens (color, type, spacing) live as CSS custom properties in
+  `frontend/src/app.css` — consume `var(--...)`, don't hardcode hex values
+  or one-off `rem` sizes.
+- Wrap each top-level view section in a `.sheet` card with a
+  `SectionHeader.svelte` (the staff-rule + barline heading).
+- Use `.manuscript-list` for list-of-items views, `.chip` for
+  status/tag/count-style badges, and the base `button`/`input`/`select`/
+  `textarea` styles plus `.secondary`/`.danger` button variants — don't
+  redefine these per component.
+- If a new element doesn't fit an existing pattern, add a token-driven
+  utility class to `app.css` rather than inlining new colors/spacing.
 
 ## Before considering a change done
 

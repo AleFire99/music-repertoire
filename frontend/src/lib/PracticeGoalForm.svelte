@@ -52,16 +52,6 @@
   form {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-  }
-  label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    font-size: 0.9rem;
-  }
-  .error {
-    color: #b00020;
+    gap: var(--space-3);
   }
 </style>

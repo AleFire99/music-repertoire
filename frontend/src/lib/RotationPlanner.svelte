@@ -7,17 +7,18 @@
 </script>
 
 {#if pieces.length === 0}
-  <p>No pieces in focus yet. Set a status of "learning" or "maintaining" and a goal to add one.</p>
+  <p class="empty">No pieces in focus yet. Set a status of "learning" or "maintaining" and a goal to add one.</p>
 {:else}
   {#if pieces.length > FOCUS_CAP}
     <p class="note">
       {pieces.length} pieces in focus — more than the suggested {FOCUS_CAP}. Consider narrowing down.
     </p>
   {/if}
-  <ul>
+  <ul class="manuscript-list">
     {#each pieces as piece (piece.id)}
-      <li>
-        {piece.title} <span class="status">{piece.status}</span>
+      <li class="accented">
+        <span class="title">{piece.title}</span>
+        <span class="chip chip-accent">{piece.status}</span>
         {#if piece.goal_text}
           <span class="goal">{piece.goal_text}</span>
         {/if}
@@ -30,29 +31,17 @@
 {/if}
 
 <style>
-  ul {
-    padding-left: 0;
-    list-style: none;
-  }
-  li {
-    margin-bottom: 0.75rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid #e0e0e0;
-  }
-  .status {
-    margin-left: 0.5rem;
-    padding: 0.1rem 0.5rem;
-    border-radius: 0.75rem;
-    background: #e0e0e0;
-    font-size: 0.8rem;
+  .title {
+    font-weight: 600;
   }
   .goal,
   .goal-date {
-    margin-left: 0.5rem;
-    color: #666;
-    font-size: 0.8rem;
+    margin-left: var(--space-2);
+    color: var(--ink-soft);
+    font-size: var(--text-sm);
+    font-style: italic;
   }
   .note {
-    color: #666;
+    color: var(--ink-soft);
   }
 </style>
