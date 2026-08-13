@@ -10,9 +10,11 @@
   let {
     pieces,
     onSaved,
+    onCancel,
   }: {
     pieces: Piece[]
     onSaved: (resource: SheetResource) => void
+    onCancel?: () => void
   } = $props()
 
   let pieceId = $state<number | ''>('')
@@ -93,6 +95,7 @@
     <button type="submit" disabled={submitting || pieceId === '' || reference.trim() === ''}>
       {submitting ? 'Saving…' : 'Add Resource'}
     </button>
+    <button type="button" class="secondary" onclick={onCancel} disabled={submitting}>Cancel</button>
   </div>
 </form>
 

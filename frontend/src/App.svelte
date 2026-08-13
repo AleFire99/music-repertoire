@@ -19,6 +19,7 @@
     type RepertoireList,
     type SheetResource,
   } from './lib/api'
+  import Modal from './lib/Modal.svelte'
   import PieceForm from './lib/PieceForm.svelte'
   import PieceList from './lib/PieceList.svelte'
   import PracticeGoalForm from './lib/PracticeGoalForm.svelte'
@@ -39,7 +40,9 @@
   let favoritesOnly = $state<boolean>(false)
   let difficultyFilter = $state<PieceDifficulty | ''>('')
   let editingPiece = $state<Piece | null>(null)
+  let pieceModalOpen = $state(false)
   let sessions = $state<PracticeSession[]>([])
+  let sessionModalOpen = $state(false)
   let stats = $state<PracticeStats>({
     total_minutes: 0,
     pieces: [],
@@ -51,9 +54,12 @@
     minutes_this_month: 0,
   })
   let goal = $state<PracticeGoal | null>(null)
+  let goalModalOpen = $state(false)
   let sheetResources = $state<SheetResource[]>([])
+  let resourceModalOpen = $state(false)
   let repertoireLists = $state<RepertoireList[]>([])
   let editingRepertoireList = $state<RepertoireList | null>(null)
+  let listModalOpen = $state(false)
   let focusPieces = $state<Piece[]>([])
 
   async function refreshPieces(): Promise<void> {
@@ -104,8 +110,24 @@
     }
   })
 
+  function openAddPiece(): void {
+    editingPiece = null
+    pieceModalOpen = true
+  }
+
+  function openEditPiece(piece: Piece): void {
+    editingPiece = piece
+    pieceModalOpen = true
+  }
+
+  function closePieceModal(): void {
+    pieceModalOpen = false
+    editingPiece = null
+  }
+
   async function handleSessionSaved(saved: PracticeSession): Promise<void> {
     sessions = [...sessions, saved].sort((a, b) => b.practiced_at.localeCompare(a.practiced_at))
+    sessionModalOpen = false
     try {
       await refreshStats()
       await refreshGoal()
@@ -116,6 +138,7 @@
 
   function handleGoalSaved(saved: PracticeGoal): void {
     goal = saved
+    goalModalOpen = false
   }
 
   async function onStatusFilterChange(): Promise<void> {
@@ -129,6 +152,7 @@
   function handlePieceSaved(saved: Piece): void {
     const exists = pieces.some((p) => p.id === saved.id)
     pieces = exists ? pieces.map((p) => (p.id === saved.id ? saved : p)) : [...pieces, saved]
+    pieceModalOpen = false
     editingPiece = null
     refreshFocusPieces().catch((err) => {
       error = err instanceof Error ? err.message : String(err)
@@ -137,7 +161,7 @@
 
   function handlePieceDeleted(id: number): void {
     pieces = pieces.filter((p) => p.id !== id)
-    if (editingPiece?.id === id) editingPiece = null
+    if (editingPiece?.id === id) closePieceModal()
     sheetResources = sheetResources.filter((r) => r.piece_id !== id)
     refreshRepertoireLists().catch((err) => {
       error = err instanceof Error ? err.message : String(err)
@@ -149,10 +173,21 @@
 
   function handleSheetResourceSaved(saved: SheetResource): void {
     sheetResources = [saved, ...sheetResources]
+    resourceModalOpen = false
   }
 
   function handleSheetResourceDeleted(id: number): void {
     sheetResources = sheetResources.filter((r) => r.id !== id)
+  }
+
+  function openAddList(): void {
+    editingRepertoireList = null
+    listModalOpen = true
+  }
+
+  function closeListModal(): void {
+    listModalOpen = false
+    editingRepertoireList = null
   }
 
   function handleRepertoireListSaved(saved: RepertoireList): void {
@@ -160,12 +195,13 @@
     repertoireLists = exists
       ? repertoireLists.map((l) => (l.id === saved.id ? saved : l))
       : [...repertoireLists, saved]
+    listModalOpen = false
     editingRepertoireList = null
   }
 
   function handleRepertoireListDeleted(id: number): void {
     repertoireLists = repertoireLists.filter((l) => l.id !== id)
-    if (editingRepertoireList?.id === id) editingRepertoireList = null
+    if (editingRepertoireList?.id === id) closeListModal()
   }
 
   function handleRepertoireListCountChanged(id: number, pieceCount: number): void {
@@ -175,13 +211,8 @@
 
 <div class="page">
   <header class="masthead">
-    <div>
-      <h1>Music Repertoire</h1>
-      <p class="tagline">a practice journal</p>
-    </div>
-    <span class="chip chip-quiet health" class:health-ok={health === 'ok'}>
-      API — {health}
-    </span>
+    <h1>Music Repertoire</h1>
+    <span class="chip" class:chip-accent={health === 'ok'}>API — {health}</span>
   </header>
 
   {#if error}
@@ -189,17 +220,8 @@
   {/if}
 
   <main>
-    <section class="sheet">
-      <SectionHeader title={editingPiece ? 'Edit Piece' : 'Add Piece'} />
-      <PieceForm
-        piece={editingPiece}
-        onSaved={handlePieceSaved}
-        onCancel={() => (editingPiece = null)}
-      />
-    </section>
-
-    <section class="sheet">
-      <SectionHeader title="Pieces">
+    <section class="panel">
+      <SectionHeader eyebrow="Repertoire" title="Pieces">
         {#snippet right()}
           <div class="filters">
             <label class="filter">
@@ -225,69 +247,86 @@
               Favorites only
             </label>
           </div>
+          <button type="button" onclick={openAddPiece}>+ Add piece</button>
         {/snippet}
       </SectionHeader>
 
-      <PieceList
-        {pieces}
-        onEdit={(p) => (editingPiece = p)}
-        onDeleted={handlePieceDeleted}
-        onUpdated={handlePieceSaved}
-      />
+      <PieceList {pieces} onEdit={openEditPiece} onDeleted={handlePieceDeleted} onUpdated={handlePieceSaved} />
     </section>
 
-    <section class="sheet">
-      <SectionHeader title="Currently in Focus" />
+    <section class="panel">
+      <SectionHeader eyebrow="Repertoire" title="Currently in Focus" />
       <RotationPlanner pieces={focusPieces} />
     </section>
 
-    <section class="sheet">
-      <SectionHeader title="Log Practice Session" />
-      <PracticeSessionForm {pieces} onSaved={handleSessionSaved} />
-    </section>
-
-    <section class="sheet">
-      <SectionHeader title="Recent Sessions" />
+    <section class="panel">
+      <SectionHeader eyebrow="Practice" title="Sessions">
+        {#snippet right()}
+          <button type="button" onclick={() => (sessionModalOpen = true)}>+ Log session</button>
+        {/snippet}
+      </SectionHeader>
       <PracticeSessionList {sessions} {pieces} />
     </section>
 
-    <section class="sheet">
-      <SectionHeader title="Weekly Practice Goal" />
-      <PracticeGoalForm {goal} onSaved={handleGoalSaved} />
-    </section>
-
-    <section class="sheet">
-      <SectionHeader title="Practice Statistics" />
+    <section class="panel">
+      <SectionHeader eyebrow="Practice" title="Statistics">
+        {#snippet right()}
+          <button type="button" class="secondary" onclick={() => (goalModalOpen = true)}>
+            {goal ? 'Edit goal' : 'Set goal'}
+          </button>
+        {/snippet}
+      </SectionHeader>
       <PracticeStatsView {stats} {goal} />
     </section>
 
-    <section class="sheet">
-      <SectionHeader title="Sheet Music Resources" />
-      <SheetResourceForm {pieces} onSaved={handleSheetResourceSaved} />
+    <section class="panel">
+      <SectionHeader eyebrow="Repertoire" title="Sheet Music Resources">
+        {#snippet right()}
+          <button type="button" onclick={() => (resourceModalOpen = true)}>+ Add resource</button>
+        {/snippet}
+      </SectionHeader>
       <SheetResourceList resources={sheetResources} {pieces} onDeleted={handleSheetResourceDeleted} />
     </section>
 
-    <section class="sheet">
-      <SectionHeader title={editingRepertoireList ? 'Rename List' : 'Add Repertoire List'} />
-      <RepertoireListForm
-        list={editingRepertoireList}
-        onSaved={handleRepertoireListSaved}
-        onCancel={() => (editingRepertoireList = null)}
-      />
-    </section>
-
-    <section class="sheet">
-      <SectionHeader title="Repertoire Lists" />
+    <section class="panel">
+      <SectionHeader eyebrow="Repertoire" title="Lists">
+        {#snippet right()}
+          <button type="button" onclick={openAddList}>+ New list</button>
+        {/snippet}
+      </SectionHeader>
       <RepertoireListList
         lists={repertoireLists}
         {pieces}
-        onEdit={(l) => (editingRepertoireList = l)}
+        onEdit={(l) => {
+          editingRepertoireList = l
+          listModalOpen = true
+        }}
         onDeleted={handleRepertoireListDeleted}
         onCountChanged={handleRepertoireListCountChanged}
       />
     </section>
   </main>
 </div>
+
+<Modal open={pieceModalOpen} title={editingPiece ? 'Edit piece' : 'Add piece'} onClose={closePieceModal}>
+  <PieceForm piece={editingPiece} onSaved={handlePieceSaved} onCancel={closePieceModal} />
+</Modal>
+
+<Modal open={sessionModalOpen} title="Log practice session" onClose={() => (sessionModalOpen = false)}>
+  <PracticeSessionForm {pieces} onSaved={handleSessionSaved} onCancel={() => (sessionModalOpen = false)} />
+</Modal>
+
+<Modal open={goalModalOpen} title={goal ? 'Edit weekly goal' : 'Set weekly goal'} onClose={() => (goalModalOpen = false)}>
+  <PracticeGoalForm {goal} onSaved={handleGoalSaved} onCancel={() => (goalModalOpen = false)} />
+</Modal>
+
+<Modal open={resourceModalOpen} title="Add sheet resource" onClose={() => (resourceModalOpen = false)}>
+  <SheetResourceForm {pieces} onSaved={handleSheetResourceSaved} onCancel={() => (resourceModalOpen = false)} />
+</Modal>
+
+<Modal open={listModalOpen} title={editingRepertoireList ? 'Rename list' : 'New repertoire list'} onClose={closeListModal}>
+  <RepertoireListForm list={editingRepertoireList} onSaved={handleRepertoireListSaved} onCancel={closeListModal} />
+</Modal>
 
 <style>
   .page {
@@ -297,30 +336,15 @@
   }
   .masthead {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: var(--space-4);
     margin-bottom: var(--space-6);
-  }
-  .tagline {
-    margin: var(--space-1) 0 0;
-    font-style: italic;
-    font-variant-caps: all-small-caps;
-    letter-spacing: 0.04em;
-    color: var(--ink-soft);
-  }
-  .health {
-    flex: none;
-    margin-left: 0;
-  }
-  .health-ok {
-    color: var(--accent-strong);
   }
   .filters {
     display: flex;
     align-items: end;
     gap: var(--space-4);
-    font-family: var(--font-body);
   }
   .filter {
     font-size: var(--text-xs);

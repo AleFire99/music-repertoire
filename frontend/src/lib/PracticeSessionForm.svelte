@@ -5,9 +5,11 @@
   let {
     pieces,
     onSaved,
+    onCancel,
   }: {
     pieces: Piece[]
     onSaved: (session: PracticeSession) => void
+    onCancel?: () => void
   } = $props()
 
   function nowLocalInputValue(): string {
@@ -112,7 +114,7 @@
     <input type="number" bind:value={durationMinutes} min="1" required />
   </label>
   <div class="timer">
-    <span class="timer-display">{formatElapsed(elapsedSeconds)}</span>
+    <span class="readout readout-lg timer-display">{formatElapsed(elapsedSeconds)}</span>
     <button type="button" class="secondary" onclick={startTimer} disabled={timerRunning}>Start</button>
     <button type="button" class="secondary" onclick={stopTimer} disabled={!timerRunning}>Stop</button>
     <button type="button" class="secondary" onclick={resetTimer} disabled={timerRunning}>Reset</button>
@@ -143,6 +145,7 @@
     <button type="submit" disabled={submitting || pieceId === ''}>
       {submitting ? 'Saving…' : 'Log Session'}
     </button>
+    <button type="button" class="secondary" onclick={onCancel} disabled={submitting}>Cancel</button>
   </div>
 </form>
 
@@ -157,14 +160,10 @@
     align-items: center;
     gap: var(--space-3);
     padding: var(--space-2) var(--space-3);
-    background: var(--brass-soft);
+    background: var(--surface-hover);
     border-radius: var(--radius-sm);
   }
   .timer-display {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-    font-size: var(--text-md);
-    color: var(--ink);
     min-width: 3.5ch;
   }
 </style>

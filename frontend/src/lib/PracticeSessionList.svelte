@@ -21,7 +21,7 @@
 {#if sessions.length === 0}
   <p class="empty">No practice sessions logged yet.</p>
 {:else}
-  <ul class="manuscript-list">
+  <ul class="row-list">
     {#each sessions as session (session.id)}
       <li>
         <span class="title">{pieceTitle(session.piece_id)}</span>
@@ -53,7 +53,7 @@
   }
   .rating {
     margin-left: var(--space-2);
-    color: var(--brass);
+    color: var(--accent-strong);
   }
   .notes {
     margin: var(--space-2) 0 0;

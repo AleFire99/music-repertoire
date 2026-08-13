@@ -40,7 +40,7 @@
 {#if resources.length === 0}
   <p class="empty">No sheet resources yet.</p>
 {:else}
-  <ul class="manuscript-list">
+  <ul class="row-list">
     {#each resources as resource (resource.id)}
       <li>
         <div class="line">
