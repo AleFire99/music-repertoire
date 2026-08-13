@@ -76,6 +76,7 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 ## Post-0.4.0 slices (not yet cut into a release)
 
 - [x] Practice statistics by week and month — issue #78
+- [x] Section-level practice breakdowns — issue #81
 
 ---
 
@@ -85,7 +86,7 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 Goals, performance history, repertoire rotation.
 
 ### Practice
-Weekly goals, progress toward goals, section-level practice breakdowns.
+Weekly goals, progress toward goals.
 
 ### Music representation
 MIDI import, MusicXML import, chord representation, measure representation, sections, annotations. **Audio → MIDI → chord extraction is explicitly out of scope indefinitely** — not a v-next item, a permanent non-goal unless a concrete future requirement changes that.
