@@ -73,6 +73,10 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] Repertoire lists (named lists of pieces) — issue #70
 - [x] Release: `develop` → `release/0.4.0` → `main`, tag `v0.4.0`
 
+## Post-0.4.0 slices (not yet cut into a release)
+
+- [x] Practice statistics by week and month — issue #78
+
 ---
 
 ## Future epics (not implemented, do not start without a new milestone)
@@ -81,7 +85,7 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 Goals, performance history, repertoire rotation.
 
 ### Practice
-Weekly goals, statistics by week/month, progress toward goals, section-level practice breakdowns.
+Weekly goals, progress toward goals, section-level practice breakdowns.
 
 ### Music representation
 MIDI import, MusicXML import, chord representation, measure representation, sections, annotations. **Audio → MIDI → chord extraction is explicitly out of scope indefinitely** — not a v-next item, a permanent non-goal unless a concrete future requirement changes that.
