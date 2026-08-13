@@ -25,6 +25,8 @@
   let tempoBpmRaw = $state('')
   let difficulty = $state<PieceDifficulty | ''>('')
   let instrument = $state('')
+  let goalText = $state('')
+  let goalTargetDate = $state('')
   let status = $state<PieceStatus>('backlog')
   let tagsRaw = $state('')
   let submitting = $state(false)
@@ -37,6 +39,8 @@
     tempoBpmRaw = piece?.tempo_bpm != null ? String(piece.tempo_bpm) : ''
     difficulty = piece?.difficulty ?? ''
     instrument = piece?.instrument ?? ''
+    goalText = piece?.goal_text ?? ''
+    goalTargetDate = piece?.goal_target_date ?? ''
     status = piece?.status ?? 'backlog'
     tagsRaw = piece?.tags.join(', ') ?? ''
     formError = null
@@ -63,6 +67,8 @@
         tempo_bpm: tempoBpmParsed != null && Number.isNaN(tempoBpmParsed) ? null : tempoBpmParsed,
         difficulty: difficulty || null,
         instrument: instrument.trim() || null,
+        goal_text: goalText.trim() || null,
+        goal_target_date: goalTargetDate.trim() || null,
         status,
         tags: parseTags(tagsRaw),
       }
@@ -105,6 +111,19 @@
   <label>
     Instrument
     <input type="text" bind:value={instrument} maxlength="100" />
+  </label>
+  <label>
+    Goal
+    <input
+      type="text"
+      bind:value={goalText}
+      maxlength="500"
+      placeholder="performance-ready for the June recital"
+    />
+  </label>
+  <label>
+    Goal target date
+    <input type="date" bind:value={goalTargetDate} />
   </label>
   <label>
     Status
