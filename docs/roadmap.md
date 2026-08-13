@@ -34,28 +34,45 @@ The interim "stay minimal" convention is retired — issue #102 delivered a
 real design system, applied to every existing view. New feature UI should
 follow it rather than reintroducing ad hoc styling:
 
-- **Direction**: a "manuscript" theme grounded in printed sheet music —
-  warm paper background, ink text, a sealing-wax red accent for actions,
-  aged brass for annotations. Light/dark are both first-class (via
-  `prefers-color-scheme`), not an afterthought.
+- **Direction**: slick, modern, minimal — flat neutral surfaces, hairline
+  borders instead of heavy cards, small radii, a single precise teal accent
+  reserved for primary actions and focus states. Light/dark are both
+  first-class (via `prefers-color-scheme`), not an afterthought.
+- **Interaction pattern**: create/edit forms are never rendered inline in
+  the page flow — they open in a modal. `Modal.svelte` is the shared,
+  hand-rolled dialog component (built on native `<dialog>`, so
+  focus-trapping and top-layer stacking come for free); it handles Escape
+  to close, backdrop click to close, and an explicit close button. Every
+  form component takes an `onCancel` prop so it can close its own modal
+  from a Cancel button, in addition to the modal's own chrome.
 - **Tokens**: all colors, type, and spacing are CSS custom properties
-  defined once in `frontend/src/app.css` (`--paper`, `--ink`, `--accent`,
-  `--brass`, `--space-*`, `--text-*`, etc.) — components consume tokens,
-  they don't hardcode hex values or ad hoc sizes.
-- **Type**: a serif display face (`--font-display`) for headings, a plain
-  sans body face (`--font-body`) for content and forms, tabular numerals
-  (`--font-mono`) for tempo/timer/durations.
-- **Recurring patterns**: `.sheet` (card wrapping each section),
-  `SectionHeader.svelte` (the barline + 5-line staff-rule divider used on
-  every section heading — the system's one signature device),
-  `.manuscript-list` (list items with a left accent bar), `.chip` (the
-  small-caps badge used for status/difficulty/tags/kind/counts, echoing
-  engraved performance directions), and shared `button`/`input`/`select`/
-  `textarea` base styles plus `.secondary`/`.danger` button variants.
+  defined once in `frontend/src/app.css` (`--bg`, `--surface`, `--ink`,
+  `--accent`, `--border`, `--space-*`, `--text-*`, `--radius*`, etc.) —
+  components consume tokens, they don't hardcode hex values or ad hoc
+  sizes.
+- **Type**: a single sans-serif stack (`--font-sans`) for everything,
+  including headings — no separate display face. Tabular monospace
+  (`--font-mono`) is reserved for the readout signature below.
+- **Signature — the "readout"**: a dark instrument-housing chip
+  (`.readout`, `.readout-lg`) with tabular monospace digits, used for every
+  real number a musician reads off a tuner or metronome — the practice
+  timer and the practice-stats totals (minutes, streaks). It stays the
+  same dark chip in both themes, like a physical instrument's display
+  would.
+- **Recurring patterns**: `.panel` (flat bordered container wrapping each
+  section), `SectionHeader.svelte` (eyebrow + heading + optional
+  right-aligned actions, used on every section heading), `.row-list`
+  (list items with a bottom hairline and an optional left accent bar via
+  `.accented`), `.chip` / `.chip-accent` / `.chip-quiet` (the pill badge
+  used for status/difficulty/tags/kind/counts, from most to least
+  emphasis), `Modal.svelte` (create/edit popups), and shared
+  `button`/`input`/`select`/`textarea` base styles plus
+  `.secondary`/`.danger` button variants.
 - **Adding a new view**: reuse these tokens and patterns rather than
-  inventing new ones. If a new recurring element doesn't fit an existing
-  pattern, add it to `app.css` as a token-driven utility class, not a
-  one-off inline style.
+  inventing new ones. Route any new create/edit interaction through
+  `Modal.svelte` rather than an inline form. If a new recurring element
+  doesn't fit an existing pattern, add it to `app.css` as a token-driven
+  utility class, not a one-off inline style.
 
 This was intentionally a single cross-cutting pass (not spread across
 feature PRs) because a design system only holds together if it's applied

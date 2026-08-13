@@ -4,9 +4,11 @@
   let {
     goal = null,
     onSaved,
+    onCancel,
   }: {
     goal?: PracticeGoal | null
     onSaved: (goal: PracticeGoal) => void
+    onCancel?: () => void
   } = $props()
 
   let targetMinutes = $state('')
@@ -43,9 +45,12 @@
     <p class="error">{formError}</p>
   {/if}
 
-  <button type="submit" disabled={submitting}>
-    {#if submitting}Saving…{:else}{goal ? 'Update Goal' : 'Set Goal'}{/if}
-  </button>
+  <div class="actions">
+    <button type="submit" disabled={submitting}>
+      {#if submitting}Saving…{:else}{goal ? 'Update Goal' : 'Set Goal'}{/if}
+    </button>
+    <button type="button" class="secondary" onclick={onCancel} disabled={submitting}>Cancel</button>
+  </div>
 </form>
 
 <style>

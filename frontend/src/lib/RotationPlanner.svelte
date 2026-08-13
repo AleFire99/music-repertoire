@@ -14,7 +14,7 @@
       {pieces.length} pieces in focus — more than the suggested {FOCUS_CAP}. Consider narrowing down.
     </p>
   {/if}
-  <ul class="manuscript-list">
+  <ul class="row-list">
     {#each pieces as piece (piece.id)}
       <li class="accented">
         <span class="title">{piece.title}</span>

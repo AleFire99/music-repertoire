@@ -117,7 +117,7 @@
 {#if lists.length === 0}
   <p class="empty">No repertoire lists yet.</p>
 {:else}
-  <ul class="manuscript-list">
+  <ul class="row-list">
     {#each lists as list (list.id)}
       <li>
         <div class="row">
@@ -211,19 +211,18 @@
     cursor: pointer;
     padding: 0;
     color: var(--ink);
-    font-family: var(--font-display);
     font-weight: 600;
     font-size: var(--text-md);
     text-align: left;
   }
   .expand:hover:not(:disabled) {
     background: none;
-    color: var(--accent);
+    color: var(--accent-strong);
   }
   .disclosure {
     display: inline-block;
     width: 1em;
-    color: var(--brass);
+    color: var(--ink-faint);
   }
   .row-actions {
     margin-left: auto;
@@ -233,7 +232,7 @@
   .detail {
     margin: var(--space-3) 0 var(--space-2) var(--space-5);
     padding-left: var(--space-3);
-    border-left: 2px solid var(--line);
+    border-left: 2px solid var(--border);
   }
   .pieces {
     list-style: none;

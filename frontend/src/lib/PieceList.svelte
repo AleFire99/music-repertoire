@@ -56,7 +56,7 @@
 {#if pieces.length === 0}
   <p class="empty">No pieces yet.</p>
 {:else}
-  <ul class="manuscript-list">
+  <ul class="row-list">
     {#each pieces as piece (piece.id)}
       <li class:accented={piece.is_favorite}>
         <div class="line">
@@ -158,9 +158,9 @@
   }
   .favorite:hover:not(:disabled) {
     background: none;
-    color: var(--brass);
+    color: var(--accent);
   }
   .favorite.favorited {
-    color: var(--brass);
+    color: var(--accent);
   }
 </style>

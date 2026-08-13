@@ -146,9 +146,7 @@
     <button type="submit" disabled={submitting}>
       {#if submitting}Saving…{:else}{piece ? 'Save' : 'Add Piece'}{/if}
     </button>
-    {#if piece}
-      <button type="button" class="secondary" onclick={onCancel} disabled={submitting}>Cancel</button>
-    {/if}
+    <button type="button" class="secondary" onclick={onCancel} disabled={submitting}>Cancel</button>
   </div>
 </form>
 

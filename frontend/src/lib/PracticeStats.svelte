@@ -26,17 +26,28 @@
   <p class="empty">No practice sessions logged yet.</p>
 {:else}
   <div class="totals">
-    <div class="stat"><strong>{stats.total_minutes}</strong><span>min total</span></div>
-    <div class="stat"><strong>{stats.minutes_this_week}</strong><span>min this week</span></div>
-    <div class="stat"><strong>{stats.minutes_this_month}</strong><span>min this month</span></div>
     <div class="stat">
-      <strong>{stats.current_streak_days}</strong><span>day{stats.current_streak_days === 1 ? '' : 's'} streak</span>
+      <span class="readout readout-lg">{stats.total_minutes}</span>
+      <span class="stat-label">min total</span>
     </div>
     <div class="stat">
-      <strong>{stats.longest_streak_days}</strong><span>best streak</span>
+      <span class="readout readout-lg">{stats.minutes_this_week}</span>
+      <span class="stat-label">min this week</span>
+    </div>
+    <div class="stat">
+      <span class="readout readout-lg">{stats.minutes_this_month}</span>
+      <span class="stat-label">min this month</span>
+    </div>
+    <div class="stat">
+      <span class="readout readout-lg">{stats.current_streak_days}</span>
+      <span class="stat-label">day{stats.current_streak_days === 1 ? '' : 's'} streak</span>
+    </div>
+    <div class="stat">
+      <span class="readout readout-lg">{stats.longest_streak_days}</span>
+      <span class="stat-label">best streak</span>
     </div>
   </div>
-  <ul class="manuscript-list">
+  <ul class="row-list">
     {#each stats.pieces as piece (piece.piece_id)}
       <li>
         <span class="title">{piece.piece_title}</span>
@@ -60,7 +71,7 @@
 
 {#if stats.recently_practiced.length > 0}
   <h3>Recently practiced</h3>
-  <ul class="manuscript-list">
+  <ul class="row-list">
     {#each stats.recently_practiced as piece (piece.piece_id)}
       <li>
         {piece.piece_title}
@@ -72,7 +83,7 @@
 
 {#if stats.neglected.length > 0}
   <h3>Neglected</h3>
-  <ul class="manuscript-list">
+  <ul class="row-list">
     {#each stats.neglected as piece (piece.piece_id)}
       <li>
         {piece.piece_title}
@@ -101,7 +112,7 @@
     min-width: 6rem;
     height: 6px;
     border-radius: 999px;
-    background: var(--brass-soft);
+    background: var(--border);
     overflow: hidden;
   }
   .bar-fill {
@@ -117,18 +128,14 @@
     flex-wrap: wrap;
     margin-bottom: var(--space-4);
     padding-bottom: var(--space-3);
-    border-bottom: 1px solid var(--line);
+    border-bottom: 1px solid var(--border);
   }
   .stat {
     display: flex;
     flex-direction: column;
+    gap: var(--space-1);
   }
-  .stat strong {
-    font-family: var(--font-display);
-    font-size: var(--text-xl);
-    line-height: 1.1;
-  }
-  .stat span {
+  .stat-label {
     font-size: var(--text-xs);
     color: var(--ink-soft);
     font-variant-caps: all-small-caps;
