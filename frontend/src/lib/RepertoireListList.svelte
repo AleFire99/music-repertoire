@@ -115,23 +115,24 @@
 {/if}
 
 {#if lists.length === 0}
-  <p>No repertoire lists yet.</p>
+  <p class="empty">No repertoire lists yet.</p>
 {:else}
-  <ul>
+  <ul class="manuscript-list">
     {#each lists as list (list.id)}
       <li>
         <div class="row">
           <button type="button" class="expand" onclick={() => toggleExpand(list)}>
-            {expandedId === list.id ? '▾' : '▸'} {list.name}
+            <span class="disclosure" aria-hidden="true">{expandedId === list.id ? '▾' : '▸'}</span>
+            {list.name}
           </button>
-          <span class="count">{list.piece_count} piece{list.piece_count === 1 ? '' : 's'}</span>
+          <span class="chip">{list.piece_count} piece{list.piece_count === 1 ? '' : 's'}</span>
           <span class="row-actions">
-            <button type="button" onclick={() => onEdit(list)} disabled={deletingId === list.id}>
+            <button type="button" class="secondary" onclick={() => onEdit(list)} disabled={deletingId === list.id}>
               Rename
             </button>
             <button
               type="button"
-              class="delete"
+              class="danger"
               onclick={() => handleDelete(list)}
               disabled={deletingId === list.id}
             >
@@ -147,15 +148,15 @@
             {/if}
             {#if expandedDetail}
               {#if expandedDetail.pieces.length === 0}
-                <p>No pieces on this list yet.</p>
+                <p class="empty">No pieces on this list yet.</p>
               {:else}
                 <ul class="pieces">
                   {#each expandedDetail.pieces as piece (piece.id)}
                     <li>
-                      {piece.title}{piece.composer ? ` — ${piece.composer}` : ''}
+                      <span>{piece.title}{piece.composer ? ` — ${piece.composer}` : ''}</span>
                       <button
                         type="button"
-                        class="delete"
+                        class="danger"
                         onclick={() => handleRemovePiece(piece.id)}
                         disabled={removingPieceId === piece.id}
                       >
@@ -179,6 +180,7 @@
                   </select>
                   <button
                     type="button"
+                    class="secondary"
                     onclick={handleAddPiece}
                     disabled={addingPiece || addPieceId === ''}
                   >
@@ -198,49 +200,56 @@
 {/if}
 
 <style>
-  .error {
-    color: #b00020;
-  }
   .row {
     display: flex;
     align-items: center;
+    gap: var(--space-1);
   }
   .expand {
     background: none;
     border: none;
     cursor: pointer;
     padding: 0;
-    font-size: 1rem;
+    color: var(--ink);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: var(--text-md);
     text-align: left;
   }
-  .count {
-    margin-left: 0.5rem;
-    padding: 0.1rem 0.5rem;
-    border-radius: 0.75rem;
-    background: #e0e0e0;
-    font-size: 0.8rem;
+  .expand:hover:not(:disabled) {
+    background: none;
+    color: var(--accent);
+  }
+  .disclosure {
+    display: inline-block;
+    width: 1em;
+    color: var(--brass);
   }
   .row-actions {
-    margin-left: 0.5rem;
-  }
-  .row-actions button {
-    margin-left: 0.25rem;
-    font-size: 0.8rem;
-  }
-  .delete {
-    color: #b00020;
+    margin-left: auto;
+    display: flex;
+    gap: var(--space-1);
   }
   .detail {
-    margin: 0.5rem 0 1rem 1.5rem;
+    margin: var(--space-3) 0 var(--space-2) var(--space-5);
+    padding-left: var(--space-3);
+    border-left: 2px solid var(--line);
+  }
+  .pieces {
+    list-style: none;
+    padding: 0;
+    margin: 0;
   }
   .pieces li {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-1) 0;
   }
   .add-piece {
     display: flex;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
   }
 </style>

@@ -1,7 +1,301 @@
+/*
+ * Design system tokens — "manuscript" theme.
+ *
+ * Grounded in the vernacular of printed sheet music: warm paper, ink,
+ * a sealing-wax red for the things you act on, aged brass for the
+ * annotations (status, tags, ratings) printed above a staff. The
+ * signature device is the staff-rule + double-barline used on section
+ * headers (see SectionHeader.svelte) — everything else stays quiet.
+ */
+
 :root {
   color-scheme: light dark;
+
+  /* Paper (light) palette */
+  --paper: #f6f1e6;
+  --surface: #fffcf5;
+  --surface-raised: #ffffff;
+  --ink: #26211b;
+  --ink-soft: #6f6355;
+  --ink-faint: #a89a84;
+  --line: #ddd0b8;
+  --accent: #8c2a3a;
+  --accent-strong: #6e1f2c;
+  --accent-contrast: #fdf6ec;
+  --brass: #9c7326;
+  --brass-soft: #ecdfb9;
+  --danger: #96352a;
+  --danger-soft: #f1ddd6;
+  --shadow: rgba(38, 33, 27, 0.08);
+
+  /* Type */
+  --font-display: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+  --font-body:
+    -apple-system, 'Segoe UI', system-ui, Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, 'Cambria Math', Georgia, serif;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.95rem;
+  --text-md: 1.125rem;
+  --text-lg: 1.4rem;
+  --text-xl: 1.85rem;
+  --text-2xl: 2.35rem;
+
+  /* Spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2.25rem;
+  --space-7: 3.25rem;
+
+  --radius: 6px;
+  --radius-sm: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --paper: #1c1815;
+    --surface: #241f19;
+    --surface-raised: #2a241d;
+    --ink: #ece3d2;
+    --ink-soft: #b0a390;
+    --ink-faint: #7c7160;
+    --line: #3d3527;
+    --accent: #e0919a;
+    --accent-strong: #eaacb2;
+    --accent-contrast: #2a1315;
+    --brass: #d3ac5c;
+    --brass-soft: #40371f;
+    --danger: #e0897d;
+    --danger-soft: #3a231e;
+    --shadow: rgba(0, 0, 0, 0.35);
+  }
+}
+
+* {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--text-base);
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ink);
+  margin: 0;
+}
+
+h1 {
+  font-size: var(--text-2xl);
+}
+
+h2 {
+  font-size: var(--text-lg);
+}
+
+h3 {
+  font-size: var(--text-md);
+  font-style: italic;
+}
+
+p {
+  margin: 0 0 var(--space-2);
+}
+
+a {
+  color: var(--accent);
+}
+
+/* Form elements */
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  font-size: var(--text-base);
+  color: var(--ink);
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+textarea {
+  resize: vertical;
+  font-family: var(--font-body);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+button:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+button {
+  font: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+  cursor: pointer;
+  transition: background 150ms ease, border-color 150ms ease, opacity 150ms ease;
+}
+
+button:hover:not(:disabled) {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* Secondary button: cancel / edit / rename / add-row actions */
+button.secondary {
+  color: var(--ink);
+  background: transparent;
+  border-color: var(--line);
+}
+
+button.secondary:hover:not(:disabled) {
+  background: var(--surface-raised);
+  border-color: var(--ink-faint);
+}
+
+/* Danger button: destructive text action, e.g. Delete */
+button.danger {
+  color: var(--danger);
+  background: transparent;
+  border-color: transparent;
+  padding: var(--space-1) var(--space-2);
+}
+
+button.danger:hover:not(:disabled) {
+  background: var(--danger-soft);
+  border-color: transparent;
+}
+
+/* Error text — presentational only, copy is unchanged */
+.error {
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-2);
+}
+
+/* Empty-state copy */
+.empty {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+
+/*
+ * Chip — the shared badge used for every printed-annotation-style label:
+ * status, difficulty, tags, tempo, kind, session count, rating context.
+ * Small caps + letter-spacing echoes engraved performance directions
+ * (ALLEGRO, DOLCE) printed above a staff.
+ */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2em;
+  margin-left: var(--space-2);
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: var(--brass-soft);
+  color: var(--ink-soft);
+  font-size: var(--text-xs);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.chip.chip-accent {
+  background: color-mix(in srgb, var(--accent) 16%, var(--brass-soft));
+  color: var(--accent-strong);
+}
+
+.chip.chip-quiet {
+  background: transparent;
+  color: var(--ink-faint);
+  padding-left: 0;
+}
+
+/* Card — one "sheet" of the binder */
+.sheet {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 3px var(--shadow);
+  padding: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+/* Manuscript list — used for pieces, sessions, resources, focus items */
+.manuscript-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.manuscript-list > li {
+  position: relative;
+  padding: var(--space-3) 0 var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--line);
+}
+
+.manuscript-list > li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: var(--space-2);
+  bottom: var(--space-2);
+  width: 2px;
+  background: var(--line);
+  border-radius: 2px;
+}
+
+.manuscript-list > li.accented::before {
+  background: var(--accent);
+}
+
+.manuscript-list > li:last-child {
+  border-bottom: none;
 }

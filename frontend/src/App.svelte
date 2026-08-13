@@ -28,6 +28,7 @@
   import RepertoireListForm from './lib/RepertoireListForm.svelte'
   import RepertoireListList from './lib/RepertoireListList.svelte'
   import RotationPlanner from './lib/RotationPlanner.svelte'
+  import SectionHeader from './lib/SectionHeader.svelte'
   import SheetResourceForm from './lib/SheetResourceForm.svelte'
   import SheetResourceList from './lib/SheetResourceList.svelte'
 
@@ -172,95 +173,169 @@
   }
 </script>
 
-<main>
-  <h1>Music Repertoire</h1>
-  <p>API health: <strong>{health}</strong></p>
+<div class="page">
+  <header class="masthead">
+    <div>
+      <h1>Music Repertoire</h1>
+      <p class="tagline">a practice journal</p>
+    </div>
+    <span class="chip chip-quiet health" class:health-ok={health === 'ok'}>
+      API — {health}
+    </span>
+  </header>
 
   {#if error}
     <p class="error">{error}</p>
   {/if}
 
-  <h2>{editingPiece ? 'Edit Piece' : 'Add Piece'}</h2>
-  <PieceForm
-    piece={editingPiece}
-    onSaved={handlePieceSaved}
-    onCancel={() => (editingPiece = null)}
-  />
+  <main>
+    <section class="sheet">
+      <SectionHeader title={editingPiece ? 'Edit Piece' : 'Add Piece'} />
+      <PieceForm
+        piece={editingPiece}
+        onSaved={handlePieceSaved}
+        onCancel={() => (editingPiece = null)}
+      />
+    </section>
 
-  <h2>Pieces</h2>
-  <label>
-    Filter by status:
-    <select bind:value={statusFilter} onchange={onStatusFilterChange}>
-      <option value="">All</option>
-      {#each PIECE_STATUSES as status (status)}
-        <option value={status}>{status}</option>
-      {/each}
-    </select>
-  </label>
-  <label>
-    <input type="checkbox" bind:checked={favoritesOnly} onchange={onStatusFilterChange} />
-    Favorites only
-  </label>
-  <label>
-    Filter by difficulty:
-    <select bind:value={difficultyFilter} onchange={onStatusFilterChange}>
-      <option value="">All</option>
-      {#each PIECE_DIFFICULTIES as d (d)}
-        <option value={d}>{d}</option>
-      {/each}
-    </select>
-  </label>
+    <section class="sheet">
+      <SectionHeader title="Pieces">
+        {#snippet right()}
+          <div class="filters">
+            <label class="filter">
+              Status
+              <select bind:value={statusFilter} onchange={onStatusFilterChange}>
+                <option value="">All</option>
+                {#each PIECE_STATUSES as status (status)}
+                  <option value={status}>{status}</option>
+                {/each}
+              </select>
+            </label>
+            <label class="filter">
+              Difficulty
+              <select bind:value={difficultyFilter} onchange={onStatusFilterChange}>
+                <option value="">All</option>
+                {#each PIECE_DIFFICULTIES as d (d)}
+                  <option value={d}>{d}</option>
+                {/each}
+              </select>
+            </label>
+            <label class="filter checkbox">
+              <input type="checkbox" bind:checked={favoritesOnly} onchange={onStatusFilterChange} />
+              Favorites only
+            </label>
+          </div>
+        {/snippet}
+      </SectionHeader>
 
-  <PieceList
-    {pieces}
-    onEdit={(p) => (editingPiece = p)}
-    onDeleted={handlePieceDeleted}
-    onUpdated={handlePieceSaved}
-  />
+      <PieceList
+        {pieces}
+        onEdit={(p) => (editingPiece = p)}
+        onDeleted={handlePieceDeleted}
+        onUpdated={handlePieceSaved}
+      />
+    </section>
 
-  <h2>Currently in Focus</h2>
-  <RotationPlanner pieces={focusPieces} />
+    <section class="sheet">
+      <SectionHeader title="Currently in Focus" />
+      <RotationPlanner pieces={focusPieces} />
+    </section>
 
-  <h2>Log Practice Session</h2>
-  <PracticeSessionForm {pieces} onSaved={handleSessionSaved} />
+    <section class="sheet">
+      <SectionHeader title="Log Practice Session" />
+      <PracticeSessionForm {pieces} onSaved={handleSessionSaved} />
+    </section>
 
-  <h2>Recent Sessions</h2>
-  <PracticeSessionList {sessions} {pieces} />
+    <section class="sheet">
+      <SectionHeader title="Recent Sessions" />
+      <PracticeSessionList {sessions} {pieces} />
+    </section>
 
-  <h2>Weekly Practice Goal</h2>
-  <PracticeGoalForm {goal} onSaved={handleGoalSaved} />
+    <section class="sheet">
+      <SectionHeader title="Weekly Practice Goal" />
+      <PracticeGoalForm {goal} onSaved={handleGoalSaved} />
+    </section>
 
-  <h2>Practice Statistics</h2>
-  <PracticeStatsView {stats} {goal} />
+    <section class="sheet">
+      <SectionHeader title="Practice Statistics" />
+      <PracticeStatsView {stats} {goal} />
+    </section>
 
-  <h2>Sheet Music Resources</h2>
-  <SheetResourceForm {pieces} onSaved={handleSheetResourceSaved} />
-  <SheetResourceList resources={sheetResources} {pieces} onDeleted={handleSheetResourceDeleted} />
+    <section class="sheet">
+      <SectionHeader title="Sheet Music Resources" />
+      <SheetResourceForm {pieces} onSaved={handleSheetResourceSaved} />
+      <SheetResourceList resources={sheetResources} {pieces} onDeleted={handleSheetResourceDeleted} />
+    </section>
 
-  <h2>{editingRepertoireList ? 'Rename List' : 'Add Repertoire List'}</h2>
-  <RepertoireListForm
-    list={editingRepertoireList}
-    onSaved={handleRepertoireListSaved}
-    onCancel={() => (editingRepertoireList = null)}
-  />
+    <section class="sheet">
+      <SectionHeader title={editingRepertoireList ? 'Rename List' : 'Add Repertoire List'} />
+      <RepertoireListForm
+        list={editingRepertoireList}
+        onSaved={handleRepertoireListSaved}
+        onCancel={() => (editingRepertoireList = null)}
+      />
+    </section>
 
-  <h2>Repertoire Lists</h2>
-  <RepertoireListList
-    lists={repertoireLists}
-    {pieces}
-    onEdit={(l) => (editingRepertoireList = l)}
-    onDeleted={handleRepertoireListDeleted}
-    onCountChanged={handleRepertoireListCountChanged}
-  />
-</main>
+    <section class="sheet">
+      <SectionHeader title="Repertoire Lists" />
+      <RepertoireListList
+        lists={repertoireLists}
+        {pieces}
+        onEdit={(l) => (editingRepertoireList = l)}
+        onDeleted={handleRepertoireListDeleted}
+        onCountChanged={handleRepertoireListCountChanged}
+      />
+    </section>
+  </main>
+</div>
 
 <style>
-  main {
-    max-width: 32rem;
-    margin: 2rem auto;
-    font-family: system-ui, sans-serif;
+  .page {
+    max-width: 44rem;
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-4) var(--space-7);
   }
-  .error {
-    color: #b00020;
+  .masthead {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-bottom: var(--space-6);
+  }
+  .tagline {
+    margin: var(--space-1) 0 0;
+    font-style: italic;
+    font-variant-caps: all-small-caps;
+    letter-spacing: 0.04em;
+    color: var(--ink-soft);
+  }
+  .health {
+    flex: none;
+    margin-left: 0;
+  }
+  .health-ok {
+    color: var(--accent-strong);
+  }
+  .filters {
+    display: flex;
+    align-items: end;
+    gap: var(--space-4);
+    font-family: var(--font-body);
+  }
+  .filter {
+    font-size: var(--text-xs);
+  }
+  .filter select {
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--text-sm);
+  }
+  .filter.checkbox {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-1);
+  }
+  main {
+    display: flex;
+    flex-direction: column;
   }
 </style>

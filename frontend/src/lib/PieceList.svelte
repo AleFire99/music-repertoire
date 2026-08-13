@@ -54,99 +54,113 @@
 {/if}
 
 {#if pieces.length === 0}
-  <p>No pieces yet.</p>
+  <p class="empty">No pieces yet.</p>
 {:else}
-  <ul>
+  <ul class="manuscript-list">
     {#each pieces as piece (piece.id)}
-      <li>
-        <button
-          type="button"
-          class="favorite"
-          class:favorited={piece.is_favorite}
-          onclick={() => toggleFavorite(piece)}
-          disabled={togglingFavoriteId === piece.id}
-          aria-label={piece.is_favorite ? 'Unmark as favorite' : 'Mark as favorite'}
-        >
-          {piece.is_favorite ? '★' : '☆'}
-        </button>
-        {piece.title}{piece.composer ? ` — ${piece.composer}` : ''}
-        <span class="status">{piece.status}</span>
-        {#if piece.difficulty}
-          <span class="status">{piece.difficulty}</span>
-        {/if}
-        {#if piece.tags.length > 0}
-          <span class="tags">{piece.tags.join(', ')}</span>
-        {/if}
-        {#if piece.key}
-          <span class="tags">Key: {piece.key}</span>
-        {/if}
-        {#if piece.tempo_bpm != null}
-          <span class="tags">{piece.tempo_bpm} BPM</span>
-        {/if}
-        {#if piece.instrument}
-          <span class="tags">{piece.instrument}</span>
-        {/if}
-        {#if piece.goal_text || piece.goal_target_date}
-          <span class="tags"
-            >Goal: {piece.goal_text ?? ''}{piece.goal_text && piece.goal_target_date
-              ? ' — '
-              : ''}{piece.goal_target_date ?? ''}</span
-          >
-        {/if}
-        <span class="row-actions">
-          <button type="button" onclick={() => onEdit(piece)} disabled={deletingId === piece.id}>
-            Edit
-          </button>
+      <li class:accented={piece.is_favorite}>
+        <div class="line">
           <button
             type="button"
-            class="delete"
-            onclick={() => handleDelete(piece)}
-            disabled={deletingId === piece.id}
+            class="favorite"
+            class:favorited={piece.is_favorite}
+            onclick={() => toggleFavorite(piece)}
+            disabled={togglingFavoriteId === piece.id}
+            aria-label={piece.is_favorite ? 'Unmark as favorite' : 'Mark as favorite'}
           >
-            {deletingId === piece.id ? 'Deleting…' : 'Delete'}
+            {piece.is_favorite ? '★' : '☆'}
           </button>
-        </span>
+          <span class="title">{piece.title}{piece.composer ? ` — ${piece.composer}` : ''}</span>
+          <span class="chip chip-accent">{piece.status}</span>
+          {#if piece.difficulty}
+            <span class="chip">{piece.difficulty}</span>
+          {/if}
+          <span class="row-actions">
+            <button type="button" class="secondary" onclick={() => onEdit(piece)} disabled={deletingId === piece.id}>
+              Edit
+            </button>
+            <button
+              type="button"
+              class="danger"
+              onclick={() => handleDelete(piece)}
+              disabled={deletingId === piece.id}
+            >
+              {deletingId === piece.id ? 'Deleting…' : 'Delete'}
+            </button>
+          </span>
+        </div>
+        <div class="meta">
+          {#if piece.key}
+            <span class="chip chip-quiet">{piece.key}</span>
+          {/if}
+          {#if piece.tempo_bpm != null}
+            <span class="chip chip-quiet tempo">&#9833; = {piece.tempo_bpm}</span>
+          {/if}
+          {#if piece.instrument}
+            <span class="chip chip-quiet">{piece.instrument}</span>
+          {/if}
+          {#each piece.tags as tag (tag)}
+            <span class="chip chip-quiet">{tag}</span>
+          {/each}
+        </div>
+        {#if piece.goal_text || piece.goal_target_date}
+          <p class="goal">
+            Goal: {piece.goal_text ?? ''}{piece.goal_text && piece.goal_target_date
+              ? ' — '
+              : ''}{piece.goal_target_date ?? ''}
+          </p>
+        {/if}
       </li>
     {/each}
   </ul>
 {/if}
 
 <style>
-  .error {
-    color: #b00020;
+  .line {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-1);
   }
-  .status {
-    margin-left: 0.5rem;
-    padding: 0.1rem 0.5rem;
-    border-radius: 0.75rem;
-    background: #e0e0e0;
-    font-size: 0.8rem;
+  .title {
+    font-weight: 600;
   }
-  .tags {
-    margin-left: 0.5rem;
-    color: #666;
-    font-size: 0.8rem;
+  .meta {
+    margin-top: var(--space-1);
+  }
+  .meta .chip {
+    margin-left: 0;
+    margin-right: var(--space-2);
+  }
+  .tempo {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
   }
   .row-actions {
-    margin-left: 0.5rem;
+    margin-left: auto;
+    display: flex;
+    gap: var(--space-1);
   }
-  .row-actions button {
-    margin-left: 0.25rem;
-    font-size: 0.8rem;
-  }
-  .delete {
-    color: #b00020;
+  .goal {
+    margin: var(--space-1) 0 0;
+    color: var(--ink-soft);
+    font-size: var(--text-sm);
+    font-style: italic;
   }
   .favorite {
     background: none;
     border: none;
     cursor: pointer;
     padding: 0;
-    font-size: 1rem;
-    color: #999;
+    font-size: 1.05rem;
+    color: var(--ink-faint);
     vertical-align: middle;
   }
+  .favorite:hover:not(:disabled) {
+    background: none;
+    color: var(--brass);
+  }
   .favorite.favorited {
-    color: #d4a017;
+    color: var(--brass);
   }
 </style>

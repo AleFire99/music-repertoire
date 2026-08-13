@@ -147,7 +147,7 @@
       {#if submitting}Saving…{:else}{piece ? 'Save' : 'Add Piece'}{/if}
     </button>
     {#if piece}
-      <button type="button" onclick={onCancel} disabled={submitting}>Cancel</button>
+      <button type="button" class="secondary" onclick={onCancel} disabled={submitting}>Cancel</button>
     {/if}
   </div>
 </form>
@@ -156,21 +156,6 @@
   form {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-  }
-  label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    font-size: 0.9rem;
-  }
-  .actions {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.25rem;
-  }
-  .error {
-    color: #b00020;
+    gap: var(--space-3);
   }
 </style>

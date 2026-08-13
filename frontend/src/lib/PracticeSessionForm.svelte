@@ -113,9 +113,9 @@
   </label>
   <div class="timer">
     <span class="timer-display">{formatElapsed(elapsedSeconds)}</span>
-    <button type="button" onclick={startTimer} disabled={timerRunning}>Start</button>
-    <button type="button" onclick={stopTimer} disabled={!timerRunning}>Stop</button>
-    <button type="button" onclick={resetTimer} disabled={timerRunning}>Reset</button>
+    <button type="button" class="secondary" onclick={startTimer} disabled={timerRunning}>Start</button>
+    <button type="button" class="secondary" onclick={stopTimer} disabled={!timerRunning}>Stop</button>
+    <button type="button" class="secondary" onclick={resetTimer} disabled={timerRunning}>Reset</button>
   </div>
   <label>
     Section (optional)
@@ -150,29 +150,21 @@
   form {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-  }
-  label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    font-size: 0.9rem;
-  }
-  .actions {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.25rem;
+    gap: var(--space-3);
   }
   .timer {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    background: var(--brass-soft);
+    border-radius: var(--radius-sm);
   }
   .timer-display {
+    font-family: var(--font-mono);
     font-variant-numeric: tabular-nums;
-  }
-  .error {
-    color: #b00020;
+    font-size: var(--text-md);
+    color: var(--ink);
+    min-width: 3.5ch;
   }
 </style>
