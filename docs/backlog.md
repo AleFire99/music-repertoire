@@ -81,7 +81,7 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] Piece-level learning goals (goal text + target date) — issue #88
 - [x] Practice time goals (weekly target + progress) — issue #91
 - [x] Repertoire rotation planner (in-focus pieces view) — issue #95
-- [ ] Release: `develop` → `release/0.5.0` → `main`, tag `v0.5.0`
+- [x] Release: `develop` → `release/0.5.0` → `main`, tag `v0.5.0`
 
 ---
 
