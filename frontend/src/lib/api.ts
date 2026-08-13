@@ -226,6 +226,34 @@ export async function getPracticeStats(): Promise<PracticeStats> {
   return response.json()
 }
 
+export interface PracticeGoal {
+  id: number
+  target_minutes: number
+  minutes_this_week: number
+  created_at: string
+  updated_at: string
+}
+
+export interface PracticeGoalSetInput {
+  target_minutes: number
+}
+
+export async function getPracticeGoal(): Promise<PracticeGoal | null> {
+  const response = await fetch('/api/practice-goal')
+  if (!response.ok) throw new Error(`failed to load practice goal: ${response.status}`)
+  return response.json()
+}
+
+export async function setPracticeGoal(input: PracticeGoalSetInput): Promise<PracticeGoal> {
+  const response = await fetch('/api/practice-goal', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  if (!response.ok) throw new Error(await describeError('failed to set practice goal', response))
+  return response.json()
+}
+
 export type SheetResourceKind = 'url' | 'physical' | 'local-doc'
 
 export const SHEET_RESOURCE_KINDS: SheetResourceKind[] = ['url', 'physical', 'local-doc']
