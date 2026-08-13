@@ -1,3 +1,5 @@
+from datetime import UTC, date, datetime
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -18,6 +20,44 @@ router = APIRouter(prefix="/practice-sessions", tags=["practice-sessions"])
 
 RECENTLY_PRACTICED_LIMIT = 5
 NEGLECTED_LIMIT = 5
+
+
+def _to_utc_date(moment: datetime) -> date:
+    if moment.tzinfo is not None:
+        moment = moment.astimezone(UTC)
+    return moment.date()
+
+
+def _compute_streaks(practice_days: set[date], today: date) -> tuple[int, int]:
+    """Longest run and current run of consecutive calendar days with a session.
+
+    "Current" counts backward from the most recent practice day only if that
+    day is today or yesterday; a gap of 2+ days since the last session resets
+    it to 0. A single practiced day is a streak of 1.
+    """
+    if not practice_days:
+        return 0, 0
+
+    sorted_days = sorted(practice_days)
+
+    longest_streak = 1
+    run = 1
+    for previous_day, day in zip(sorted_days, sorted_days[1:], strict=False):
+        run = run + 1 if (day - previous_day).days == 1 else 1
+        longest_streak = max(longest_streak, run)
+
+    most_recent_day = sorted_days[-1]
+    if (today - most_recent_day).days >= 2:
+        return 0, longest_streak
+
+    current_streak = 1
+    for i in range(len(sorted_days) - 1, 0, -1):
+        if (sorted_days[i] - sorted_days[i - 1]).days == 1:
+            current_streak += 1
+        else:
+            break
+
+    return current_streak, longest_streak
 
 
 @router.post("", response_model=PracticeSessionRead, status_code=201)
@@ -109,9 +149,17 @@ def get_practice_stats(db: Session = Depends(get_db)) -> PracticeStatsRead:
         for piece_id, title, last_practiced_at in neglected_rows
     ]
 
+    practiced_at_values = db.query(PracticeSession.practiced_at).distinct().all()
+    practice_days = {_to_utc_date(row[0]) for row in practiced_at_values}
+    current_streak_days, longest_streak_days = _compute_streaks(
+        practice_days, today=datetime.now(UTC).date()
+    )
+
     return PracticeStatsRead(
         total_minutes=total_minutes,
         pieces=pieces,
         recently_practiced=recently_practiced,
         neglected=neglected,
+        current_streak_days=current_streak_days,
+        longest_streak_days=longest_streak_days,
     )

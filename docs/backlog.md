@@ -64,17 +64,24 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] Piece favorites (toggle + filter) — issue #46
 - [x] Piece key/tempo/difficulty/instrument fields — issue #50
 - [x] Recently-practiced and neglected pieces in practice stats — issue #56
-- [ ] Release: `develop` → `release/0.3.0` → `main`, tag `v0.3.0`
+- [x] Release: `develop` → `release/0.3.0` → `main`, tag `v0.3.0`
+
+## v0.4.0 — Practice timer/streaks, repertoire lists
+
+- [x] Practice session timer (stopwatch, auto-fills duration_minutes) — issue #63
+- [x] Practice streaks (current/longest consecutive-day streaks) — issue #67
+- [x] Repertoire lists (named lists of pieces) — issue #70
+- [ ] Release: `develop` → `release/0.4.0` → `main`, tag `v0.4.0`
 
 ---
 
 ## Future epics (not implemented, do not start without a new milestone)
 
 ### Repertoire
-Favorites, goals, repertoire lists, performance history, repertoire rotation, key/tempo/difficulty/instrument fields.
+Goals, performance history, repertoire rotation.
 
 ### Practice
-Timer, weekly goals, statistics by week/month, neglected pieces, recently practiced, progress toward goals, practice streaks, section-level practice breakdowns.
+Weekly goals, statistics by week/month, progress toward goals, section-level practice breakdowns.
 
 ### Music representation
 MIDI import, MusicXML import, chord representation, measure representation, sections, annotations. **Audio → MIDI → chord extraction is explicitly out of scope indefinitely** — not a v-next item, a permanent non-goal unless a concrete future requirement changes that.

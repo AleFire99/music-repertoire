@@ -1,6 +1,6 @@
 [project]
 name = "repertoire"
-version = "0.3.0"
+version = "0.4.0"
 description = "Backend API for the Music Repertoire app"
 readme = "README.md"
 authors = [

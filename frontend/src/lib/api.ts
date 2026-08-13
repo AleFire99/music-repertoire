@@ -202,6 +202,8 @@ export interface PracticeStats {
   pieces: PiecePracticeStats[]
   recently_practiced: RecentlyPracticedPiece[]
   neglected: NeglectedPiece[]
+  current_streak_days: number
+  longest_streak_days: number
 }
 
 export async function getPracticeStats(): Promise<PracticeStats> {
@@ -262,5 +264,104 @@ export async function deleteSheetResource(id: number): Promise<void> {
   const response = await fetch(`/api/sheet-resources/${id}`, { method: 'DELETE' })
   if (!response.ok) {
     throw new Error(await describeError('failed to delete sheet resource', response))
+  }
+}
+
+export interface RepertoireList {
+  id: number
+  name: string
+  created_at: string
+  updated_at: string
+  piece_count: number
+}
+
+export interface RepertoireListDetail {
+  id: number
+  name: string
+  created_at: string
+  updated_at: string
+  pieces: Piece[]
+}
+
+export interface RepertoireListCreateInput {
+  name: string
+}
+
+export interface RepertoireListUpdateInput {
+  name?: string
+}
+
+export async function listRepertoireLists(): Promise<RepertoireList[]> {
+  const response = await fetch('/api/repertoire-lists')
+  if (!response.ok) throw new Error(`failed to list repertoire lists: ${response.status}`)
+  return response.json()
+}
+
+export async function getRepertoireList(id: number): Promise<RepertoireListDetail> {
+  const response = await fetch(`/api/repertoire-lists/${id}`)
+  if (!response.ok) throw new Error(`failed to load repertoire list: ${response.status}`)
+  return response.json()
+}
+
+export async function createRepertoireList(
+  input: RepertoireListCreateInput,
+): Promise<RepertoireList> {
+  const response = await fetch('/api/repertoire-lists', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  if (!response.ok) {
+    throw new Error(await describeError('failed to create repertoire list', response))
+  }
+  return response.json()
+}
+
+export async function updateRepertoireList(
+  id: number,
+  input: RepertoireListUpdateInput,
+): Promise<RepertoireList> {
+  const response = await fetch(`/api/repertoire-lists/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  if (!response.ok) {
+    throw new Error(await describeError('failed to update repertoire list', response))
+  }
+  return response.json()
+}
+
+export async function deleteRepertoireList(id: number): Promise<void> {
+  const response = await fetch(`/api/repertoire-lists/${id}`, { method: 'DELETE' })
+  if (!response.ok) {
+    throw new Error(await describeError('failed to delete repertoire list', response))
+  }
+}
+
+export async function addPieceToRepertoireList(
+  listId: number,
+  pieceId: number,
+): Promise<RepertoireListDetail> {
+  const response = await fetch(`/api/repertoire-lists/${listId}/pieces`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ piece_id: pieceId }),
+  })
+  if (!response.ok) {
+    throw new Error(await describeError('failed to add piece to repertoire list', response))
+  }
+  return response.json()
+}
+
+export async function removePieceFromRepertoireList(
+  listId: number,
+  pieceId: number,
+): Promise<void> {
+  const response = await fetch(`/api/repertoire-lists/${listId}/pieces/${pieceId}`, {
+    method: 'DELETE',
+  })
+  if (!response.ok) {
+    throw new Error(await describeError('failed to remove piece from repertoire list', response))
   }
 }

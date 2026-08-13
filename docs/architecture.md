@@ -16,6 +16,16 @@ v0.1 ("Repertoire Foundation") started intentionally small: Piece CRUD only. v0.
 | Packaging | uv (backend), npm (frontend) | Fast, standard, zero extra tooling. |
 | Runtime | Docker Compose (3 containers: postgres, backend, frontend) | One `docker compose up` for the whole stack; no per-dev environment drift. |
 
+## API reference
+
+No hand-maintained API doc exists (or should exist) — FastAPI auto-generates one from the route/schema code, so it's always current with zero upkeep. With the backend running (`docker compose up`):
+
+- Swagger UI (interactive): `http://localhost:${BACKEND_HOST_PORT:-8000}/docs`
+- ReDoc (read-only reference): same host, `/redoc`
+- Raw OpenAPI schema: `/openapi.json`
+
+These are on the backend's own port directly, not proxied through the frontend's Vite dev server (which only proxies `/api/*`).
+
 ## System diagram (v0.1)
 
 ```mermaid
