@@ -1,12 +1,24 @@
 <script lang="ts">
-  import type { PracticeStats } from './api'
+  import type { PracticeGoal, PracticeStats } from './api'
 
-  let { stats }: { stats: PracticeStats } = $props()
+  let { stats, goal = null }: { stats: PracticeStats; goal?: PracticeGoal | null } = $props()
 
   function formatDate(iso: string): string {
     return new Date(iso).toLocaleString()
   }
+
+  function formatHours(minutes: number): string {
+    return (minutes / 60).toFixed(1)
+  }
 </script>
+
+{#if goal}
+  <p>
+    Weekly goal progress:
+    <strong>{formatHours(goal.minutes_this_week)} / {formatHours(goal.target_minutes)} hours</strong>
+    this week
+  </p>
+{/if}
 
 {#if stats.pieces.length === 0}
   <p>No practice sessions logged yet.</p>

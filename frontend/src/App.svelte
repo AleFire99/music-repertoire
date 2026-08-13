@@ -2,6 +2,7 @@
   import { onMount } from 'svelte'
   import {
     getHealth,
+    getPracticeGoal,
     getPracticeStats,
     listPieces,
     listPracticeSessions,
@@ -12,6 +13,7 @@
     type Piece,
     type PieceStatus,
     type PieceDifficulty,
+    type PracticeGoal,
     type PracticeSession,
     type PracticeStats,
     type RepertoireList,
@@ -19,6 +21,7 @@
   } from './lib/api'
   import PieceForm from './lib/PieceForm.svelte'
   import PieceList from './lib/PieceList.svelte'
+  import PracticeGoalForm from './lib/PracticeGoalForm.svelte'
   import PracticeSessionForm from './lib/PracticeSessionForm.svelte'
   import PracticeSessionList from './lib/PracticeSessionList.svelte'
   import PracticeStatsView from './lib/PracticeStats.svelte'
@@ -45,6 +48,7 @@
     minutes_this_week: 0,
     minutes_this_month: 0,
   })
+  let goal = $state<PracticeGoal | null>(null)
   let sheetResources = $state<SheetResource[]>([])
   let repertoireLists = $state<RepertoireList[]>([])
   let editingRepertoireList = $state<RepertoireList | null>(null)
@@ -65,6 +69,10 @@
     stats = await getPracticeStats()
   }
 
+  async function refreshGoal(): Promise<void> {
+    goal = await getPracticeGoal()
+  }
+
   async function refreshSheetResources(): Promise<void> {
     sheetResources = await listSheetResources()
   }
@@ -80,6 +88,7 @@
       await refreshPieces()
       await refreshSessions()
       await refreshStats()
+      await refreshGoal()
       await refreshSheetResources()
       await refreshRepertoireLists()
     } catch (err) {
@@ -91,9 +100,14 @@
     sessions = [...sessions, saved].sort((a, b) => b.practiced_at.localeCompare(a.practiced_at))
     try {
       await refreshStats()
+      await refreshGoal()
     } catch (err) {
       error = err instanceof Error ? err.message : String(err)
     }
+  }
+
+  function handleGoalSaved(saved: PracticeGoal): void {
+    goal = saved
   }
 
   async function onStatusFilterChange(): Promise<void> {
@@ -197,8 +211,11 @@
   <h2>Recent Sessions</h2>
   <PracticeSessionList {sessions} {pieces} />
 
+  <h2>Weekly Practice Goal</h2>
+  <PracticeGoalForm {goal} onSaved={handleGoalSaved} />
+
   <h2>Practice Statistics</h2>
-  <PracticeStatsView {stats} />
+  <PracticeStatsView {stats} {goal} />
 
   <h2>Sheet Music Resources</h2>
   <SheetResourceForm {pieces} onSaved={handleSheetResourceSaved} />

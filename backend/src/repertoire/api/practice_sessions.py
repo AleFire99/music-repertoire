@@ -1,9 +1,10 @@
-from datetime import UTC, date, datetime, time, timedelta
+from datetime import UTC, date, datetime
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from repertoire.date_utils import current_week_bounds, start_of_utc_day
 from repertoire.db import get_db
 from repertoire.models.piece import Piece
 from repertoire.models.practice_session import PracticeSession
@@ -30,21 +31,6 @@ def _to_utc_date(moment: datetime) -> date:
     return moment.date()
 
 
-def _start_of_utc_day(moment: date) -> datetime:
-    return datetime.combine(moment, time.min, tzinfo=UTC)
-
-
-def _current_week_bounds(today: date) -> tuple[datetime, datetime]:
-    """[start, end) for the current ISO week (Monday-start), in UTC.
-
-    A session exactly at Monday 00:00:00 UTC counts as this week; a session
-    at the following Monday 00:00:00 UTC belongs to next week (excluded).
-    """
-    start_date = today - timedelta(days=today.weekday())
-    end_date = start_date + timedelta(days=7)
-    return _start_of_utc_day(start_date), _start_of_utc_day(end_date)
-
-
 def _current_month_bounds(today: date) -> tuple[datetime, datetime]:
     """[start, end) for the current calendar month, in UTC.
 
@@ -57,7 +43,7 @@ def _current_month_bounds(today: date) -> tuple[datetime, datetime]:
         if start_date.month == 12
         else start_date.replace(month=start_date.month + 1)
     )
-    return _start_of_utc_day(start_date), _start_of_utc_day(end_date)
+    return start_of_utc_day(start_date), start_of_utc_day(end_date)
 
 
 def _compute_streaks(practice_days: set[date], today: date) -> tuple[int, int]:
@@ -215,7 +201,7 @@ def get_practice_stats(db: Session = Depends(get_db)) -> PracticeStatsRead:
     today = datetime.now(UTC).date()
     current_streak_days, longest_streak_days = _compute_streaks(practice_days, today=today)
 
-    week_start, week_end = _current_week_bounds(today)
+    week_start, week_end = current_week_bounds(today)
     minutes_this_week = (
         db.query(func.sum(PracticeSession.duration_minutes))
         .filter(
