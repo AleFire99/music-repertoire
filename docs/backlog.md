@@ -77,6 +77,7 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 
 - [x] Practice statistics by week and month — issue #78
 - [x] Section-level practice breakdowns — issue #81
+- [x] Fix: cascade-delete practice sessions when their piece is deleted — issue #83
 
 ---
 
