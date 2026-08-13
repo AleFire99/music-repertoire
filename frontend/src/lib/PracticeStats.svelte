@@ -28,6 +28,16 @@
         {piece.piece_title} — {piece.total_minutes} min
         <span class="count">{piece.session_count} session{piece.session_count === 1 ? '' : 's'}</span>
         <span class="when">last: {formatDate(piece.last_practiced_at)}</span>
+        {#if piece.sections.length > 0}
+          <details>
+            <summary>By section</summary>
+            <ul>
+              {#each piece.sections as section (section.section)}
+                <li>{section.section} — {section.total_minutes} min</li>
+              {/each}
+            </ul>
+          </details>
+        {/if}
       </li>
     {/each}
   </ul>
