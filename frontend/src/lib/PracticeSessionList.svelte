@@ -24,15 +24,17 @@
   <ul class="row-list">
     {#each sessions as session (session.id)}
       <li>
-        <span class="title">{pieceTitle(session.piece_id)}</span>
-        <span class="chip chip-accent">{session.duration_minutes} min</span>
-        {#if session.section}
-          <span class="chip">{session.section}</span>
-        {/if}
-        {#if session.rating}
-          <span class="rating">{'★'.repeat(session.rating)}</span>
-        {/if}
-        <span class="when">{formatDate(session.practiced_at)}</span>
+        <div class="line">
+          <span class="title">{pieceTitle(session.piece_id)}</span>
+          <span class="tag small-caps">
+            <span class="readout">{session.duration_minutes}</span> min{#if session.section}
+              <span class="dot-sep"> &middot; </span>{session.section}{/if}
+          </span>
+          {#if session.rating}
+            <span class="rating">{'★'.repeat(session.rating)}</span>
+          {/if}
+        </div>
+        <div class="meta-line"><span>{formatDate(session.practiced_at)}</span></div>
         {#if session.notes}
           <p class="notes">{session.notes}</p>
         {/if}
@@ -42,18 +44,26 @@
 {/if}
 
 <style>
-  .title {
-    font-weight: 600;
+  .line {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: var(--space-2);
   }
-  .when {
-    display: block;
-    margin-top: var(--space-1);
+  .title {
+    font-family: var(--font-serif);
+    font-size: var(--text-md);
+  }
+  .tag {
     color: var(--ink-faint);
-    font-size: var(--text-xs);
+    font-size: var(--text-sm);
+  }
+  .dot-sep {
+    color: var(--ink-faint);
   }
   .rating {
-    margin-left: var(--space-2);
-    color: var(--accent-strong);
+    color: var(--accent);
+    font-size: var(--text-sm);
   }
   .notes {
     margin: var(--space-2) 0 0;

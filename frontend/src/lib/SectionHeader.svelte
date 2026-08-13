@@ -1,46 +1,36 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
 
-  let { eyebrow, title, right }: { eyebrow: string; title: string; right?: Snippet } = $props()
+  let {
+    title,
+    dek,
+    actions,
+  }: { title: string; dek?: string; actions?: Snippet } = $props()
 </script>
 
 <header class="section-header">
-  <div class="row">
-    <div>
-      <p class="eyebrow">{eyebrow}</p>
-      <h2>{title}</h2>
-    </div>
-    {#if right}
-      <div class="right">{@render right()}</div>
-    {/if}
-  </div>
+  <h2>{title}</h2>
+  {#if dek}
+    <p class="dek">{dek}</p>
+  {/if}
+  <hr class="rule" />
+  {#if actions}
+    <div class="actions-row">{@render actions()}</div>
+  {/if}
 </header>
 
 <style>
   .section-header {
-    padding-bottom: var(--space-4);
-    margin-bottom: var(--space-4);
-    border-bottom: 1px solid var(--border);
+    margin-bottom: var(--space-5);
   }
-  .row {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: var(--space-4);
-    flex-wrap: wrap;
+  .rule {
+    margin-top: var(--space-4);
   }
-  .eyebrow {
-    margin: 0 0 0.2rem;
-    color: var(--accent-strong);
-    font-size: var(--text-xs);
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-  }
-  .right {
-    font-family: var(--font-sans);
+  .actions-row {
     display: flex;
     align-items: center;
-    gap: var(--space-3);
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    padding-top: var(--space-3);
   }
 </style>

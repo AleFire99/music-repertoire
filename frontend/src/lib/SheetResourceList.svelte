@@ -1,5 +1,6 @@
 <script lang="ts">
   import { deleteSheetResource, type Piece, type SheetResource } from './api'
+  import Icon from './Icon.svelte'
 
   let {
     resources,
@@ -45,18 +46,18 @@
       <li>
         <div class="line">
           <span class="title">{pieceTitle(resource.piece_id)}</span>
-          <span class="chip">{resource.kind}</span>
-          {#if resource.label}
-            <span class="label">{resource.label}</span>
-          {/if}
+          <span class="tag small-caps">
+            {resource.kind}{#if resource.label}<span class="dot-sep"> &middot; </span>{resource.label}{/if}
+          </span>
           <span class="row-actions">
             <button
               type="button"
-              class="danger"
+              class="icon-btn danger"
               onclick={() => handleDelete(resource)}
               disabled={deletingId === resource.id}
+              aria-label="Delete"
             >
-              {deletingId === resource.id ? 'Deleting…' : 'Delete'}
+              <Icon name="delete" />
             </button>
           </span>
         </div>
@@ -72,19 +73,25 @@
 <style>
   .line {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     flex-wrap: wrap;
-    gap: var(--space-1);
+    gap: var(--space-2);
   }
   .title {
-    font-weight: 600;
+    font-family: var(--font-serif);
+    font-size: var(--text-md);
   }
-  .label {
-    color: var(--ink-soft);
-    font-style: italic;
+  .tag {
+    color: var(--ink-faint);
+    font-size: var(--text-sm);
+  }
+  .dot-sep {
+    color: var(--ink-faint);
   }
   .row-actions {
     margin-left: auto;
+    display: flex;
+    gap: var(--space-1);
   }
   .reference {
     margin: var(--space-1) 0 0;
@@ -95,5 +102,6 @@
     margin: var(--space-1) 0 0;
     color: var(--ink-soft);
     font-size: var(--text-xs);
+    font-style: italic;
   }
 </style>

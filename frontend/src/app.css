@@ -1,45 +1,42 @@
 /*
- * Design system tokens — slick / modern / minimal.
+ * Design system tokens — Minimal Monochrome Editorial.
  *
- * Flat neutral surfaces, one precise accent, sans-serif type throughout.
- * The signature is the "readout" — a dark LCD-housing chip with tabular
- * monospace digits, used for every real number a musician reads off a
- * tuner or metronome (tempo, durations, counts, streaks). It stays the
- * same dark chip in both themes, like a physical instrument's display
- * would. Everything else stays quiet: hairlines instead of heavy cards,
- * small radii, restrained shadows reserved for the modal layer.
+ * A "critical edition's index" aesthetic: pure neutral grayscale, one
+ * accent ("editor's blue pencil") reserved for annotation and reference —
+ * links, the active-nav tick, the current-streak numeral — never used
+ * decoratively. Radius is zero everywhere: sharp edges read as page/table,
+ * not app card. Three type roles: serif display for headlines and hero
+ * numerals, the existing sans stack for UI chrome, the existing mono
+ * stack for genuinely tabular data (dates, durations, counts).
  */
 
 :root {
   color-scheme: light dark;
 
   /* Surfaces */
-  --bg: #f7f7f8;
+  --bg: #f6f6f5;
+  --sidebar-bg: #eeeeec;
   --surface: #ffffff;
   --surface-2: #ffffff;
-  --surface-hover: #f1f1f3;
-  --ink: #16181d;
-  --ink-soft: #6b6f78;
-  --ink-faint: #9a9ea8;
-  --border: #e6e7ea;
-  --shadow: rgba(15, 17, 21, 0.12);
-  --backdrop: rgba(10, 12, 15, 0.5);
+  --surface-hover: #eeeeec;
+  --ink: #1c1c1a;
+  --ink-soft: #5f5f5c;
+  --ink-faint: #8f8f8b;
+  --border: #dcdcda;
+  --shadow: rgba(28, 28, 26, 0.1);
+  --backdrop: rgba(20, 20, 18, 0.45);
 
-  /* Accent — a tuner/metronome signal color */
-  --accent: #0f9d92;
-  --accent-strong: #0b7d74;
+  /* Accent — the editor's blue pencil: annotation and reference only */
+  --accent: #2b579e;
+  --accent-strong: #1b3a70;
   --accent-contrast: #ffffff;
-  --accent-tint: rgba(15, 157, 146, 0.12);
-  --danger: #c8392f;
-  --danger-strong: #a92e26;
-  --danger-tint: rgba(200, 57, 47, 0.1);
-
-  /* Readout — always a dark instrument housing, in both themes */
-  --readout-bg: #14171c;
-  --readout-fg: #35e0c9;
-  --readout-fg-dim: #7c8683;
+  --accent-tint: rgba(43, 87, 158, 0.08);
+  --danger: #a1402f;
+  --danger-strong: #7c2f22;
+  --danger-tint: rgba(161, 64, 47, 0.08);
 
   /* Type */
+  --font-serif: Georgia, 'Times New Roman', 'Liberation Serif', serif;
   --font-sans:
     -apple-system, 'Segoe UI', system-ui, Roboto, Helvetica, Arial, sans-serif;
   --font-mono: ui-monospace, 'Cascadia Mono', 'SF Mono', Consolas, monospace;
@@ -50,7 +47,7 @@
   --text-md: 1.0625rem;
   --text-lg: 1.3rem;
   --text-xl: 1.75rem;
-  --text-2xl: 2.1rem;
+  --text-2xl: 2.75rem;
 
   /* Spacing scale */
   --space-1: 0.25rem;
@@ -61,31 +58,55 @@
   --space-6: 2.25rem;
   --space-7: 3.25rem;
 
-  --radius: 10px;
-  --radius-sm: 6px;
+  /* Radius — the loudest structural decision: zero, everywhere */
+  --radius: 0;
+  --radius-sm: 0;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #0e1013;
-    --surface: #15181d;
-    --surface-2: #1b1f26;
-    --surface-hover: #1f2329;
-    --ink: #eef0f2;
-    --ink-soft: #a3a8b0;
-    --ink-faint: #6d7178;
-    --border: #262a31;
+    --bg: #17181a;
+    --sidebar-bg: #101113;
+    --surface: #1e1f22;
+    --surface-2: #1e1f22;
+    --surface-hover: #26272a;
+    --ink: #ececea;
+    --ink-soft: #a8a7a2;
+    --ink-faint: #75746f;
+    --border: #2d2e30;
     --shadow: rgba(0, 0, 0, 0.5);
-    --backdrop: rgba(4, 5, 7, 0.65);
+    --backdrop: rgba(4, 5, 6, 0.6);
 
-    --accent: #35e0c9;
-    --accent-strong: #5eeadb;
-    --accent-contrast: #06201d;
-    --accent-tint: rgba(53, 224, 201, 0.14);
-    --danger: #ef7a72;
-    --danger-strong: #f39a94;
-    --danger-tint: rgba(239, 122, 114, 0.14);
+    --accent: #86abe6;
+    --accent-strong: #b3cbf2;
+    --accent-contrast: #10192a;
+    --accent-tint: rgba(134, 171, 230, 0.14);
+    --danger: #d98b78;
+    --danger-strong: #eeab9a;
+    --danger-tint: rgba(217, 139, 120, 0.14);
   }
+}
+
+:root[data-theme='dark'] {
+  --bg: #17181a;
+  --sidebar-bg: #101113;
+  --surface: #1e1f22;
+  --surface-2: #1e1f22;
+  --surface-hover: #26272a;
+  --ink: #ececea;
+  --ink-soft: #a8a7a2;
+  --ink-faint: #75746f;
+  --border: #2d2e30;
+  --shadow: rgba(0, 0, 0, 0.5);
+  --backdrop: rgba(4, 5, 6, 0.6);
+
+  --accent: #86abe6;
+  --accent-strong: #b3cbf2;
+  --accent-contrast: #10192a;
+  --accent-tint: rgba(134, 171, 230, 0.14);
+  --danger: #d98b78;
+  --danger-strong: #eeab9a;
+  --danger-tint: rgba(217, 139, 120, 0.14);
 }
 
 * {
@@ -104,27 +125,32 @@ body {
 h1,
 h2,
 h3 {
-  font-family: var(--font-sans);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ink);
   margin: 0;
+  color: var(--ink);
 }
 
 h1 {
-  font-size: var(--text-2xl);
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: var(--text-xl);
+  letter-spacing: 0;
 }
 
 h2 {
-  font-size: var(--text-lg);
-  font-weight: 600;
-  letter-spacing: -0.005em;
+  font-family: var(--font-serif);
+  font-weight: 400;
+  font-size: var(--text-2xl);
+  letter-spacing: 0;
+  line-height: 1.1;
 }
 
 h3 {
-  font-size: var(--text-md);
+  font-family: var(--font-sans);
   font-weight: 600;
+  font-size: var(--text-sm);
   color: var(--ink-soft);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.04em;
 }
 
 p {
@@ -132,7 +158,52 @@ p {
 }
 
 a {
-  color: var(--accent-strong);
+  color: var(--accent);
+}
+
+/* Dek — italic subtitle line beneath a serif headline */
+.dek {
+  margin: var(--space-2) 0 0;
+  font-family: var(--font-sans);
+  font-style: italic;
+  color: var(--ink-soft);
+  font-size: var(--text-md);
+}
+
+/* Small-caps label — colophon lines, captions, column headers */
+.small-caps {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.04em;
+}
+
+/* Hero/tabular numeral — serif, used for real numbers the reader compares */
+.numeral {
+  font-family: var(--font-serif);
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.numeral.accent {
+  color: var(--accent);
+}
+
+/* Caption — small-caps label under a numeral or heading a data column */
+.caption {
+  font-family: var(--font-sans);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.04em;
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}
+
+/* Full-width hairline rule */
+.rule {
+  border: none;
+  height: 1px;
+  background: var(--border);
+  margin: 0;
 }
 
 /* Form elements */
@@ -176,17 +247,23 @@ button {
   font: inherit;
   font-size: var(--text-sm);
   font-weight: 600;
-  color: var(--accent-contrast);
-  background: var(--accent);
-  border: 1px solid transparent;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.02em;
+  color: var(--bg);
+  background: var(--ink);
+  border: 1px solid var(--ink);
   border-radius: var(--radius-sm);
   padding: var(--space-2) var(--space-4);
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
   transition: background 120ms ease, border-color 120ms ease, opacity 120ms ease;
 }
 
 button:hover:not(:disabled) {
-  background: var(--accent-strong);
+  background: var(--ink-soft);
+  border-color: var(--ink-soft);
 }
 
 button:disabled {
@@ -194,7 +271,7 @@ button:disabled {
   cursor: default;
 }
 
-/* Secondary button: cancel / rename / add-row / low-emphasis actions */
+/* Secondary button: cancel / rename / low-emphasis actions */
 button.secondary {
   color: var(--ink);
   background: transparent;
@@ -206,7 +283,7 @@ button.secondary:hover:not(:disabled) {
   border-color: var(--ink-faint);
 }
 
-/* Danger button: destructive text action, e.g. Delete */
+/* Danger button: destructive text action */
 button.danger {
   color: var(--danger);
   background: transparent;
@@ -216,6 +293,87 @@ button.danger {
 
 button.danger:hover:not(:disabled) {
   background: var(--danger-tint);
+}
+
+/* Icon button — hover-revealed row action (pencil-nib / strike-mark / etc.) */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  color: var(--ink-faint);
+  background: none;
+  border: none;
+  opacity: 0;
+  transition: opacity 120ms ease, color 120ms ease;
+}
+
+.icon-btn:hover:not(:disabled) {
+  background: none;
+  border-color: transparent;
+  color: var(--ink);
+}
+
+.icon-btn.danger {
+  color: var(--ink-faint);
+}
+
+.icon-btn.danger:hover:not(:disabled) {
+  background: none;
+  color: var(--danger);
+}
+
+li:hover .icon-btn,
+.icon-btn:focus-visible {
+  opacity: 1;
+}
+
+/* Text toggle — underlined-on-active filter switch, joined by middle dots */
+.text-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.text-toggle:hover:not(:disabled) {
+  background: none;
+  border-color: transparent;
+  text-decoration: underline;
+}
+
+.text-toggle.active {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--accent);
+  text-decoration-thickness: 1.5px;
+}
+
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  flex-wrap: wrap;
+}
+
+.toggle-row > .text-toggle + .text-toggle {
+  margin-left: var(--space-3);
+}
+
+.toggle-row > .text-toggle + .text-toggle::before {
+  content: '\00B7';
+  margin-right: var(--space-3);
+  color: var(--ink-faint);
+}
+
+/* Pushes a trailing element to the far right of a flex row */
+.push-right {
+  margin-left: auto;
 }
 
 /* Error text — presentational only, copy is unchanged */
@@ -234,61 +392,18 @@ button.danger:hover:not(:disabled) {
 }
 
 /*
- * Chip — small pill badge for status/difficulty/tags/kind labels.
- */
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2em;
-  padding: 0.15rem 0.6rem;
-  border-radius: 999px;
-  background: var(--surface-hover);
-  color: var(--ink-soft);
-  font-size: var(--text-xs);
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.chip.chip-accent {
-  background: var(--accent-tint);
-  color: var(--accent-strong);
-}
-
-/* Chip, low-emphasis variant — secondary metadata (key, tempo, tags, per-section counts) */
-.chip.chip-quiet {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--ink-faint);
-}
-
-/*
- * Readout — the signature: a dark instrument-housing chip with tabular
- * monospace digits, for every real number (tempo, durations, counts,
- * streaks). Stays dark in both themes, like a physical LCD.
+ * Readout — a real number the reader compares (durations). Tabular mono,
+ * no housing chip; the LCD-instrument treatment is retired with the old
+ * design system.
  */
 .readout {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.3em;
-  background: var(--readout-bg);
-  color: var(--readout-fg);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  font-size: var(--text-xs);
-  padding: 0.2rem 0.55rem;
-  border-radius: var(--radius-sm);
-  line-height: 1.4;
-}
-
-.readout .unit {
-  color: var(--readout-fg-dim);
-  font-size: 0.85em;
+  color: var(--ink);
 }
 
 .readout-lg {
   font-size: var(--text-lg);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-sm);
 }
 
 /* Panel — a section's flat container */
@@ -320,13 +435,58 @@ button.danger:hover:not(:disabled) {
 }
 
 .row-list > li.accented {
-  border-left: 2px solid var(--accent);
+  border-left: 1.5px solid var(--accent);
   padding-left: var(--space-3);
   margin-left: calc(var(--space-3) * -1);
 }
 
 .row-list > li:last-child {
   border-bottom: none;
+}
+
+/* Meta caption line — plain ink-faint text, values joined by middle dots */
+.meta-line {
+  margin-top: var(--space-1);
+  color: var(--ink-faint);
+  font-size: var(--text-sm);
+}
+
+.meta-line > span + span::before {
+  content: '\00B7';
+  margin: 0 0.5em;
+}
+
+/* Index table — real table for tabular data (per-piece breakdowns, etc.) */
+.index-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+
+.index-table th {
+  text-align: left;
+  padding: 0 var(--space-2) var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+  color: var(--ink-faint);
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.03em;
+}
+
+.index-table td {
+  padding: var(--space-2) var(--space-2) var(--space-2) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.index-table tr:last-child td {
+  border-bottom: none;
+}
+
+.index-table th.num,
+.index-table td.num {
+  text-align: right;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Native <dialog> reset + modal chrome (see Modal.svelte) */

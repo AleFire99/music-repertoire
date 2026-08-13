@@ -28,51 +28,60 @@ styling something that might still change shape.
 Work continues one small slice at a time via `scripts/new-feature.sh`, same
 cadence as issues #18–#46.
 
-## UI design system (established by the #102 design pass)
+## UI design system (Minimal Monochrome Editorial, established by #105)
 
-The interim "stay minimal" convention is retired — issue #102 delivered a
-real design system, applied to every existing view. New feature UI should
-follow it rather than reintroducing ad hoc styling:
+Issue #102's teal-accented "slick/modern/minimal" pass was replaced wholesale
+by #105 after live review — the single-scrolling-page layout read as
+document-like rather than app-like. **Minimal Monochrome Editorial** ("a
+critical edition's index") is the current system, applied to every view in
+one pass. New feature UI should follow it rather than reintroducing ad hoc
+styling:
 
-- **Direction**: slick, modern, minimal — flat neutral surfaces, hairline
-  borders instead of heavy cards, small radii, a single precise teal accent
-  reserved for primary actions and focus states. Light/dark are both
-  first-class (via `prefers-color-scheme`), not an afterthought.
-- **Interaction pattern**: create/edit forms are never rendered inline in
-  the page flow — they open in a modal. `Modal.svelte` is the shared,
-  hand-rolled dialog component (built on native `<dialog>`, so
-  focus-trapping and top-layer stacking come for free); it handles Escape
-  to close, backdrop click to close, and an explicit close button. Every
-  form component takes an `onCancel` prop so it can close its own modal
-  from a Cancel button, in addition to the modal's own chrome.
-- **Tokens**: all colors, type, and spacing are CSS custom properties
-  defined once in `frontend/src/app.css` (`--bg`, `--surface`, `--ink`,
-  `--accent`, `--border`, `--space-*`, `--text-*`, `--radius*`, etc.) —
-  components consume tokens, they don't hardcode hex values or ad hoc
-  sizes.
-- **Type**: a single sans-serif stack (`--font-sans`) for everything,
-  including headings — no separate display face. Tabular monospace
-  (`--font-mono`) is reserved for the readout signature below.
-- **Signature — the "readout"**: a dark instrument-housing chip
-  (`.readout`, `.readout-lg`) with tabular monospace digits, used for every
-  real number a musician reads off a tuner or metronome — the practice
-  timer and the practice-stats totals (minutes, streaks). It stays the
-  same dark chip in both themes, like a physical instrument's display
-  would.
-- **Recurring patterns**: `.panel` (flat bordered container wrapping each
-  section), `SectionHeader.svelte` (eyebrow + heading + optional
-  right-aligned actions, used on every section heading), `.row-list`
-  (list items with a bottom hairline and an optional left accent bar via
-  `.accented`), `.chip` / `.chip-accent` / `.chip-quiet` (the pill badge
-  used for status/difficulty/tags/kind/counts, from most to least
-  emphasis), `Modal.svelte` (create/edit popups), and shared
-  `button`/`input`/`select`/`textarea` base styles plus
-  `.secondary`/`.danger` button variants.
-- **Adding a new view**: reuse these tokens and patterns rather than
-  inventing new ones. Route any new create/edit interaction through
-  `Modal.svelte` rather than an inline form. If a new recurring element
-  doesn't fit an existing pattern, add it to `app.css` as a token-driven
-  utility class, not a one-off inline style.
+- **Direction**: pure neutral grayscale plus one accent (the "editor's blue
+  pencil"), reserved strictly for annotation/reference — links, the
+  sidebar's active-nav tick, the current-streak numeral — never used
+  decoratively. `--radius: 0` everywhere (buttons, modal, inputs, sidebar
+  rows) is the loudest structural decision: sharp edges read as page/table,
+  not app card. Light/dark are both first-class (via
+  `prefers-color-scheme`).
+- **Shell, not a scrolling page**: `App.svelte` is a fixed-width sidebar +
+  single active view, switched via a plain `activeView` `$state` string —
+  explicitly not a router. Six views: Pieces, Focus, Sessions, Statistics,
+  Resources, Lists. The sidebar is collapsible to a 64px icon-only rail,
+  state persisted to `localStorage`.
+- **Interaction pattern**: create/edit forms open in `Modal.svelte`
+  (unchanged mechanics — native `<dialog>`, Escape/backdrop-click to close,
+  explicit close button with the crossing-hairline close icon). Every form
+  component takes an `onCancel` prop.
+- **Tokens**: colors, type, and spacing are CSS custom properties in
+  `frontend/src/app.css` — components consume tokens, never hardcode hex
+  values or ad hoc sizes.
+- **Type — three roles**: `--font-serif` (Georgia/Times/Liberation Serif)
+  for display headlines and hero numerals; the existing `--font-sans` for
+  all UI chrome, forms, and labels; the existing `--font-mono` for
+  genuinely tabular data (dates, durations), with the old neon-LCD chip
+  styling retired — it's now plain tabular text via `.readout`.
+- **Iconography**: a hand-rolled ~14-glyph inline SVG sprite at
+  `frontend/public/icons.svg` (20x20 grid, 1.5px stroke, no fill, square
+  corners — "engraver's/proofing marks"), consumed via `Icon.svelte`
+  (`<svg><use href="/icons.svg#{name}"/></svg>`). Color comes from the
+  consumer's CSS `color` through `currentColor`.
+- **Recurring patterns**: `.panel`, `SectionHeader.svelte` (now a
+  page-level header per view: serif headline, italic dek line, full-width
+  hairline rule, then a filter/action row), `.row-list` with `.accented`
+  for a left accent bar, `.meta-line` (values joined by middle dots via
+  `::before` on `span + span`), `.text-toggle` / `.toggle-row` (underlined
+  text filters replacing boxed `<select>`s), `.icon-btn` (hover-revealed
+  row actions — pencil-nib edit, strike-mark delete), `.index-table` (real
+  tables for tabular breakdowns, right-aligned numerics), `.numeral` /
+  `.caption` (serif hero number + small-caps label pairing), `Modal.svelte`,
+  and shared `button`/`input`/`select`/`textarea` base styles plus
+  `.secondary`/`.danger` variants. The old `.chip`/`.chip-accent`/
+  `.chip-quiet` pill badges are retired in favor of small-caps text labels.
+- **Adding a new view**: reuse these tokens and patterns. Route any new
+  create/edit interaction through `Modal.svelte`. If a new recurring
+  element doesn't fit an existing pattern, add it to `app.css` as a
+  token-driven utility class, not a one-off inline style.
 
 This was intentionally a single cross-cutting pass (not spread across
 feature PRs) because a design system only holds together if it's applied

@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Snippet } from 'svelte'
+  import Icon from './Icon.svelte'
 
   let {
     open,
@@ -42,7 +43,7 @@
   <div class="panel">
     <header>
       <h2 id="modal-title">{title}</h2>
-      <button type="button" class="close" onclick={onClose} aria-label="Close">&times;</button>
+      <button type="button" class="close" onclick={onClose} aria-label="Close"><Icon name="close" size={16} /></button>
     </header>
     <div class="body">
       {@render children()}
@@ -52,12 +53,10 @@
 
 <style>
   .panel {
-    background: var(--surface-2);
+    background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow:
-      0 24px 60px -24px var(--shadow),
-      0 4px 16px var(--shadow);
+    border-radius: 0;
+    box-shadow: 0 2px 8px var(--shadow);
     max-height: calc(100vh - 4rem);
     display: flex;
     flex-direction: column;
@@ -73,6 +72,7 @@
   }
   h2 {
     margin: 0;
+    font-size: var(--text-xl);
   }
   .close {
     flex: none;
@@ -85,12 +85,9 @@
     color: var(--ink-soft);
     background: transparent;
     border: none;
-    font-size: 1.25rem;
-    line-height: 1;
-    border-radius: var(--radius-sm);
   }
   .close:hover {
-    background: var(--surface-hover);
+    background: none;
     color: var(--ink);
   }
   .body {
