@@ -177,12 +177,18 @@ export async function createPracticeSession(
   return response.json()
 }
 
+export interface SectionPracticeStats {
+  section: string
+  total_minutes: number
+}
+
 export interface PiecePracticeStats {
   piece_id: number
   piece_title: string
   total_minutes: number
   session_count: number
   last_practiced_at: string
+  sections: SectionPracticeStats[]
 }
 
 export interface RecentlyPracticedPiece {

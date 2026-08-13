@@ -14,12 +14,14 @@ from repertoire.schemas.practice_session import (
     PracticeSessionRead,
     PracticeStatsRead,
     RecentlyPracticedPiece,
+    SectionPracticeStats,
 )
 
 router = APIRouter(prefix="/practice-sessions", tags=["practice-sessions"])
 
 RECENTLY_PRACTICED_LIMIT = 5
 NEGLECTED_LIMIT = 5
+UNSPECIFIED_SECTION_LABEL = "(unspecified)"
 
 
 def _to_utc_date(moment: datetime) -> date:
@@ -90,6 +92,12 @@ def _compute_streaks(practice_days: set[date], today: date) -> tuple[int, int]:
     return current_streak, longest_streak
 
 
+def _section_label(section: str | None) -> str:
+    """Sessions with no (or blank) section are grouped under a single label
+    rather than excluded, so their time still counts toward the piece total."""
+    return section if section else UNSPECIFIED_SECTION_LABEL
+
+
 @router.post("", response_model=PracticeSessionRead, status_code=201)
 def create_practice_session(
     payload: PracticeSessionCreate, db: Session = Depends(get_db)
@@ -131,6 +139,22 @@ def get_practice_stats(db: Session = Depends(get_db)) -> PracticeStatsRead:
         .all()
     )
 
+    section_rows = (
+        db.query(
+            PracticeSession.piece_id,
+            PracticeSession.section,
+            func.sum(PracticeSession.duration_minutes),
+        )
+        .group_by(PracticeSession.piece_id, PracticeSession.section)
+        .all()
+    )
+
+    sections_by_piece: dict[int, dict[str, int]] = {}
+    for piece_id, section, section_minutes in section_rows:
+        label = _section_label(section)
+        bucket = sections_by_piece.setdefault(piece_id, {})
+        bucket[label] = bucket.get(label, 0) + section_minutes
+
     pieces = [
         PiecePracticeStats(
             piece_id=piece_id,
@@ -138,6 +162,13 @@ def get_practice_stats(db: Session = Depends(get_db)) -> PracticeStatsRead:
             total_minutes=piece_total_minutes,
             session_count=session_count,
             last_practiced_at=last_practiced_at,
+            sections=[
+                SectionPracticeStats(section=label, total_minutes=minutes)
+                for label, minutes in sorted(
+                    sections_by_piece.get(piece_id, {}).items(),
+                    key=lambda item: (-item[1], item[0]),
+                )
+            ],
         )
         for piece_id, title, piece_total_minutes, session_count, last_practiced_at in rows
     ]

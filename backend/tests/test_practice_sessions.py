@@ -444,6 +444,128 @@ def test_stats_minutes_this_week_boundary(client: TestClient) -> None:
     assert body["minutes_this_week"] == 15
 
 
+def test_stats_sections_empty_for_piece_with_no_sessions(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Untouched")
+
+    response = client.get("/api/practice-sessions/stats")
+    assert response.status_code == 200
+    body = response.json()
+
+    assert body["pieces"] == []
+    assert piece_id  # sanity: piece exists but contributes nothing to `pieces`
+
+
+def test_stats_sections_distinct_totals(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Sonata")
+    client.post(
+        "/api/practice-sessions",
+        json={
+            "piece_id": piece_id,
+            "practiced_at": "2026-08-01T10:00:00Z",
+            "duration_minutes": 20,
+            "section": "exposition",
+        },
+    )
+    client.post(
+        "/api/practice-sessions",
+        json={
+            "piece_id": piece_id,
+            "practiced_at": "2026-08-02T10:00:00Z",
+            "duration_minutes": 5,
+            "section": "exposition",
+        },
+    )
+    client.post(
+        "/api/practice-sessions",
+        json={
+            "piece_id": piece_id,
+            "practiced_at": "2026-08-03T10:00:00Z",
+            "duration_minutes": 15,
+            "section": "coda",
+        },
+    )
+
+    response = client.get("/api/practice-sessions/stats")
+    assert response.status_code == 200
+    sections = response.json()["pieces"][0]["sections"]
+
+    assert {(s["section"], s["total_minutes"]) for s in sections} == {
+        ("exposition", 25),
+        ("coda", 15),
+    }
+    # ordered by total_minutes desc
+    assert [s["section"] for s in sections] == ["exposition", "coda"]
+
+
+def test_stats_sections_null_and_empty_grouped_as_unspecified(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Etude")
+    client.post(
+        "/api/practice-sessions",
+        json={
+            "piece_id": piece_id,
+            "practiced_at": "2026-08-01T10:00:00Z",
+            "duration_minutes": 10,
+        },
+    )
+    client.post(
+        "/api/practice-sessions",
+        json={
+            "piece_id": piece_id,
+            "practiced_at": "2026-08-02T10:00:00Z",
+            "duration_minutes": 5,
+            "section": "",
+        },
+    )
+    client.post(
+        "/api/practice-sessions",
+        json={
+            "piece_id": piece_id,
+            "practiced_at": "2026-08-03T10:00:00Z",
+            "duration_minutes": 7,
+            "section": "trills",
+        },
+    )
+
+    response = client.get("/api/practice-sessions/stats")
+    assert response.status_code == 200
+    sections = response.json()["pieces"][0]["sections"]
+
+    assert {(s["section"], s["total_minutes"]) for s in sections} == {
+        ("(unspecified)", 15),
+        ("trills", 7),
+    }
+
+
+def test_stats_sections_do_not_leak_across_pieces(client: TestClient) -> None:
+    piece_a = _create_piece(client, "A")
+    piece_b = _create_piece(client, "B")
+    client.post(
+        "/api/practice-sessions",
+        json={
+            "piece_id": piece_a,
+            "practiced_at": "2026-08-01T10:00:00Z",
+            "duration_minutes": 10,
+            "section": "intro",
+        },
+    )
+    client.post(
+        "/api/practice-sessions",
+        json={
+            "piece_id": piece_b,
+            "practiced_at": "2026-08-01T10:00:00Z",
+            "duration_minutes": 20,
+            "section": "finale",
+        },
+    )
+
+    response = client.get("/api/practice-sessions/stats")
+    assert response.status_code == 200
+    by_id = {p["piece_id"]: p for p in response.json()["pieces"]}
+
+    assert [s["section"] for s in by_id[piece_a]["sections"]] == ["intro"]
+    assert [s["section"] for s in by_id[piece_b]["sections"]] == ["finale"]
+
+
 def test_stats_minutes_this_month_boundary(client: TestClient) -> None:
     """The 1st at 00:00:00 UTC counts as this month; the 1st of next month does not."""
     piece_id = _create_piece(client, "Month boundary")
