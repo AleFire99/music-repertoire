@@ -1,0 +1,67 @@
+<script lang="ts">
+  import { setPracticeGoal, type PracticeGoal } from './api'
+
+  let {
+    goal = null,
+    onSaved,
+  }: {
+    goal?: PracticeGoal | null
+    onSaved: (goal: PracticeGoal) => void
+  } = $props()
+
+  let targetMinutes = $state('')
+  let submitting = $state(false)
+  let formError = $state<string | null>(null)
+
+  $effect(() => {
+    targetMinutes = goal ? String(goal.target_minutes) : ''
+    formError = null
+  })
+
+  async function handleSubmit(event: SubmitEvent): Promise<void> {
+    event.preventDefault()
+    submitting = true
+    formError = null
+    try {
+      const saved = await setPracticeGoal({ target_minutes: Number(targetMinutes) })
+      onSaved(saved)
+    } catch (err) {
+      formError = err instanceof Error ? err.message : String(err)
+    } finally {
+      submitting = false
+    }
+  }
+</script>
+
+<form onsubmit={handleSubmit}>
+  <label>
+    Weekly target (minutes)
+    <input type="number" bind:value={targetMinutes} required min="1" step="1" />
+  </label>
+
+  {#if formError}
+    <p class="error">{formError}</p>
+  {/if}
+
+  <button type="submit" disabled={submitting}>
+    {#if submitting}Saving…{:else}{goal ? 'Update Goal' : 'Set Goal'}{/if}
+  </button>
+</form>
+
+<style>
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    font-size: 0.9rem;
+  }
+  .error {
+    color: #b00020;
+  }
+</style>

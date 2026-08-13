@@ -1,17 +1,34 @@
 <script lang="ts">
-  import type { PracticeStats } from './api'
+  import type { PracticeGoal, PracticeStats } from './api'
 
-  let { stats }: { stats: PracticeStats } = $props()
+  let { stats, goal = null }: { stats: PracticeStats; goal?: PracticeGoal | null } = $props()
 
   function formatDate(iso: string): string {
     return new Date(iso).toLocaleString()
   }
+
+  function formatHours(minutes: number): string {
+    return (minutes / 60).toFixed(1)
+  }
 </script>
+
+{#if goal}
+  <p>
+    Weekly goal progress:
+    <strong>{formatHours(goal.minutes_this_week)} / {formatHours(goal.target_minutes)} hours</strong>
+    this week
+  </p>
+{/if}
 
 {#if stats.pieces.length === 0}
   <p>No practice sessions logged yet.</p>
 {:else}
   <p>Total practice time: <strong>{stats.total_minutes} min</strong></p>
+  <p>
+    This week: <strong>{stats.minutes_this_week} min</strong>
+    &middot;
+    This month: <strong>{stats.minutes_this_month} min</strong>
+  </p>
   <p>
     Current streak: <strong>{stats.current_streak_days} day{stats.current_streak_days === 1 ? '' : 's'}</strong>
     &middot;
@@ -23,6 +40,16 @@
         {piece.piece_title} — {piece.total_minutes} min
         <span class="count">{piece.session_count} session{piece.session_count === 1 ? '' : 's'}</span>
         <span class="when">last: {formatDate(piece.last_practiced_at)}</span>
+        {#if piece.sections.length > 0}
+          <details>
+            <summary>By section</summary>
+            <ul>
+              {#each piece.sections as section (section.section)}
+                <li>{section.section} — {section.total_minutes} min</li>
+              {/each}
+            </ul>
+          </details>
+        {/if}
       </li>
     {/each}
   </ul>

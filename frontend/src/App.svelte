@@ -2,6 +2,7 @@
   import { onMount } from 'svelte'
   import {
     getHealth,
+    getPracticeGoal,
     getPracticeStats,
     listPieces,
     listPracticeSessions,
@@ -12,6 +13,7 @@
     type Piece,
     type PieceStatus,
     type PieceDifficulty,
+    type PracticeGoal,
     type PracticeSession,
     type PracticeStats,
     type RepertoireList,
@@ -19,11 +21,13 @@
   } from './lib/api'
   import PieceForm from './lib/PieceForm.svelte'
   import PieceList from './lib/PieceList.svelte'
+  import PracticeGoalForm from './lib/PracticeGoalForm.svelte'
   import PracticeSessionForm from './lib/PracticeSessionForm.svelte'
   import PracticeSessionList from './lib/PracticeSessionList.svelte'
   import PracticeStatsView from './lib/PracticeStats.svelte'
   import RepertoireListForm from './lib/RepertoireListForm.svelte'
   import RepertoireListList from './lib/RepertoireListList.svelte'
+  import RotationPlanner from './lib/RotationPlanner.svelte'
   import SheetResourceForm from './lib/SheetResourceForm.svelte'
   import SheetResourceList from './lib/SheetResourceList.svelte'
 
@@ -42,10 +46,14 @@
     neglected: [],
     current_streak_days: 0,
     longest_streak_days: 0,
+    minutes_this_week: 0,
+    minutes_this_month: 0,
   })
+  let goal = $state<PracticeGoal | null>(null)
   let sheetResources = $state<SheetResource[]>([])
   let repertoireLists = $state<RepertoireList[]>([])
   let editingRepertoireList = $state<RepertoireList | null>(null)
+  let focusPieces = $state<Piece[]>([])
 
   async function refreshPieces(): Promise<void> {
     pieces = await listPieces({
@@ -63,12 +71,20 @@
     stats = await getPracticeStats()
   }
 
+  async function refreshGoal(): Promise<void> {
+    goal = await getPracticeGoal()
+  }
+
   async function refreshSheetResources(): Promise<void> {
     sheetResources = await listSheetResources()
   }
 
   async function refreshRepertoireLists(): Promise<void> {
     repertoireLists = await listRepertoireLists()
+  }
+
+  async function refreshFocusPieces(): Promise<void> {
+    focusPieces = await listPieces({ inFocus: true })
   }
 
   onMount(async () => {
@@ -78,8 +94,10 @@
       await refreshPieces()
       await refreshSessions()
       await refreshStats()
+      await refreshGoal()
       await refreshSheetResources()
       await refreshRepertoireLists()
+      await refreshFocusPieces()
     } catch (err) {
       error = err instanceof Error ? err.message : String(err)
     }
@@ -89,9 +107,14 @@
     sessions = [...sessions, saved].sort((a, b) => b.practiced_at.localeCompare(a.practiced_at))
     try {
       await refreshStats()
+      await refreshGoal()
     } catch (err) {
       error = err instanceof Error ? err.message : String(err)
     }
+  }
+
+  function handleGoalSaved(saved: PracticeGoal): void {
+    goal = saved
   }
 
   async function onStatusFilterChange(): Promise<void> {
@@ -106,6 +129,9 @@
     const exists = pieces.some((p) => p.id === saved.id)
     pieces = exists ? pieces.map((p) => (p.id === saved.id ? saved : p)) : [...pieces, saved]
     editingPiece = null
+    refreshFocusPieces().catch((err) => {
+      error = err instanceof Error ? err.message : String(err)
+    })
   }
 
   function handlePieceDeleted(id: number): void {
@@ -113,6 +139,9 @@
     if (editingPiece?.id === id) editingPiece = null
     sheetResources = sheetResources.filter((r) => r.piece_id !== id)
     refreshRepertoireLists().catch((err) => {
+      error = err instanceof Error ? err.message : String(err)
+    })
+    refreshFocusPieces().catch((err) => {
       error = err instanceof Error ? err.message : String(err)
     })
   }
@@ -189,14 +218,20 @@
     onUpdated={handlePieceSaved}
   />
 
+  <h2>Currently in Focus</h2>
+  <RotationPlanner pieces={focusPieces} />
+
   <h2>Log Practice Session</h2>
   <PracticeSessionForm {pieces} onSaved={handleSessionSaved} />
 
   <h2>Recent Sessions</h2>
   <PracticeSessionList {sessions} {pieces} />
 
+  <h2>Weekly Practice Goal</h2>
+  <PracticeGoalForm {goal} onSaved={handleGoalSaved} />
+
   <h2>Practice Statistics</h2>
-  <PracticeStatsView {stats} />
+  <PracticeStatsView {stats} {goal} />
 
   <h2>Sheet Music Resources</h2>
   <SheetResourceForm {pieces} onSaved={handleSheetResourceSaved} />

@@ -33,6 +33,26 @@ def test_delete_piece(client: TestClient) -> None:
     assert client.get(f"/api/pieces/{created['id']}").status_code == 404
 
 
+def test_delete_piece_with_practice_sessions_cascades(client: TestClient) -> None:
+    piece = client.post("/api/pieces", json={"title": "Etude"}).json()
+    session = client.post(
+        "/api/practice-sessions",
+        json={
+            "piece_id": piece["id"],
+            "practiced_at": "2026-08-01T10:00:00Z",
+            "duration_minutes": 20,
+        },
+    ).json()
+
+    delete_response = client.delete(f"/api/pieces/{piece['id']}")
+    assert delete_response.status_code == 204
+
+    remaining_sessions = client.get(
+        "/api/practice-sessions", params={"piece_id": piece["id"]}
+    ).json()
+    assert session["id"] not in [s["id"] for s in remaining_sessions]
+
+
 def test_get_missing_piece_404(client: TestClient) -> None:
     response = client.get("/api/pieces/999999")
     assert response.status_code == 404
@@ -185,3 +205,132 @@ def test_list_pieces_filter_by_instrument(client: TestClient) -> None:
     assert response.status_code == 200
     titles = [piece["title"] for piece in response.json()]
     assert titles == ["A"]
+
+
+def test_create_piece_defaults_goal_fields(client: TestClient) -> None:
+    created = client.post("/api/pieces", json={"title": "Barcarolle"}).json()
+    assert created["goal_text"] is None
+    assert created["goal_target_date"] is None
+
+
+def test_create_piece_with_goal_fields(client: TestClient) -> None:
+    payload = {
+        "title": "Rhapsody",
+        "goal_text": "performance-ready for the June recital",
+        "goal_target_date": "2026-06-01",
+    }
+    created = client.post("/api/pieces", json=payload).json()
+    assert created["goal_text"] == "performance-ready for the June recital"
+    assert created["goal_target_date"] == "2026-06-01"
+
+
+def test_update_piece_goal_fields(client: TestClient) -> None:
+    created = client.post("/api/pieces", json={"title": "Fantaisie"}).json()
+    response = client.patch(
+        f"/api/pieces/{created['id']}",
+        json={"goal_text": "memorize by recital", "goal_target_date": "2026-12-01"},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["goal_text"] == "memorize by recital"
+    assert body["goal_target_date"] == "2026-12-01"
+
+
+def test_update_piece_clears_goal_fields(client: TestClient) -> None:
+    created = client.post(
+        "/api/pieces",
+        json={
+            "title": "Nocturne No. 2",
+            "goal_text": "performance-ready",
+            "goal_target_date": "2026-06-01",
+        },
+    ).json()
+
+    response = client.patch(
+        f"/api/pieces/{created['id']}",
+        json={"goal_text": None, "goal_target_date": None},
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["goal_text"] is None
+    assert body["goal_target_date"] is None
+
+
+def test_list_pieces_filter_by_has_goal(client: TestClient) -> None:
+    client.post("/api/pieces", json={"title": "A", "goal_target_date": "2026-06-01"})
+    client.post("/api/pieces", json={"title": "B"})
+
+    response = client.get("/api/pieces", params={"has_goal": "true"})
+    assert response.status_code == 200
+    titles = [piece["title"] for piece in response.json()]
+    assert titles == ["A"]
+
+    response = client.get("/api/pieces", params={"has_goal": "false"})
+    assert response.status_code == 200
+    titles = [piece["title"] for piece in response.json()]
+    assert titles == ["B"]
+
+
+def test_list_pieces_in_focus_empty(client: TestClient) -> None:
+    client.post("/api/pieces", json={"title": "A", "status": "backlog"})
+    client.post(
+        "/api/pieces",
+        json={"title": "B", "status": "archived", "goal_target_date": "2026-06-01"},
+    )
+
+    response = client.get("/api/pieces", params={"in_focus": "true"})
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_list_pieces_in_focus_under_cap(client: TestClient) -> None:
+    client.post(
+        "/api/pieces",
+        json={"title": "A", "status": "learning", "goal_target_date": "2026-06-01"},
+    )
+    client.post(
+        "/api/pieces",
+        json={"title": "B", "status": "maintaining", "goal_text": "keep it performance-ready"},
+    )
+    client.post("/api/pieces", json={"title": "C", "status": "backlog"})
+
+    response = client.get("/api/pieces", params={"in_focus": "true"})
+    assert response.status_code == 200
+    titles = [piece["title"] for piece in response.json()]
+    assert titles == ["A", "B"]
+
+
+def test_list_pieces_in_focus_over_cap_not_blocked(client: TestClient) -> None:
+    for title in ["A", "B", "C", "D"]:
+        client.post(
+            "/api/pieces",
+            json={"title": title, "status": "learning", "goal_target_date": "2026-06-01"},
+        )
+
+    response = client.get("/api/pieces", params={"in_focus": "true"})
+    assert response.status_code == 200
+    titles = [piece["title"] for piece in response.json()]
+    assert titles == ["A", "B", "C", "D"]
+
+
+def test_list_pieces_in_focus_status_without_goal_excluded(client: TestClient) -> None:
+    client.post("/api/pieces", json={"title": "A", "status": "learning"})
+
+    response = client.get("/api/pieces", params={"in_focus": "true"})
+    assert response.status_code == 200
+    assert response.json() == []
+
+
+def test_list_pieces_in_focus_goal_without_matching_status_excluded(client: TestClient) -> None:
+    client.post(
+        "/api/pieces",
+        json={"title": "A", "status": "backlog", "goal_target_date": "2026-06-01"},
+    )
+    client.post(
+        "/api/pieces",
+        json={"title": "B", "status": "performance-ready", "goal_text": "keep it sharp"},
+    )
+
+    response = client.get("/api/pieces", params={"in_focus": "true"})
+    assert response.status_code == 200
+    assert response.json() == []

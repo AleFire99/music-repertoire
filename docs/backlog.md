@@ -71,17 +71,27 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] Practice session timer (stopwatch, auto-fills duration_minutes) — issue #63
 - [x] Practice streaks (current/longest consecutive-day streaks) — issue #67
 - [x] Repertoire lists (named lists of pieces) — issue #70
-- [ ] Release: `develop` → `release/0.4.0` → `main`, tag `v0.4.0`
+- [x] Release: `develop` → `release/0.4.0` → `main`, tag `v0.4.0`
+
+## v0.5.0 — Practice epic completion, Repertoire epic completion
+
+- [x] Practice statistics by week and month — issue #78
+- [x] Section-level practice breakdowns — issue #81
+- [x] Fix: cascade-delete practice sessions when their piece is deleted — issue #83
+- [x] Piece-level learning goals (goal text + target date) — issue #88
+- [x] Practice time goals (weekly target + progress) — issue #91
+- [x] Repertoire rotation planner (in-focus pieces view) — issue #95
+- [ ] Release: `develop` → `release/0.5.0` → `main`, tag `v0.5.0`
 
 ---
 
 ## Future epics (not implemented, do not start without a new milestone)
 
 ### Repertoire
-Goals, performance history, repertoire rotation.
+Fully delivered — see issue #5 for the shipped-item checklist. No remaining scope; new Repertoire-epic ideas need their own scoping discussion before being added here.
 
 ### Practice
-Weekly goals, statistics by week/month, progress toward goals, section-level practice breakdowns.
+Fully delivered — see issue #6 for the shipped-item checklist. No remaining scope; new Practice-epic ideas need their own scoping discussion before being added here.
 
 ### Music representation
 MIDI import, MusicXML import, chord representation, measure representation, sections, annotations. **Audio → MIDI → chord extraction is explicitly out of scope indefinitely** — not a v-next item, a permanent non-goal unless a concrete future requirement changes that.

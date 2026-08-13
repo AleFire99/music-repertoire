@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from repertoire.date_utils import current_week_bounds, start_of_utc_day
 from repertoire.db import get_db
 from repertoire.models.piece import Piece
 from repertoire.models.practice_session import PracticeSession
@@ -14,18 +15,35 @@ from repertoire.schemas.practice_session import (
     PracticeSessionRead,
     PracticeStatsRead,
     RecentlyPracticedPiece,
+    SectionPracticeStats,
 )
 
 router = APIRouter(prefix="/practice-sessions", tags=["practice-sessions"])
 
 RECENTLY_PRACTICED_LIMIT = 5
 NEGLECTED_LIMIT = 5
+UNSPECIFIED_SECTION_LABEL = "(unspecified)"
 
 
 def _to_utc_date(moment: datetime) -> date:
     if moment.tzinfo is not None:
         moment = moment.astimezone(UTC)
     return moment.date()
+
+
+def _current_month_bounds(today: date) -> tuple[datetime, datetime]:
+    """[start, end) for the current calendar month, in UTC.
+
+    A session exactly at the 1st 00:00:00 UTC counts as this month; a
+    session at the 1st of next month 00:00:00 UTC is excluded.
+    """
+    start_date = today.replace(day=1)
+    end_date = (
+        start_date.replace(year=start_date.year + 1, month=1)
+        if start_date.month == 12
+        else start_date.replace(month=start_date.month + 1)
+    )
+    return start_of_utc_day(start_date), start_of_utc_day(end_date)
 
 
 def _compute_streaks(practice_days: set[date], today: date) -> tuple[int, int]:
@@ -58,6 +76,12 @@ def _compute_streaks(practice_days: set[date], today: date) -> tuple[int, int]:
             break
 
     return current_streak, longest_streak
+
+
+def _section_label(section: str | None) -> str:
+    """Sessions with no (or blank) section are grouped under a single label
+    rather than excluded, so their time still counts toward the piece total."""
+    return section if section else UNSPECIFIED_SECTION_LABEL
 
 
 @router.post("", response_model=PracticeSessionRead, status_code=201)
@@ -101,6 +125,22 @@ def get_practice_stats(db: Session = Depends(get_db)) -> PracticeStatsRead:
         .all()
     )
 
+    section_rows = (
+        db.query(
+            PracticeSession.piece_id,
+            PracticeSession.section,
+            func.sum(PracticeSession.duration_minutes),
+        )
+        .group_by(PracticeSession.piece_id, PracticeSession.section)
+        .all()
+    )
+
+    sections_by_piece: dict[int, dict[str, int]] = {}
+    for piece_id, section, section_minutes in section_rows:
+        label = _section_label(section)
+        bucket = sections_by_piece.setdefault(piece_id, {})
+        bucket[label] = bucket.get(label, 0) + section_minutes
+
     pieces = [
         PiecePracticeStats(
             piece_id=piece_id,
@@ -108,6 +148,13 @@ def get_practice_stats(db: Session = Depends(get_db)) -> PracticeStatsRead:
             total_minutes=piece_total_minutes,
             session_count=session_count,
             last_practiced_at=last_practiced_at,
+            sections=[
+                SectionPracticeStats(section=label, total_minutes=minutes)
+                for label, minutes in sorted(
+                    sections_by_piece.get(piece_id, {}).items(),
+                    key=lambda item: (-item[1], item[0]),
+                )
+            ],
         )
         for piece_id, title, piece_total_minutes, session_count, last_practiced_at in rows
     ]
@@ -151,8 +198,29 @@ def get_practice_stats(db: Session = Depends(get_db)) -> PracticeStatsRead:
 
     practiced_at_values = db.query(PracticeSession.practiced_at).distinct().all()
     practice_days = {_to_utc_date(row[0]) for row in practiced_at_values}
-    current_streak_days, longest_streak_days = _compute_streaks(
-        practice_days, today=datetime.now(UTC).date()
+    today = datetime.now(UTC).date()
+    current_streak_days, longest_streak_days = _compute_streaks(practice_days, today=today)
+
+    week_start, week_end = current_week_bounds(today)
+    minutes_this_week = (
+        db.query(func.sum(PracticeSession.duration_minutes))
+        .filter(
+            PracticeSession.practiced_at >= week_start,
+            PracticeSession.practiced_at < week_end,
+        )
+        .scalar()
+        or 0
+    )
+
+    month_start, month_end = _current_month_bounds(today)
+    minutes_this_month = (
+        db.query(func.sum(PracticeSession.duration_minutes))
+        .filter(
+            PracticeSession.practiced_at >= month_start,
+            PracticeSession.practiced_at < month_end,
+        )
+        .scalar()
+        or 0
     )
 
     return PracticeStatsRead(
@@ -162,4 +230,6 @@ def get_practice_stats(db: Session = Depends(get_db)) -> PracticeStatsRead:
         neglected=neglected,
         current_streak_days=current_streak_days,
         longest_streak_days=longest_streak_days,
+        minutes_this_week=minutes_this_week,
+        minutes_this_month=minutes_this_month,
     )

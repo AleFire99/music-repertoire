@@ -32,6 +32,8 @@ export interface Piece {
   tempo_bpm: number | null
   difficulty: PieceDifficulty | null
   instrument: string | null
+  goal_text: string | null
+  goal_target_date: string | null
   status: PieceStatus
   tags: string[]
   is_favorite: boolean
@@ -46,6 +48,8 @@ export interface PieceCreateInput {
   tempo_bpm?: number | null
   difficulty?: PieceDifficulty | null
   instrument?: string | null
+  goal_text?: string | null
+  goal_target_date?: string | null
   status?: PieceStatus
   tags?: string[]
   is_favorite?: boolean
@@ -58,6 +62,8 @@ export interface PieceUpdateInput {
   tempo_bpm?: number | null
   difficulty?: PieceDifficulty | null
   instrument?: string | null
+  goal_text?: string | null
+  goal_target_date?: string | null
   status?: PieceStatus
   tags?: string[]
   is_favorite?: boolean
@@ -75,6 +81,7 @@ export async function listPieces(
     favorite?: boolean
     difficulty?: PieceDifficulty
     instrument?: string
+    inFocus?: boolean
   },
 ): Promise<Piece[]> {
   const params = new URLSearchParams()
@@ -82,6 +89,7 @@ export async function listPieces(
   if (filters?.favorite) params.set('favorite', 'true')
   if (filters?.difficulty) params.set('difficulty', filters.difficulty)
   if (filters?.instrument) params.set('instrument', filters.instrument)
+  if (filters?.inFocus) params.set('in_focus', 'true')
   const query = params.toString()
   const response = await fetch(`/api/pieces${query ? `?${query}` : ''}`)
   if (!response.ok) throw new Error(`failed to list pieces: ${response.status}`)
@@ -177,12 +185,18 @@ export async function createPracticeSession(
   return response.json()
 }
 
+export interface SectionPracticeStats {
+  section: string
+  total_minutes: number
+}
+
 export interface PiecePracticeStats {
   piece_id: number
   piece_title: string
   total_minutes: number
   session_count: number
   last_practiced_at: string
+  sections: SectionPracticeStats[]
 }
 
 export interface RecentlyPracticedPiece {
@@ -204,11 +218,41 @@ export interface PracticeStats {
   neglected: NeglectedPiece[]
   current_streak_days: number
   longest_streak_days: number
+  minutes_this_week: number
+  minutes_this_month: number
 }
 
 export async function getPracticeStats(): Promise<PracticeStats> {
   const response = await fetch('/api/practice-sessions/stats')
   if (!response.ok) throw new Error(`failed to load practice stats: ${response.status}`)
+  return response.json()
+}
+
+export interface PracticeGoal {
+  id: number
+  target_minutes: number
+  minutes_this_week: number
+  created_at: string
+  updated_at: string
+}
+
+export interface PracticeGoalSetInput {
+  target_minutes: number
+}
+
+export async function getPracticeGoal(): Promise<PracticeGoal | null> {
+  const response = await fetch('/api/practice-goal')
+  if (!response.ok) throw new Error(`failed to load practice goal: ${response.status}`)
+  return response.json()
+}
+
+export async function setPracticeGoal(input: PracticeGoalSetInput): Promise<PracticeGoal> {
+  const response = await fetch('/api/practice-goal', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  })
+  if (!response.ok) throw new Error(await describeError('failed to set practice goal', response))
   return response.json()
 }
 

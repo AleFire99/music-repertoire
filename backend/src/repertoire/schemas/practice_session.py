@@ -26,12 +26,18 @@ class PracticeSessionRead(BaseModel):
     updated_at: datetime
 
 
+class SectionPracticeStats(BaseModel):
+    section: str
+    total_minutes: int
+
+
 class PiecePracticeStats(BaseModel):
     piece_id: int
     piece_title: str
     total_minutes: int
     session_count: int
     last_practiced_at: datetime
+    sections: list[SectionPracticeStats]
 
 
 class RecentlyPracticedPiece(BaseModel):
@@ -53,3 +59,5 @@ class PracticeStatsRead(BaseModel):
     neglected: list[NeglectedPiece]
     current_streak_days: int
     longest_streak_days: int
+    minutes_this_week: int
+    minutes_this_month: int
