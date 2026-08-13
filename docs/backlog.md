@@ -66,11 +66,12 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] Recently-practiced and neglected pieces in practice stats — issue #56
 - [x] Release: `develop` → `release/0.3.0` → `main`, tag `v0.3.0`
 
-## Post-0.3.0 slices (not yet cut into a release)
+## v0.4.0 — Practice timer/streaks, repertoire lists
 
 - [x] Practice session timer (stopwatch, auto-fills duration_minutes) — issue #63
 - [x] Practice streaks (current/longest consecutive-day streaks) — issue #67
 - [x] Repertoire lists (named lists of pieces) — issue #70
+- [ ] Release: `develop` → `release/0.4.0` → `main`, tag `v0.4.0`
 
 ---
 
