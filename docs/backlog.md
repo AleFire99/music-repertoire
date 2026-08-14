@@ -83,6 +83,12 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] Repertoire rotation planner (in-focus pieces view) — issue #95
 - [x] Release: `develop` → `release/0.5.0` → `main`, tag `v0.5.0`
 
+## Post-0.5.0 slices (not yet cut into a release)
+
+- [x] Practice stats: 14-week consistency heatmap — issue #107 (bundled with the UI redesign below; small deterministic addition, same category as already-shipped stats features)
+- [x] Practice stats: deterministic "suggested next" practice plan (due goals, neglected pieces, low-rated sessions — no LLM) — issue #107
+- [x] UI design pass v3 ("Modernist": Archivo, zero-radius, 2px dividers, blue accent, manual light/dark toggle, imported from claude.ai/design) — issue #107, replacing #105's Minimal Monochrome Editorial
+
 ---
 
 ## Future epics (not implemented, do not start without a new milestone)
