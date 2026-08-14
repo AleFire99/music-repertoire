@@ -142,16 +142,18 @@ def test_list_sessions_ordered_newest_first(client: TestClient) -> None:
 def test_stats_empty(client: TestClient) -> None:
     response = client.get("/api/practice-sessions/stats")
     assert response.status_code == 200
-    assert response.json() == {
-        "total_minutes": 0,
-        "pieces": [],
-        "recently_practiced": [],
-        "neglected": [],
-        "current_streak_days": 0,
-        "longest_streak_days": 0,
-        "minutes_this_week": 0,
-        "minutes_this_month": 0,
-    }
+    body = response.json()
+    assert body["total_minutes"] == 0
+    assert body["pieces"] == []
+    assert body["recently_practiced"] == []
+    assert body["neglected"] == []
+    assert body["current_streak_days"] == 0
+    assert body["longest_streak_days"] == 0
+    assert body["minutes_this_week"] == 0
+    assert body["minutes_this_month"] == 0
+    assert body["suggested_plan"] == []
+    assert len(body["consistency_heatmap"]) == 98
+    assert all(day["total_minutes"] == 0 for day in body["consistency_heatmap"])
 
 
 def test_stats_empty_with_pieces_but_no_sessions(client: TestClient) -> None:
@@ -582,3 +584,192 @@ def test_stats_minutes_this_month_boundary(client: TestClient) -> None:
     body = client.get("/api/practice-sessions/stats").json()
 
     assert body["minutes_this_month"] == 12
+
+
+def test_heatmap_covers_98_days_oldest_first(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Heatmap")
+    _log_session(client, piece_id, days_ago=0)
+
+    body = client.get("/api/practice-sessions/stats").json()
+    heatmap = body["consistency_heatmap"]
+
+    assert len(heatmap) == 98
+    dates = [day["date"] for day in heatmap]
+    assert dates == sorted(dates)
+    today = datetime.now(UTC).date()
+    assert dates[-1] == today.isoformat()
+    assert dates[0] == (today - timedelta(days=97)).isoformat()
+
+
+def test_heatmap_buckets_minutes_by_utc_day(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Heatmap totals")
+    _log_session(client, piece_id, days_ago=0, hour=9)
+    _log_session(client, piece_id, days_ago=0, hour=21)
+    _log_session(client, piece_id, days_ago=3)
+
+    body = client.get("/api/practice-sessions/stats").json()
+    heatmap = {day["date"]: day["total_minutes"] for day in body["consistency_heatmap"]}
+    today = datetime.now(UTC).date()
+
+    assert heatmap[today.isoformat()] == 20
+    assert heatmap[(today - timedelta(days=3)).isoformat()] == 10
+    assert heatmap[(today - timedelta(days=1)).isoformat()] == 0
+
+
+def test_heatmap_excludes_sessions_older_than_window(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Old session")
+    _log_session(client, piece_id, days_ago=200)
+
+    body = client.get("/api/practice-sessions/stats").json()
+
+    assert all(day["total_minutes"] == 0 for day in body["consistency_heatmap"])
+
+
+def test_suggested_plan_includes_due_soon_goal(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Due soon")
+    target = (datetime.now(UTC).date() + timedelta(days=5)).isoformat()
+    client.patch(f"/api/pieces/{piece_id}", json={"goal_target_date": target})
+
+    body = client.get("/api/practice-sessions/stats").json()
+    plan = body["suggested_plan"]
+
+    assert any(item["piece_id"] == piece_id and "due in 5 days" in item["reason"] for item in plan)
+
+
+def test_suggested_plan_excludes_far_future_goal(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Far off")
+    target = (datetime.now(UTC).date() + timedelta(days=90)).isoformat()
+    client.patch(f"/api/pieces/{piece_id}", json={"goal_target_date": target})
+
+    body = client.get("/api/practice-sessions/stats").json()
+
+    # The piece may still surface via the "never practiced" heuristic — what this
+    # asserts is that a goal 90 days out doesn't itself earn a "due" reason.
+    assert all(
+        not (item["piece_id"] == piece_id and "due" in item["reason"].lower())
+        for item in body["suggested_plan"]
+    )
+
+
+def test_suggested_plan_flags_overdue_goal(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Overdue")
+    target = (datetime.now(UTC).date() - timedelta(days=2)).isoformat()
+    client.patch(f"/api/pieces/{piece_id}", json={"goal_target_date": target})
+
+    body = client.get("/api/practice-sessions/stats").json()
+    plan = body["suggested_plan"]
+
+    assert any(
+        item["piece_id"] == piece_id and "was due 2 days ago" in item["reason"] for item in plan
+    )
+
+
+def test_suggested_plan_excludes_archived_pieces_with_due_goal(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Archived")
+    target = (datetime.now(UTC).date() + timedelta(days=1)).isoformat()
+    client.patch(
+        f"/api/pieces/{piece_id}", json={"goal_target_date": target, "status": "archived"}
+    )
+
+    body = client.get("/api/practice-sessions/stats").json()
+
+    # An archived piece never earns a "due" reason even with a goal due tomorrow
+    # (it may still surface via the "never practiced" heuristic).
+    assert all(
+        not (item["piece_id"] == piece_id and "due" in item["reason"].lower())
+        for item in body["suggested_plan"]
+    )
+
+
+def test_suggested_plan_includes_never_practiced(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Never")
+
+    body = client.get("/api/practice-sessions/stats").json()
+    plan = body["suggested_plan"]
+
+    assert any(
+        item["piece_id"] == piece_id and item["reason"] == "Never practiced" for item in plan
+    )
+
+
+def test_suggested_plan_flags_low_rated_last_session(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Rough patch")
+    client.post(
+        "/api/practice-sessions",
+        json={
+            "piece_id": piece_id,
+            "practiced_at": "2026-08-01T10:00:00Z",
+            "duration_minutes": 10,
+            "rating": 5,
+        },
+    )
+    client.post(
+        "/api/practice-sessions",
+        json={
+            "piece_id": piece_id,
+            "practiced_at": "2026-08-05T10:00:00Z",
+            "duration_minutes": 10,
+            "rating": 2,
+        },
+    )
+
+    body = client.get("/api/practice-sessions/stats").json()
+    plan = body["suggested_plan"]
+
+    assert any(
+        item["piece_id"] == piece_id and item["reason"] == "Last session rated 2/5"
+        for item in plan
+    )
+
+
+def test_suggested_plan_ignores_piece_whose_last_session_rated_well(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Doing fine")
+    client.post(
+        "/api/practice-sessions",
+        json={
+            "piece_id": piece_id,
+            "practiced_at": "2026-08-01T10:00:00Z",
+            "duration_minutes": 10,
+            "rating": 2,
+        },
+    )
+    client.post(
+        "/api/practice-sessions",
+        json={
+            "piece_id": piece_id,
+            "practiced_at": "2026-08-05T10:00:00Z",
+            "duration_minutes": 10,
+            "rating": 5,
+        },
+    )
+
+    body = client.get("/api/practice-sessions/stats").json()
+
+    assert all(
+        not (item["piece_id"] == piece_id and "rated" in item["reason"])
+        for item in body["suggested_plan"]
+    )
+
+
+def test_suggested_plan_deduplicates_piece_appearing_in_multiple_reasons(
+    client: TestClient,
+) -> None:
+    piece_id = _create_piece(client, "Multiple reasons")
+    target = (datetime.now(UTC).date() - timedelta(days=1)).isoformat()
+    client.patch(f"/api/pieces/{piece_id}", json={"goal_target_date": target})
+
+    body = client.get("/api/practice-sessions/stats").json()
+    plan = body["suggested_plan"]
+
+    assert [item["piece_id"] for item in plan].count(piece_id) == 1
+
+
+def test_suggested_plan_capped_at_four(client: TestClient) -> None:
+    for i in range(6):
+        piece_id = _create_piece(client, f"Overdue {i}")
+        target = (datetime.now(UTC).date() - timedelta(days=i + 1)).isoformat()
+        client.patch(f"/api/pieces/{piece_id}", json={"goal_target_date": target})
+
+    body = client.get("/api/practice-sessions/stats").json()
+
+    assert len(body["suggested_plan"]) <= 4

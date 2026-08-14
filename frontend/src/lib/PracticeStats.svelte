@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { PracticeGoal, PracticeStats } from './api'
+  import type { DayPracticeMinutes, PracticeGoal, PracticeStats } from './api'
   import Icon from './Icon.svelte'
 
   let { stats, goal = null }: { stats: PracticeStats; goal?: PracticeGoal | null } = $props()
@@ -15,43 +15,66 @@
   const goalPct = $derived(
     goal ? Math.min(100, (goal.minutes_this_week / goal.target_minutes) * 100) : 0,
   )
-</script>
 
-{#if goal}
-  <div class="goal-row">
-    <div class="goal-rule">
-      <span class="goal-fill" style={`width: ${goalPct}%`}></span>
-    </div>
-    <span class="goal-fraction numeral">
-      {formatHours(goal.minutes_this_week)} / {formatHours(goal.target_minutes)}
-      <span class="unit caption">hrs this week</span>
-    </span>
-  </div>
-{/if}
+  const HEAT_LEVELS = ['var(--border)', 'var(--accent-200)', 'var(--accent-400)', 'var(--accent)', 'var(--accent-700)']
+
+  function heatLevel(day: DayPracticeMinutes): string {
+    const m = day.total_minutes
+    const level = m === 0 ? 0 : m < 15 ? 1 : m < 30 ? 2 : m < 60 ? 3 : 4
+    return HEAT_LEVELS[level]
+  }
+</script>
 
 {#if stats.pieces.length === 0}
   <p class="empty">No practice sessions logged yet.</p>
 {:else}
   <div class="stat-strip">
     <div class="stat-cell">
-      <span class="numeral">{stats.total_minutes}</span>
-      <span class="caption">min total</span>
+      <span class="caption">Total practice</span>
+      <span class="numeral">{formatHours(stats.total_minutes)}<span class="unit-inline">h</span></span>
     </div>
     <div class="stat-cell">
-      <span class="numeral">{stats.minutes_this_week}</span>
-      <span class="caption">min this week</span>
+      <span class="caption">This week</span>
+      <span class="numeral">{formatHours(stats.minutes_this_week)}<span class="unit-inline">h</span></span>
     </div>
     <div class="stat-cell">
-      <span class="numeral">{stats.minutes_this_month}</span>
-      <span class="caption">min this month</span>
+      <span class="caption">This month</span>
+      <span class="numeral">{formatHours(stats.minutes_this_month)}<span class="unit-inline">h</span></span>
     </div>
-    <div class="stat-cell">
-      <span class="numeral accent">{stats.current_streak_days}</span>
-      <span class="caption">day{stats.current_streak_days === 1 ? '' : 's'} streak</span>
+    <div class="stat-cell highlight">
+      <span class="caption"><Icon name="streak" size={13} /> Streak</span>
+      <span class="numeral">{stats.current_streak_days}<span class="unit-inline">day{stats.current_streak_days === 1 ? '' : 's'}</span></span>
+      <span class="best">Best ever is {stats.longest_streak_days}</span>
     </div>
-    <div class="stat-cell">
-      <span class="numeral">{stats.longest_streak_days}</span>
-      <span class="caption">best streak</span>
+  </div>
+
+  <div class="stats-columns">
+    <div>
+      <div class="col-head">
+        <h3>Weekly goal</h3>
+        {#if goal}<span class="caption">{formatHours(goal.minutes_this_week)}h / {formatHours(goal.target_minutes)}h</span>{/if}
+      </div>
+      <div class="goal-track"><div class="goal-track-fill" style={`width: ${goalPct}%`}></div></div>
+    </div>
+    <div>
+      <div class="col-head">
+        <h3>Consistency</h3>
+        <span class="caption">Last 14 weeks</span>
+      </div>
+      <div class="heatmap">
+        {#each stats.consistency_heatmap as day (day.date)}
+          <div class="heatmap-cell" style={`background:${heatLevel(day)}`} title="{day.date}: {day.total_minutes} min"></div>
+        {/each}
+      </div>
+      <div class="heatmap-legend">
+        <span class="caption">Less</span>
+        <span class="legend-swatches">
+          {#each HEAT_LEVELS as bg (bg)}
+            <i style={`background:${bg}`}></i>
+          {/each}
+        </span>
+        <span class="caption">More</span>
+      </div>
     </div>
   </div>
 
@@ -97,10 +120,10 @@
 {/if}
 
 {#if stats.recently_practiced.length > 0 || stats.neglected.length > 0}
-  <div class="editorial-columns" class:single={stats.recently_practiced.length === 0 || stats.neglected.length === 0}>
+  <div class="stats-columns" class:single={stats.recently_practiced.length === 0 || stats.neglected.length === 0}>
     {#if stats.recently_practiced.length > 0}
       <div class="col">
-        <h3>Recently practiced</h3>
+        <h3>Fresh in the hands</h3>
         <ul class="col-list">
           {#each stats.recently_practiced as piece (piece.piece_id)}
             <li>
@@ -113,7 +136,7 @@
     {/if}
     {#if stats.neglected.length > 0}
       <div class="col">
-        <h3>Neglected</h3>
+        <h3>Slipping away</h3>
         <ul class="col-list">
           {#each stats.neglected as piece (piece.piece_id)}
             <li>
@@ -130,69 +153,115 @@
 {/if}
 
 <style>
-  .goal-row {
-    display: flex;
-    align-items: baseline;
-    gap: var(--space-4);
-    margin-bottom: var(--space-5);
-    flex-wrap: wrap;
-  }
-  .goal-rule {
-    position: relative;
-    flex: 1 1 10rem;
-    min-width: 6rem;
-    height: 1px;
-    background: var(--border);
-  }
-  .goal-fill {
-    position: absolute;
-    top: -1px;
-    left: 0;
-    height: 3px;
-    background: var(--accent);
-    width: 0;
-    transition: width 200ms ease;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .goal-fill {
-      transition: none;
-    }
-  }
-  .goal-fraction {
-    font-size: var(--text-lg);
-    white-space: nowrap;
-  }
-  .unit {
-    margin-left: var(--space-2);
+  .unit-inline {
+    font-size: var(--text-md);
+    opacity: 0.55;
+    margin-left: 2px;
   }
 
   .stat-strip {
-    display: flex;
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    margin-bottom: var(--space-5);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    border-top: var(--border-width-strong) solid var(--ink);
+    border-bottom: var(--border-width) solid var(--border);
+    margin-bottom: var(--space-6);
   }
   .stat-cell {
-    flex: 1;
     display: flex;
     flex-direction: column;
     gap: var(--space-1);
-    padding: var(--space-4) var(--space-4) var(--space-3) var(--space-4);
-    border-left: 1px solid var(--border);
+    padding: var(--space-4);
+    border-left: var(--border-width) solid var(--border);
   }
   .stat-cell:first-child {
     border-left: none;
-    padding-left: 0;
   }
   .stat-cell .numeral {
     font-size: var(--text-2xl);
   }
+  .stat-cell.highlight {
+    background: var(--accent);
+    color: var(--accent-contrast);
+  }
+  .stat-cell.highlight .caption,
+  .stat-cell.highlight .numeral,
+  .stat-cell.highlight .best {
+    color: var(--accent-contrast);
+  }
+  .stat-cell.highlight .caption {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    opacity: 0.9;
+  }
+  .best {
+    font-size: var(--text-xs);
+    color: var(--ink-faint);
+  }
+
+  .stats-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-6) var(--space-6);
+    margin-bottom: var(--space-6);
+    align-items: start;
+  }
+  .stats-columns.single {
+    grid-template-columns: 1fr;
+  }
+  .stats-columns .col + .col {
+    border-left: var(--border-width) solid var(--border);
+    padding-left: var(--space-6);
+  }
+  .col-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: var(--space-3);
+  }
+
+  .goal-track {
+    height: 10px;
+    background: var(--border);
+  }
+  .goal-track-fill {
+    height: 100%;
+    background: var(--accent);
+  }
+
+  .heatmap {
+    display: grid;
+    grid-template-rows: repeat(7, 13px);
+    grid-auto-flow: column;
+    grid-auto-columns: 13px;
+    gap: 4px;
+  }
+  .heatmap-cell {
+    width: 13px;
+    height: 13px;
+  }
+  .heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+  }
+  .legend-swatches {
+    display: flex;
+    gap: 4px;
+  }
+  .legend-swatches i {
+    width: 12px;
+    height: 12px;
+    display: block;
+  }
 
   .index-table {
-    margin-bottom: var(--space-5);
+    margin-bottom: var(--space-6);
   }
   .piece-title {
-    font-family: var(--font-serif);
+    font-family: var(--font-heading);
+    font-weight: var(--font-heading-weight);
   }
   .no-disclosure {
     padding-left: calc(12px + var(--space-1));
@@ -234,18 +303,6 @@
   h3 {
     margin-bottom: var(--space-2);
   }
-  .editorial-columns {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0 var(--space-6);
-  }
-  .editorial-columns.single {
-    grid-template-columns: 1fr;
-  }
-  .editorial-columns .col + .col {
-    border-left: 1px solid var(--border);
-    padding-left: var(--space-6);
-  }
   .col-list {
     list-style: none;
     padding: 0;
@@ -256,7 +313,7 @@
     justify-content: space-between;
     gap: var(--space-3);
     padding: var(--space-2) 0;
-    border-bottom: 1px solid var(--border);
+    border-bottom: var(--border-width) solid var(--border);
   }
   .col-list li:last-child {
     border-bottom: none;

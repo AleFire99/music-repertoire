@@ -36,16 +36,49 @@
 
   type ViewId = 'pieces' | 'focus' | 'sessions' | 'stats' | 'resources' | 'lists'
 
-  const NAV_ITEMS: { id: ViewId; label: string; icon: string }[] = [
-    { id: 'pieces', label: 'Pieces', icon: 'piece' },
-    { id: 'focus', label: 'Focus', icon: 'focus' },
-    { id: 'sessions', label: 'Sessions', icon: 'session' },
-    { id: 'stats', label: 'Statistics', icon: 'stats' },
-    { id: 'resources', label: 'Resources', icon: 'resource' },
-    { id: 'lists', label: 'Lists', icon: 'list' },
+  const NAV_GROUPS: { label: string; items: { id: ViewId; label: string; icon: string }[] }[] = [
+    {
+      label: 'Practice',
+      items: [
+        { id: 'focus', label: 'Today & Focus', icon: 'focus' },
+        { id: 'sessions', label: 'Sessions', icon: 'sessions' },
+        { id: 'stats', label: 'Progress', icon: 'stats' },
+      ],
+    },
+    {
+      label: 'Library',
+      items: [
+        { id: 'pieces', label: 'Pieces', icon: 'pieces' },
+        { id: 'resources', label: 'Sheet Music', icon: 'sheet' },
+        { id: 'lists', label: 'Lists', icon: 'list' },
+      ],
+    },
   ]
 
-  let activeView = $state<ViewId>('pieces')
+  type Theme = 'light' | 'dark'
+
+  function preferredTheme(): Theme {
+    const stored = localStorage.getItem('theme')
+    if (stored === 'light' || stored === 'dark') return stored
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+  }
+
+  const initialTheme = preferredTheme()
+  let theme = $state<Theme>(initialTheme)
+
+  function applyTheme(next: Theme): void {
+    document.documentElement.setAttribute('data-theme', next)
+  }
+
+  function toggleTheme(): void {
+    theme = theme === 'dark' ? 'light' : 'dark'
+    localStorage.setItem('theme', theme)
+    applyTheme(theme)
+  }
+
+  applyTheme(initialTheme)
+
+  let activeView = $state<ViewId>('focus')
   let sidebarCollapsed = $state(localStorage.getItem('sidebar-collapsed') === 'true')
 
   function toggleSidebar(): void {
@@ -59,6 +92,7 @@
   let statusFilter = $state<PieceStatus | ''>('')
   let favoritesOnly = $state<boolean>(false)
   let difficultyFilter = $state<PieceDifficulty | ''>('')
+  let pieceQuery = $state('')
   let editingPiece = $state<Piece | null>(null)
   let pieceModalOpen = $state(false)
   let sessions = $state<PracticeSession[]>([])
@@ -72,6 +106,8 @@
     longest_streak_days: 0,
     minutes_this_week: 0,
     minutes_this_month: 0,
+    consistency_heatmap: [],
+    suggested_plan: [],
   })
   let goal = $state<PracticeGoal | null>(null)
   let goalModalOpen = $state(false)
@@ -81,6 +117,20 @@
   let editingRepertoireList = $state<RepertoireList | null>(null)
   let listModalOpen = $state(false)
   let focusPieces = $state<Piece[]>([])
+
+  const filteredPieces = $derived(
+    pieceQuery.trim() === ''
+      ? pieces
+      : pieces.filter((p) =>
+          `${p.title} ${p.composer ?? ''} ${p.key ?? ''} ${p.tags.join(' ')}`
+            .toLowerCase()
+            .includes(pieceQuery.trim().toLowerCase()),
+        ),
+  )
+
+  const weekGoalPct = $derived(
+    goal ? Math.min(100, Math.round((goal.minutes_this_week / goal.target_minutes) * 100)) : 0,
+  )
 
   async function refreshPieces(): Promise<void> {
     pieces = await listPieces({
@@ -247,42 +297,73 @@
 <div class="app-shell" class:collapsed={sidebarCollapsed}>
   <aside class="sidebar">
     <div class="masthead">
-      <h1>Music Repertoire</h1>
+      <div class="brand">
+        <Icon name="brand" size={20} />
+        <span class="brand-name">Music Repertoire</span>
+      </div>
       <p class="colophon caption">{pieces.length} piece{pieces.length === 1 ? '' : 's'} catalogued</p>
     </div>
 
     <nav>
-      <ul>
-        {#each NAV_ITEMS as item (item.id)}
-          <li>
-            <button
-              type="button"
-              class="nav-item"
-              class:active={activeView === item.id}
-              onclick={() => (activeView = item.id)}
-              title={item.label}
-            >
-              <span class="tick" aria-hidden="true"></span>
-              <Icon name={item.icon} />
-              <span class="label">{item.label}</span>
-            </button>
-          </li>
-        {/each}
-      </ul>
+      {#each NAV_GROUPS as group (group.label)}
+        <div class="nav-group-label caption">{group.label}</div>
+        <ul>
+          {#each group.items as item (item.id)}
+            <li>
+              <button
+                type="button"
+                class="nav-item"
+                class:active={activeView === item.id}
+                onclick={() => (activeView = item.id)}
+                title={item.label}
+              >
+                <Icon name={item.icon} size={18} />
+                <span class="label">{item.label}</span>
+              </button>
+            </li>
+          {/each}
+        </ul>
+      {/each}
     </nav>
 
     <div class="sidebar-footer">
-      <button
-        type="button"
-        class="rail-toggle"
-        onclick={toggleSidebar}
-        aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-      >
-        <Icon name="rail" size={16} />
+      {#if goal}
+        <div class="goal-mini">
+          <div class="goal-mini-row">
+            <span class="caption">This week</span>
+            <span class="goal-mini-value">{goal.minutes_this_week}m / {goal.target_minutes}m</span>
+          </div>
+          <div class="goal-mini-track">
+            <div class="goal-mini-fill" style="width: {weekGoalPct}%"></div>
+          </div>
+        </div>
+      {:else}
+        <p class="goal-mini-empty caption">No weekly goal set</p>
+      {/if}
+
+      <button type="button" class="primary start-session" onclick={() => (sessionModalOpen = true)}>
+        <Icon name="play" size={16} />
+        <span class="label">Start a session</span>
       </button>
-      <div class="health">
-        <span class="dot" class:online={health === 'ok'} aria-hidden="true"></span>
-        <span class="health-label caption">{health === 'ok' ? 'connected' : 'offline'}</span>
+
+      <button type="button" class="theme-toggle" onclick={toggleTheme}>
+        <Icon name={theme === 'dark' ? 'theme-sun' : 'theme-moon'} size={15} />
+        <span class="label">{theme === 'dark' ? 'Light theme' : 'Dark theme'}</span>
+      </button>
+
+      <div class="footer-row">
+        <button
+          type="button"
+          class="rail-toggle"
+          onclick={toggleSidebar}
+          aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          <Icon name="rail" size={16} />
+        </button>
+        <div class="health">
+          <span class="dot" class:online={health === 'ok'} aria-hidden="true"></span>
+          <span class="health-label caption">{health === 'ok' ? 'connected' : 'offline'}</span>
+        </div>
       </div>
     </div>
   </aside>
@@ -294,82 +375,86 @@
 
     {#if activeView === 'pieces'}
       <SectionHeader
+        kicker="Your library"
         title="Pieces"
-        dek="Every piece in the repertoire, catalogued with its status, difficulty, and goal."
+        subtitle="Standards, soundtracks, contemporary and your own writing, each catalogued with its status and goal."
       >
         {#snippet actions()}
-          <div class="filter-groups">
-            <div class="filter-group">
-              <span class="caption">Status</span>
-              <span class="toggle-row">
-                <button type="button" class="text-toggle" class:active={statusFilter === ''} onclick={() => setStatusFilter('')}>all</button>
-                {#each PIECE_STATUSES as status (status)}
-                  <button
-                    type="button"
-                    class="text-toggle"
-                    class:active={statusFilter === status}
-                    onclick={() => setStatusFilter(status)}
-                  >
-                    {status}
-                  </button>
-                {/each}
-              </span>
-            </div>
-            <div class="filter-group">
-              <span class="caption">Difficulty</span>
-              <span class="toggle-row">
-                <button type="button" class="text-toggle" class:active={difficultyFilter === ''} onclick={() => setDifficultyFilter('')}>all</button>
-                {#each PIECE_DIFFICULTIES as d (d)}
-                  <button
-                    type="button"
-                    class="text-toggle"
-                    class:active={difficultyFilter === d}
-                    onclick={() => setDifficultyFilter(d)}
-                  >
-                    {d}
-                  </button>
-                {/each}
-              </span>
-            </div>
-            <button type="button" class="text-toggle" class:active={favoritesOnly} onclick={toggleFavoritesOnly}>
-              favorites only
-            </button>
-          </div>
-          <button type="button" class="push-right" onclick={openAddPiece}><Icon name="add" size={14} /> Add piece</button>
+          <label class="search-field">
+            <Icon name="search" size={15} />
+            <input
+              type="search"
+              placeholder="Search title, composer, key"
+              bind:value={pieceQuery}
+            />
+          </label>
+          <button type="button" onclick={openAddPiece}><Icon name="add" size={14} /> Add piece</button>
         {/snippet}
       </SectionHeader>
 
-      <PieceList {pieces} onEdit={openEditPiece} onDeleted={handlePieceDeleted} onUpdated={handlePieceSaved} />
+      <div class="filter-groups">
+        <span class="toggle-row">
+          <button type="button" class="pill" class:active={statusFilter === ''} onclick={() => setStatusFilter('')}>All</button>
+          {#each PIECE_STATUSES as status (status)}
+            <button
+              type="button"
+              class="pill"
+              class:active={statusFilter === status}
+              onclick={() => setStatusFilter(status)}
+            >
+              {status}
+            </button>
+          {/each}
+        </span>
+        <span class="toggle-row">
+          <button type="button" class="text-toggle" class:active={difficultyFilter === ''} onclick={() => setDifficultyFilter('')}>all difficulties</button>
+          {#each PIECE_DIFFICULTIES as d (d)}
+            <button
+              type="button"
+              class="text-toggle"
+              class:active={difficultyFilter === d}
+              onclick={() => setDifficultyFilter(d)}
+            >
+              {d}
+            </button>
+          {/each}
+        </span>
+        <button type="button" class="text-toggle" class:active={favoritesOnly} onclick={toggleFavoritesOnly}>
+          favorites only
+        </button>
+      </div>
+
+      <PieceList pieces={filteredPieces} stats={stats.pieces} onEdit={openEditPiece} onDeleted={handlePieceDeleted} onUpdated={handlePieceSaved} />
     {:else if activeView === 'focus'}
-      <SectionHeader title="Focus" dek="What's actively being learned or maintained right now." />
-      <RotationPlanner pieces={focusPieces} />
+      <SectionHeader kicker="Right now" title="Today & Focus" subtitle="A plan for the next hour, and what you're actively carrying." />
+      <RotationPlanner pieces={focusPieces} suggestedPlan={stats.suggested_plan} onStartSession={() => (sessionModalOpen = true)} onAddPiece={openAddPiece} />
     {:else if activeView === 'sessions'}
-      <SectionHeader title="Sessions" dek="A ledger of practice, logged session by session.">
+      <SectionHeader kicker="Practice log" title="Sessions" subtitle="A ledger of practice, logged session by session.">
         {#snippet actions()}
-          <button type="button" class="push-right" onclick={() => (sessionModalOpen = true)}><Icon name="add" size={14} /> Log session</button>
+          <button type="button" onclick={() => (sessionModalOpen = true)}><Icon name="add" size={14} /> Log session</button>
         {/snippet}
       </SectionHeader>
       <PracticeSessionList {sessions} {pieces} />
     {:else if activeView === 'stats'}
-      <SectionHeader title="Statistics" dek="Time invested, streaks kept, and pieces due for attention.">
+      <SectionHeader kicker="How it's going" title="Progress" subtitle="Time invested, streaks kept, and pieces due for attention.">
         {#snippet actions()}
-          <button type="button" class="secondary push-right" onclick={() => (goalModalOpen = true)}>
+          <button type="button" class="secondary" onclick={() => (goalModalOpen = true)}>
             {goal ? 'Edit goal' : 'Set goal'}
           </button>
         {/snippet}
       </SectionHeader>
       <PracticeStatsView {stats} {goal} />
     {:else if activeView === 'resources'}
-      <SectionHeader title="Resources" dek="Where to find the score, part, or edition for each piece.">
+      <SectionHeader kicker="Charts & scores" title="Sheet Music" subtitle="Where to find the score, part, or edition for each piece.">
         {#snippet actions()}
-          <button type="button" class="push-right" onclick={() => (resourceModalOpen = true)}><Icon name="add" size={14} /> Add resource</button>
+          <button type="button" onclick={() => (resourceModalOpen = true)}><Icon name="add" size={14} /> Add resource</button>
         {/snippet}
       </SectionHeader>
       <SheetResourceList resources={sheetResources} {pieces} onDeleted={handleSheetResourceDeleted} />
     {:else if activeView === 'lists'}
-      <SectionHeader title="Lists" dek="Custom groupings for programs, recitals, and rotations.">
+      <SectionHeader kicker="Groupings" title="Lists" subtitle="Custom groupings for programs, recitals, and rotations.">
         {#snippet actions()}
-          <button type="button" class="push-right" onclick={openAddList}><Icon name="add" size={14} /> New list</button>
+          <button type="button" onclick={openAddList}><Icon name="add" size={14} /> New list</button>
         {/snippet}
       </SectionHeader>
       <RepertoireListList
@@ -413,10 +498,10 @@
   }
 
   .sidebar {
-    width: 240px;
+    width: 256px;
     flex: none;
-    background: var(--sidebar-bg);
-    border-right: 1px solid var(--border);
+    background: var(--surface);
+    border-right: var(--border-width-strong) solid var(--border);
     display: flex;
     flex-direction: column;
     transition: width 150ms ease;
@@ -432,29 +517,48 @@
 
   .masthead {
     padding: var(--space-5) var(--space-4);
-    border-bottom: 1px solid var(--border);
+    border-bottom: var(--border-width-strong) solid var(--border);
     overflow: hidden;
   }
-  .masthead h1 {
-    font-size: var(--text-lg);
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--accent);
+  }
+  .brand-name {
+    font-family: var(--font-heading);
+    font-weight: var(--font-heading-weight);
+    font-size: var(--text-md);
+    color: var(--ink);
+    letter-spacing: -0.01em;
     white-space: nowrap;
   }
   .colophon {
-    margin: var(--space-1) 0 0;
+    margin: var(--space-2) 0 0;
     white-space: nowrap;
   }
-  .app-shell.collapsed .masthead h1,
+  .app-shell.collapsed .masthead .brand-name,
   .app-shell.collapsed .masthead .colophon {
     display: none;
   }
 
+  nav {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-3) var(--space-2) var(--space-2);
+    gap: 2px;
+  }
   nav ul {
     list-style: none;
     margin: 0;
     padding: 0;
   }
-  nav li {
-    border-bottom: 1px solid var(--border);
+  .nav-group-label {
+    padding: var(--space-2) var(--space-3) var(--space-1);
+  }
+  .app-shell.collapsed .nav-group-label {
+    display: none;
   }
 
   .nav-item {
@@ -462,44 +566,33 @@
     align-items: center;
     gap: var(--space-3);
     width: 100%;
-    padding: var(--space-3) var(--space-4);
+    padding: var(--space-2) var(--space-3);
     background: none;
     border: none;
-    color: var(--ink-soft);
-    font-variant-caps: normal;
-    letter-spacing: normal;
+    color: var(--ink);
+    font-family: var(--font-body);
     font-weight: 400;
+    font-size: var(--text-sm);
     text-align: left;
     cursor: pointer;
-    position: relative;
   }
   .nav-item:hover:not(:disabled) {
-    background: none;
+    background: var(--surface-hover);
     border-color: transparent;
   }
-  .nav-item:hover .label {
-    text-decoration: underline;
-  }
-  .nav-item .tick {
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 1.5px;
-    background: transparent;
-  }
   .nav-item.active {
+    background: var(--bg);
     color: var(--accent);
-  }
-  .nav-item.active .tick {
-    background: var(--accent);
+    font-family: var(--font-heading);
+    font-weight: var(--font-heading-weight);
+    box-shadow: inset 3px 0 0 var(--accent);
   }
   .label {
-    font-size: var(--text-sm);
+    white-space: nowrap;
   }
   .app-shell.collapsed .nav-item {
     justify-content: center;
-    padding: var(--space-3) 0;
+    padding: var(--space-2) 0;
   }
   .app-shell.collapsed .nav-item .label {
     display: none;
@@ -507,8 +600,72 @@
 
   .sidebar-footer {
     margin-top: auto;
-    border-top: 1px solid var(--border);
-    padding: var(--space-3) var(--space-4);
+    border-top: var(--border-width-strong) solid var(--border);
+    padding: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  .app-shell.collapsed .sidebar-footer {
+    padding: var(--space-3) var(--space-2);
+  }
+  .app-shell.collapsed .goal-mini,
+  .app-shell.collapsed .goal-mini-empty,
+  .app-shell.collapsed .start-session .label,
+  .app-shell.collapsed .theme-toggle .label {
+    display: none;
+  }
+
+  .goal-mini-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: var(--space-2);
+  }
+  .goal-mini-value {
+    font-family: var(--font-heading);
+    font-weight: var(--font-heading-weight);
+    font-size: var(--text-sm);
+  }
+  .goal-mini-track {
+    height: 6px;
+    background: var(--border);
+  }
+  .goal-mini-fill {
+    height: 100%;
+    background: var(--accent);
+  }
+  .goal-mini-empty {
+    margin: 0;
+  }
+
+  .start-session {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    width: 100%;
+    padding: var(--space-1) 0;
+    background: transparent;
+    color: var(--ink-soft);
+    border: none;
+    font-size: var(--text-xs);
+    font-family: var(--font-body);
+    font-weight: 400;
+  }
+  .theme-toggle:hover:not(:disabled) {
+    background: none;
+    color: var(--ink);
+  }
+  .app-shell.collapsed .theme-toggle {
+    justify-content: center;
+  }
+
+  .footer-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -535,13 +692,12 @@
     flex: none;
     width: 7px;
     height: 7px;
-    border-radius: 50%;
     border: 1px solid var(--ink-faint);
     background: transparent;
   }
   .dot.online {
-    background: var(--ink);
-    border-color: var(--ink);
+    background: var(--accent);
+    border-color: var(--accent);
   }
   .health-label {
     white-space: nowrap;
@@ -553,19 +709,39 @@
   .content {
     flex: 1;
     min-width: 0;
-    padding: var(--space-6) var(--space-6) var(--space-7);
-    max-width: 56rem;
+    padding: var(--space-6) var(--space-7) var(--space-7);
   }
 
   .filter-groups {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
-    gap: var(--space-5);
+    align-items: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-5);
   }
-  .filter-group {
+
+  .search-field {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     gap: var(--space-2);
+    background: var(--surface);
+    border: var(--border-width) solid var(--border);
+    padding: 0 var(--space-3);
+    height: 36px;
+    width: 15rem;
+    color: var(--ink-faint);
+  }
+  .search-field input {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--ink);
+    font-size: var(--text-sm);
+  }
+  .search-field input:focus-visible {
+    outline: none;
+    box-shadow: none;
   }
 </style>
