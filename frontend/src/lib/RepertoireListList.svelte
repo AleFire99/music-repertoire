@@ -118,37 +118,14 @@
 {#if lists.length === 0}
   <p class="empty">No repertoire lists yet.</p>
 {:else}
-  <ul class="row-list">
+  <div class="list-grid">
     {#each lists as list (list.id)}
-      <li>
-        <div class="line">
+      <div class="card elev-sm">
+        <div class="card-head">
           <button type="button" class="expand" onclick={() => toggleExpand(list)}>
-            <span class="disclosure" class:open={expandedId === list.id} aria-hidden="true">
-              <Icon name="disclose" size={14} />
-            </span>
-            <span class="title">{list.name}</span>
+            <span class="card-title">{list.name}</span>
           </button>
-          <span class="tag small-caps">{list.piece_count} piece{list.piece_count === 1 ? '' : 's'}</span>
-          <span class="row-actions">
-            <button
-              type="button"
-              class="icon-btn"
-              onclick={() => onEdit(list)}
-              disabled={deletingId === list.id}
-              aria-label="Rename"
-            >
-              <Icon name="edit" />
-            </button>
-            <button
-              type="button"
-              class="icon-btn danger"
-              onclick={() => handleDelete(list)}
-              disabled={deletingId === list.id}
-              aria-label="Delete"
-            >
-              <Icon name="delete" />
-            </button>
-          </span>
+          <span class="tag tag-accent">{list.piece_count} piece{list.piece_count === 1 ? '' : 's'}</span>
         </div>
 
         {#if expandedId === list.id}
@@ -171,7 +148,7 @@
                         disabled={removingPieceId === piece.id}
                         aria-label="Remove"
                       >
-                        <Icon name="close" size={16} />
+                        <Icon name="close" size={15} />
                       </button>
                     </li>
                   {/each}
@@ -204,15 +181,33 @@
               {/if}
             {/if}
           </div>
+        {:else if list.piece_count > 0}
+          <p class="card-body">Click the name to view and manage pieces.</p>
         {/if}
-      </li>
+
+        <div class="row-actions">
+          <button type="button" class="icon-btn always" onclick={() => onEdit(list)} disabled={deletingId === list.id} aria-label="Rename">
+            <Icon name="edit" size={15} />
+          </button>
+          <button type="button" class="icon-btn danger always" onclick={() => handleDelete(list)} disabled={deletingId === list.id} aria-label="Delete">
+            <Icon name="delete" size={15} />
+          </button>
+        </div>
+      </div>
     {/each}
-  </ul>
+  </div>
 {/if}
 
 <style>
-  .line {
+  .list-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-5);
+    align-items: start;
+  }
+  .card-head {
     display: flex;
+    justify-content: space-between;
     align-items: baseline;
     gap: var(--space-2);
   }
@@ -221,70 +216,47 @@
     border: none;
     cursor: pointer;
     padding: 0;
-    color: var(--ink);
+    color: inherit;
     text-align: left;
-    display: inline-flex;
-    align-items: baseline;
-    gap: var(--space-1);
   }
   .expand:hover:not(:disabled) {
     background: none;
   }
-  .expand:hover:not(:disabled) .title {
+  .expand:hover:not(:disabled) .card-title {
     text-decoration: underline;
   }
-  .title {
-    font-family: var(--font-serif);
-    font-size: var(--text-md);
-  }
-  .disclosure {
-    display: inline-flex;
-    color: var(--ink-faint);
-    transition: transform 150ms ease;
-  }
-  .disclosure.open {
-    transform: rotate(90deg);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .disclosure {
-      transition: none;
-    }
-  }
-  .tag {
-    color: var(--ink-faint);
-    font-size: var(--text-sm);
-  }
-  .row-actions {
-    margin-left: auto;
-    display: flex;
-    gap: var(--space-1);
-  }
   .detail {
-    margin: var(--space-3) 0 var(--space-2) var(--space-5);
-    padding-left: var(--space-3);
-    border-left: 1px solid var(--border);
+    padding-top: var(--space-2);
+    border-top: var(--border-width) solid var(--border);
   }
   .pieces {
     list-style: none;
     padding: 0;
     margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
   }
   .pieces li {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-2);
-    padding: var(--space-1) 0;
+    font-size: var(--text-sm);
   }
   .piece-title {
-    font-family: var(--font-serif);
-  }
-  .icon-btn.always {
-    opacity: 1;
+    font-family: var(--font-heading);
+    font-weight: var(--font-heading-weight);
   }
   .add-piece {
     display: flex;
     gap: var(--space-2);
     margin-top: var(--space-3);
+  }
+  .row-actions {
+    display: flex;
+    gap: var(--space-1);
+    justify-content: flex-end;
+    margin-top: auto;
   }
 </style>

@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import func
@@ -6,9 +6,10 @@ from sqlalchemy.orm import Session
 
 from repertoire.date_utils import current_week_bounds, start_of_utc_day
 from repertoire.db import get_db
-from repertoire.models.piece import Piece
+from repertoire.models.piece import Piece, PieceStatus
 from repertoire.models.practice_session import PracticeSession
 from repertoire.schemas.practice_session import (
+    DayPracticeMinutes,
     NeglectedPiece,
     PiecePracticeStats,
     PracticeSessionCreate,
@@ -16,6 +17,7 @@ from repertoire.schemas.practice_session import (
     PracticeStatsRead,
     RecentlyPracticedPiece,
     SectionPracticeStats,
+    SuggestedPlanItem,
 )
 
 router = APIRouter(prefix="/practice-sessions", tags=["practice-sessions"])
@@ -23,6 +25,11 @@ router = APIRouter(prefix="/practice-sessions", tags=["practice-sessions"])
 RECENTLY_PRACTICED_LIMIT = 5
 NEGLECTED_LIMIT = 5
 UNSPECIFIED_SECTION_LABEL = "(unspecified)"
+HEATMAP_DAYS = 98
+SUGGESTED_PLAN_LIMIT = 4
+SUGGESTED_PLAN_DUE_SOON_DAYS = 14
+SUGGESTED_PLAN_LOW_RATING_MAX = 3
+SUGGESTED_PLAN_NEGLECTED_MIN_DAYS = 14
 
 
 def _to_utc_date(moment: datetime) -> date:
@@ -82,6 +89,113 @@ def _section_label(section: str | None) -> str:
     """Sessions with no (or blank) section are grouped under a single label
     rather than excluded, so their time still counts toward the piece total."""
     return section if section else UNSPECIFIED_SECTION_LABEL
+
+
+def _build_consistency_heatmap(db: Session, today: date) -> list[DayPracticeMinutes]:
+    """Daily total-minutes series for the last `HEATMAP_DAYS` UTC calendar days, oldest first."""
+    start_day = today - timedelta(days=HEATMAP_DAYS - 1)
+    rows = (
+        db.query(PracticeSession.practiced_at, PracticeSession.duration_minutes)
+        .filter(PracticeSession.practiced_at >= start_of_utc_day(start_day))
+        .all()
+    )
+    minutes_by_day: dict[date, int] = {}
+    for practiced_at, duration_minutes in rows:
+        day = _to_utc_date(practiced_at)
+        minutes_by_day[day] = minutes_by_day.get(day, 0) + duration_minutes
+
+    return [
+        DayPracticeMinutes(
+            date=start_day + timedelta(days=offset),
+            total_minutes=minutes_by_day.get(start_day + timedelta(days=offset), 0),
+        )
+        for offset in range(HEATMAP_DAYS)
+    ]
+
+
+def _build_suggested_plan(
+    db: Session, today: date, neglected: list[NeglectedPiece]
+) -> list[SuggestedPlanItem]:
+    """A few pieces worth practicing next, ranked by due/overdue goals, longest-neglected,
+    and low-rated recent sessions — a deterministic heuristic over existing fields, no
+    music-theory logic and no LLM."""
+    due_soon_cutoff = today + timedelta(days=SUGGESTED_PLAN_DUE_SOON_DAYS)
+    due_soon_rows = (
+        db.query(Piece.id, Piece.title, Piece.goal_target_date)
+        .filter(
+            Piece.goal_target_date.isnot(None),
+            Piece.goal_target_date <= due_soon_cutoff,
+            Piece.status != PieceStatus.ARCHIVED,
+        )
+        .order_by(Piece.goal_target_date.asc())
+        .limit(SUGGESTED_PLAN_LIMIT)
+        .all()
+    )
+    candidates: list[SuggestedPlanItem] = []
+    for piece_id, title, target_date in due_soon_rows:
+        days = (target_date - today).days
+        if days < 0:
+            reason = f"Goal was due {-days} day{'s' if -days != 1 else ''} ago"
+        elif days == 0:
+            reason = "Goal due today"
+        else:
+            reason = f"Goal due in {days} day{'s' if days != 1 else ''}"
+        candidates.append(SuggestedPlanItem(piece_id=piece_id, piece_title=title, reason=reason))
+
+    for piece in neglected:
+        if piece.last_practiced_at is None:
+            reason = "Never practiced"
+        else:
+            days = (today - _to_utc_date(piece.last_practiced_at)).days
+            if days < SUGGESTED_PLAN_NEGLECTED_MIN_DAYS:
+                continue
+            reason = f"Not practiced in {days} day{'s' if days != 1 else ''}"
+        candidates.append(
+            SuggestedPlanItem(piece_id=piece.piece_id, piece_title=piece.piece_title, reason=reason)
+        )
+
+    latest_session = (
+        db.query(
+            PracticeSession.piece_id,
+            PracticeSession.rating,
+            func.row_number()
+            .over(
+                partition_by=PracticeSession.piece_id,
+                order_by=PracticeSession.practiced_at.desc(),
+            )
+            .label("rn"),
+        )
+        .subquery()
+    )
+    low_rated_rows = (
+        db.query(Piece.id, Piece.title, latest_session.c.rating)
+        .join(latest_session, latest_session.c.piece_id == Piece.id)
+        .filter(
+            latest_session.c.rn == 1,
+            latest_session.c.rating.isnot(None),
+            latest_session.c.rating <= SUGGESTED_PLAN_LOW_RATING_MAX,
+        )
+        .order_by(latest_session.c.rating.asc())
+        .limit(SUGGESTED_PLAN_LIMIT)
+        .all()
+    )
+    for piece_id, title, rating in low_rated_rows:
+        candidates.append(
+            SuggestedPlanItem(
+                piece_id=piece_id, piece_title=title, reason=f"Last session rated {rating}/5"
+            )
+        )
+
+    seen: set[int] = set()
+    plan: list[SuggestedPlanItem] = []
+    for item in candidates:
+        if item.piece_id in seen:
+            continue
+        seen.add(item.piece_id)
+        plan.append(item)
+        if len(plan) == SUGGESTED_PLAN_LIMIT:
+            break
+    return plan
 
 
 @router.post("", response_model=PracticeSessionRead, status_code=201)
@@ -232,4 +346,6 @@ def get_practice_stats(db: Session = Depends(get_db)) -> PracticeStatsRead:
         longest_streak_days=longest_streak_days,
         minutes_this_week=minutes_this_week,
         minutes_this_month=minutes_this_month,
+        consistency_heatmap=_build_consistency_heatmap(db, today),
+        suggested_plan=_build_suggested_plan(db, today, neglected),
     )

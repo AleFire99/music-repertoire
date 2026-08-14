@@ -2,18 +2,23 @@
   import type { Snippet } from 'svelte'
 
   let {
+    kicker,
     title,
-    dek,
+    subtitle,
     actions,
-  }: { title: string; dek?: string; actions?: Snippet } = $props()
+  }: { kicker?: string; title: string; subtitle?: string; actions?: Snippet } = $props()
 </script>
 
 <header class="section-header">
-  <h2>{title}</h2>
-  {#if dek}
-    <p class="dek">{dek}</p>
-  {/if}
-  <hr class="rule" />
+  <div class="heading">
+    {#if kicker}
+      <div class="kicker">{kicker}</div>
+    {/if}
+    <h1>{title}</h1>
+    {#if subtitle}
+      <p class="subtitle">{subtitle}</p>
+    {/if}
+  </div>
   {#if actions}
     <div class="actions-row">{@render actions()}</div>
   {/if}
@@ -21,16 +26,24 @@
 
 <style>
   .section-header {
-    margin-bottom: var(--space-5);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: var(--space-5) var(--space-6);
+    padding-bottom: var(--space-5);
+    margin-bottom: var(--space-6);
+    border-bottom: var(--border-width-strong) solid var(--border);
   }
-  .rule {
-    margin-top: var(--space-4);
+  .heading {
+    flex: 1 1 20rem;
+    min-width: 0;
   }
   .actions-row {
+    flex: none;
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: var(--space-4);
-    padding-top: var(--space-3);
+    gap: var(--space-3);
+    margin-left: auto;
   }
 </style>

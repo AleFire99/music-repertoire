@@ -41,67 +41,78 @@
 {#if resources.length === 0}
   <p class="empty">No sheet resources yet.</p>
 {:else}
-  <ul class="row-list">
+  <div class="resource-grid">
     {#each resources as resource (resource.id)}
-      <li>
-        <div class="line">
-          <span class="title">{pieceTitle(resource.piece_id)}</span>
-          <span class="tag small-caps">
-            {resource.kind}{#if resource.label}<span class="dot-sep"> &middot; </span>{resource.label}{/if}
-          </span>
-          <span class="row-actions">
-            <button
-              type="button"
-              class="icon-btn danger"
-              onclick={() => handleDelete(resource)}
-              disabled={deletingId === resource.id}
-              aria-label="Delete"
-            >
-              <Icon name="delete" />
-            </button>
-          </span>
+      <div class="resource-row">
+        <span class="icon-wrap">
+          <Icon name="sheet" size={17} />
+        </span>
+        <div class="body">
+          <div class="title">{pieceTitle(resource.piece_id)}</div>
+          <div class="reference">{resource.reference}</div>
+          <div class="meta-line">
+            <span>{resource.kind}</span>
+            {#if resource.label}<span>{resource.label}</span>{/if}
+          </div>
+          {#if resource.notes}
+            <p class="notes">{resource.notes}</p>
+          {/if}
         </div>
-        <p class="reference">{resource.reference}</p>
-        {#if resource.notes}
-          <p class="notes">{resource.notes}</p>
-        {/if}
-      </li>
+        <button
+          type="button"
+          class="icon-btn danger always"
+          onclick={() => handleDelete(resource)}
+          disabled={deletingId === resource.id}
+          aria-label="Delete"
+        >
+          <Icon name="delete" size={16} />
+        </button>
+      </div>
     {/each}
-  </ul>
+  </div>
 {/if}
 
 <style>
-  .line {
+  .resource-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 0 var(--space-6);
+    border-top: var(--border-width-strong) solid var(--ink);
+  }
+  .resource-row {
     display: flex;
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: var(--space-2);
+    gap: var(--space-3);
+    padding: var(--space-4) 0;
+    border-bottom: var(--border-width) solid var(--border);
+  }
+  .icon-wrap {
+    flex: none;
+    width: 2.375rem;
+    height: 2.375rem;
+    display: grid;
+    place-items: center;
+    background: var(--surface);
+    border: var(--border-width) solid var(--border);
+    color: var(--ink-soft);
+  }
+  .body {
+    flex: 1;
+    min-width: 0;
   }
   .title {
-    font-family: var(--font-serif);
-    font-size: var(--text-md);
-  }
-  .tag {
-    color: var(--ink-faint);
-    font-size: var(--text-sm);
-  }
-  .dot-sep {
-    color: var(--ink-faint);
-  }
-  .row-actions {
-    margin-left: auto;
-    display: flex;
-    gap: var(--space-1);
+    font-family: var(--font-heading);
+    font-weight: var(--font-heading-weight);
+    font-size: var(--text-base);
   }
   .reference {
-    margin: var(--space-1) 0 0;
+    margin-top: 2px;
     color: var(--ink);
     font-size: var(--text-sm);
+    overflow-wrap: break-word;
   }
   .notes {
     margin: var(--space-1) 0 0;
     color: var(--ink-soft);
     font-size: var(--text-xs);
-    font-style: italic;
   }
 </style>

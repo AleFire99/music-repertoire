@@ -54,9 +54,8 @@
 <style>
   .panel {
     background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 0;
-    box-shadow: 0 2px 8px var(--shadow);
+    border-top: var(--border-width-strong) solid var(--accent);
+    box-shadow: var(--shadow, 0 12px 32px rgba(0, 0, 0, 0.2));
     max-height: calc(100vh - 4rem);
     display: flex;
     flex-direction: column;
@@ -67,12 +66,12 @@
     justify-content: space-between;
     gap: var(--space-3);
     padding: var(--space-4) var(--space-5);
-    border-bottom: 1px solid var(--border);
+    border-bottom: var(--border-width-strong) solid var(--border);
     flex: none;
   }
   h2 {
     margin: 0;
-    font-size: var(--text-xl);
+    font-size: var(--text-lg);
   }
   .close {
     flex: none;

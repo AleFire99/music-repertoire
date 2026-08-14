@@ -1,14 +1,24 @@
 <script lang="ts">
-  import { deletePiece, updatePiece, type Piece } from './api'
+  import { deletePiece, updatePiece, type Piece, type PiecePracticeStats } from './api'
   import Icon from './Icon.svelte'
+
+  const KNOWN_GENRES = ['Jazz', 'Classical', 'Anime', 'Film', 'Contemporary', 'Mine']
+  const DIFFICULTY_RANK: Record<string, number> = {
+    beginner: 1,
+    intermediate: 2,
+    advanced: 3,
+    expert: 4,
+  }
 
   let {
     pieces,
+    stats = [],
     onEdit,
     onDeleted,
     onUpdated,
   }: {
     pieces: Piece[]
+    stats?: PiecePracticeStats[]
     onEdit: (piece: Piece) => void
     onDeleted: (id: number) => void
     onUpdated: (piece: Piece) => void
@@ -18,6 +28,32 @@
   let deleteError = $state<string | null>(null)
   let togglingFavoriteId = $state<number | null>(null)
   let favoriteError = $state<string | null>(null)
+
+  const statsByPiece = $derived(new Map(stats.map((s) => [s.piece_id, s])))
+
+  function genre(piece: Piece): string | null {
+    if (piece.tags.length === 0) return null
+    const known = piece.tags.find((t) => KNOWN_GENRES.some((g) => g.toLowerCase() === t.toLowerCase()))
+    return known ?? piece.tags[0]
+  }
+
+  function formatMinutes(minutes: number): string {
+    const h = Math.floor(minutes / 60)
+    const m = minutes % 60
+    return h > 0 ? `${h}h ${String(m).padStart(2, '0')}m` : `${m}m`
+  }
+
+  function formatLastPracticed(iso: string): string {
+    const date = new Date(iso)
+    const now = new Date()
+    const sameDay = (a: Date, b: Date) =>
+      a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
+    if (sameDay(date, now)) return 'Today'
+    const yesterday = new Date(now)
+    yesterday.setDate(now.getDate() - 1)
+    if (sameDay(date, yesterday)) return 'Yesterday'
+    return date.toLocaleDateString()
+  }
 
   async function handleDelete(piece: Piece): Promise<void> {
     if (!window.confirm(`Delete "${piece.title}"? This cannot be undone.`)) return
@@ -57,103 +93,131 @@
 {#if pieces.length === 0}
   <p class="empty">No pieces yet.</p>
 {:else}
-  <ul class="row-list">
-    {#each pieces as piece (piece.id)}
-      <li class:accented={piece.is_favorite}>
-        <div class="line">
-          <button
-            type="button"
-            class="icon-btn favorite"
-            class:favorited={piece.is_favorite}
-            onclick={() => toggleFavorite(piece)}
-            disabled={togglingFavoriteId === piece.id}
-            aria-label={piece.is_favorite ? 'Unmark as favorite' : 'Mark as favorite'}
-          >
-            <Icon name={piece.is_favorite ? 'bookmark-filled' : 'bookmark'} />
-          </button>
-          <span class="title">{piece.title}</span>
-          {#if piece.composer}<span class="composer">{piece.composer}</span>{/if}
-          <span class="status small-caps">
-            {piece.status}{#if piece.difficulty}<span class="dot-sep"> &middot; </span>{piece.difficulty}{/if}
-          </span>
-          <span class="row-actions">
-            <button
-              type="button"
-              class="icon-btn"
-              onclick={() => onEdit(piece)}
-              disabled={deletingId === piece.id}
-              aria-label="Edit"
-            >
-              <Icon name="edit" />
-            </button>
-            <button
-              type="button"
-              class="icon-btn danger"
-              onclick={() => handleDelete(piece)}
-              disabled={deletingId === piece.id}
-              aria-label="Delete"
-            >
-              <Icon name="delete" />
-            </button>
-          </span>
-        </div>
-        {#if piece.key || piece.tempo_bpm != null || piece.instrument || piece.tags.length > 0}
-          <div class="meta-line">
-            {#if piece.key}<span>{piece.key}</span>{/if}
-            {#if piece.tempo_bpm != null}<span><span class="readout">{piece.tempo_bpm}</span> bpm</span>{/if}
-            {#if piece.instrument}<span>{piece.instrument}</span>{/if}
-            {#each piece.tags as tag (tag)}<span>{tag}</span>{/each}
-          </div>
-        {/if}
-        {#if piece.goal_text || piece.goal_target_date}
-          <p class="goal">
-            Goal: {piece.goal_text ?? ''}{piece.goal_text && piece.goal_target_date
-              ? ' — '
-              : ''}{piece.goal_target_date ?? ''}
-          </p>
-        {/if}
-      </li>
-    {/each}
-  </ul>
+  <div class="table-scroll">
+    <table class="table">
+      <thead>
+        <tr>
+          <th style="width:2rem"></th>
+          <th>Piece</th>
+          <th style="width:8rem">Status</th>
+          <th style="width:6rem">Difficulty</th>
+          <th style="width:6rem">Key</th>
+          <th style="width:4.5rem">Tempo</th>
+          <th style="width:7rem">Last practiced</th>
+          <th class="num" style="width:5rem">Total</th>
+          <th style="width:4.5rem"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {#each pieces as piece (piece.id)}
+          {@const pieceGenre = genre(piece)}
+          {@const pieceStats = statsByPiece.get(piece.id)}
+          <tr>
+            <td>
+              <button
+                type="button"
+                class="icon-btn favorite always"
+                class:favorited={piece.is_favorite}
+                onclick={() => toggleFavorite(piece)}
+                disabled={togglingFavoriteId === piece.id}
+                aria-label={piece.is_favorite ? 'Unmark as favorite' : 'Mark as favorite'}
+              >
+                <Icon name={piece.is_favorite ? 'star-filled' : 'star'} size={16} />
+              </button>
+            </td>
+            <td>
+              <div class="title-row">
+                <span class="title">{piece.title}</span>
+                {#if pieceGenre}<span class="tag tag-neutral">{pieceGenre}</span>{/if}
+              </div>
+              {#if piece.composer}<div class="composer">{piece.composer}</div>{/if}
+              {#if piece.goal_text || piece.goal_target_date}
+                <div class="goal-chip">
+                  <Icon name="goal" size={12} />
+                  {piece.goal_text ?? ''}{piece.goal_text && piece.goal_target_date ? ' — ' : ''}{piece.goal_target_date ?? ''}
+                </div>
+              {/if}
+            </td>
+            <td><span class="tag tag-accent">{piece.status}</span></td>
+            <td>
+              {#if piece.difficulty}
+                <span class="diff-bars">
+                  {#each [0, 1, 2, 3] as n (n)}
+                    <i class:filled={n < DIFFICULTY_RANK[piece.difficulty]} style="height:{5 + n * 2.5}px"></i>
+                  {/each}
+                </span>
+                {piece.difficulty}
+              {/if}
+            </td>
+            <td>{piece.key ?? ''}</td>
+            <td class="readout">{piece.tempo_bpm ?? ''}</td>
+            <td>{pieceStats ? formatLastPracticed(pieceStats.last_practiced_at) : 'Never'}</td>
+            <td class="num readout">{pieceStats ? formatMinutes(pieceStats.total_minutes) : ''}</td>
+            <td class="row-actions">
+              <button type="button" class="icon-btn" onclick={() => onEdit(piece)} disabled={deletingId === piece.id} aria-label="Edit">
+                <Icon name="edit" size={16} />
+              </button>
+              <button type="button" class="icon-btn danger" onclick={() => handleDelete(piece)} disabled={deletingId === piece.id} aria-label="Delete">
+                <Icon name="delete" size={16} />
+              </button>
+            </td>
+          </tr>
+        {/each}
+      </tbody>
+    </table>
+  </div>
 {/if}
 
 <style>
-  .line {
+  .table-scroll {
+    overflow-x: auto;
+  }
+  .table {
+    min-width: 52rem;
+  }
+  .title-row {
     display: flex;
     align-items: baseline;
-    flex-wrap: wrap;
     gap: var(--space-2);
+    flex-wrap: wrap;
   }
   .title {
-    font-family: var(--font-serif);
-    font-size: var(--text-md);
+    font-family: var(--font-heading);
+    font-weight: var(--font-heading-weight);
+    font-size: var(--text-base);
   }
   .composer {
-    font-style: italic;
     color: var(--ink-soft);
     font-size: var(--text-sm);
+    margin-top: 2px;
   }
-  .status {
-    color: var(--ink-faint);
-    font-size: var(--text-sm);
-  }
-  .dot-sep {
-    color: var(--ink-faint);
-  }
-  .row-actions {
-    margin-left: auto;
-    display: flex;
+  .goal-chip {
+    display: inline-flex;
+    align-items: center;
     gap: var(--space-1);
-    align-self: center;
+    margin-top: var(--space-2);
+    font-size: var(--text-xs);
+    color: var(--accent-700);
+    background: var(--accent-100);
+    padding: 3px 8px;
   }
-  .goal {
-    margin: var(--space-1) 0 0;
-    color: var(--ink-soft);
-    font-size: var(--text-sm);
-    font-style: italic;
+  .diff-bars {
+    display: inline-flex;
+    gap: 3px;
+    align-items: flex-end;
+    height: 13px;
+    margin-right: var(--space-1);
+    vertical-align: -2px;
+  }
+  .diff-bars i {
+    width: 3px;
+    display: block;
+    background: var(--border);
+  }
+  .diff-bars i.filled {
+    background: var(--ink);
   }
   .favorite {
-    opacity: 1;
     color: var(--ink-faint);
   }
   .favorite:hover:not(:disabled) {
@@ -161,5 +225,10 @@
   }
   .favorite.favorited {
     color: var(--accent);
+  }
+  .row-actions {
+    display: flex;
+    gap: var(--space-1);
+    justify-content: flex-end;
   }
 </style>

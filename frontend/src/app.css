@@ -1,53 +1,79 @@
 /*
- * Design system tokens — Minimal Monochrome Editorial.
+ * Design system tokens — Modernist, imported from claude.ai/design and
+ * customized with a blue accent in place of the source system's red.
  *
- * A "critical edition's index" aesthetic: pure neutral grayscale, one
- * accent ("editor's blue pencil") reserved for annotation and reference —
- * links, the active-nav tick, the current-streak numeral — never used
- * decoratively. Radius is zero everywhere: sharp edges read as page/table,
- * not app card. Three type roles: serif display for headlines and hero
- * numerals, the existing sans stack for UI chrome, the existing mono
- * stack for genuinely tabular data (dates, durations, counts).
+ * Flat and architectural: one typeface (Archivo, self-hosted) distinguished
+ * only by weight, zero corner radius everywhere, strong 2px dividers between
+ * major sections (1px for repeated row separators), and an accent used
+ * sparingly — the primary action, the active-nav rail, small emphasis.
  */
+
+@font-face {
+  font-family: 'Archivo';
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: local('Archivo'), url('./assets/fonts/archivo-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Archivo';
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+  src: local('Archivo SemiBold'), url('./assets/fonts/archivo-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Archivo';
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+  src: local('Archivo ExtraBold'), url('./assets/fonts/archivo-800.woff2') format('woff2');
+}
 
 :root {
   color-scheme: light dark;
 
   /* Surfaces */
-  --bg: #f6f6f5;
-  --sidebar-bg: #eeeeec;
-  --surface: #ffffff;
-  --surface-2: #ffffff;
-  --surface-hover: #eeeeec;
-  --ink: #1c1c1a;
-  --ink-soft: #5f5f5c;
-  --ink-faint: #8f8f8b;
-  --border: #dcdcda;
-  --shadow: rgba(28, 28, 26, 0.1);
-  --backdrop: rgba(20, 20, 18, 0.45);
+  --bg: #f3f2f2;
+  --surface: #eae9e9;
+  --surface-hover: color-mix(in srgb, #201e1d 6%, transparent);
+  --ink: #201e1d;
+  --ink-soft: #5c5957;
+  --ink-faint: #8c8985;
+  --border: color-mix(in srgb, #201e1d 40%, transparent);
+  --shadow: color-mix(in srgb, #201e1d 16%, transparent);
+  --backdrop: color-mix(in srgb, #000000 55%, transparent);
 
-  /* Accent — the editor's blue pencil: annotation and reference only */
-  --accent: #2b579e;
-  --accent-strong: #1b3a70;
+  /* Accent — a blue substituted for Modernist's default red */
+  --accent-100: #eef3ff;
+  --accent-200: #dbe6ff;
+  --accent-300: #bacfff;
+  --accent-400: #85a8f6;
+  --accent-500: #4a7cef;
+  --accent-600: #2455c4;
+  --accent-700: #1c419a;
+  --accent-800: #16326f;
+  --accent-900: #142545;
+  --accent: #2f68e0;
   --accent-contrast: #ffffff;
-  --accent-tint: rgba(43, 87, 158, 0.08);
+  --accent-tint: var(--accent-100);
+
   --danger: #a1402f;
   --danger-strong: #7c2f22;
   --danger-tint: rgba(161, 64, 47, 0.08);
 
-  /* Type */
-  --font-serif: Georgia, 'Times New Roman', 'Liberation Serif', serif;
-  --font-sans:
-    -apple-system, 'Segoe UI', system-ui, Roboto, Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, 'Cascadia Mono', 'SF Mono', Consolas, monospace;
+  /* Type — one family, Archivo, distinguished by weight */
+  --font-heading: 'Archivo', system-ui, sans-serif;
+  --font-heading-weight: 800;
+  --font-body: 'Archivo', system-ui, sans-serif;
 
-  --text-xs: 0.75rem;
-  --text-sm: 0.8125rem;
+  --text-xs: 0.6875rem;
+  --text-sm: 0.75rem;
   --text-base: 0.9375rem;
   --text-md: 1.0625rem;
-  --text-lg: 1.3rem;
-  --text-xl: 1.75rem;
-  --text-2xl: 2.75rem;
+  --text-lg: 1.25rem;
+  --text-xl: 2rem;
+  --text-2xl: 2.375rem;
 
   /* Spacing scale */
   --space-1: 0.25rem;
@@ -55,32 +81,36 @@
   --space-3: 0.75rem;
   --space-4: 1rem;
   --space-5: 1.5rem;
-  --space-6: 2.25rem;
-  --space-7: 3.25rem;
+  --space-6: 2rem;
+  --space-7: 2.5rem;
 
   /* Radius — the loudest structural decision: zero, everywhere */
   --radius: 0;
   --radius-sm: 0;
+
+  /* Divider weights: 2px between major sections, 1px for repeated rows */
+  --border-width: 1px;
+  --border-width-strong: 2px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #17181a;
-    --sidebar-bg: #101113;
-    --surface: #1e1f22;
-    --surface-2: #1e1f22;
-    --surface-hover: #26272a;
-    --ink: #ececea;
-    --ink-soft: #a8a7a2;
-    --ink-faint: #75746f;
-    --border: #2d2e30;
+    --bg: #181a1d;
+    --surface: #22252a;
+    --surface-hover: color-mix(in srgb, #edeeef 8%, transparent);
+    --ink: #edeeef;
+    --ink-soft: #a9abae;
+    --ink-faint: #74777b;
+    --border: color-mix(in srgb, #edeeef 30%, transparent);
     --shadow: rgba(0, 0, 0, 0.5);
-    --backdrop: rgba(4, 5, 6, 0.6);
+    --backdrop: rgba(0, 0, 0, 0.6);
 
-    --accent: #86abe6;
-    --accent-strong: #b3cbf2;
-    --accent-contrast: #10192a;
-    --accent-tint: rgba(134, 171, 230, 0.14);
+    --accent-100: #1b2740;
+    --accent-200: #223559;
+    --accent-300: #2b4780;
+    --accent-700: #9dbcff;
+    --accent-800: #cfe0ff;
+
     --danger: #d98b78;
     --danger-strong: #eeab9a;
     --danger-tint: rgba(217, 139, 120, 0.14);
@@ -88,22 +118,22 @@
 }
 
 :root[data-theme='dark'] {
-  --bg: #17181a;
-  --sidebar-bg: #101113;
-  --surface: #1e1f22;
-  --surface-2: #1e1f22;
-  --surface-hover: #26272a;
-  --ink: #ececea;
-  --ink-soft: #a8a7a2;
-  --ink-faint: #75746f;
-  --border: #2d2e30;
+  --bg: #181a1d;
+  --surface: #22252a;
+  --surface-hover: color-mix(in srgb, #edeeef 8%, transparent);
+  --ink: #edeeef;
+  --ink-soft: #a9abae;
+  --ink-faint: #74777b;
+  --border: color-mix(in srgb, #edeeef 30%, transparent);
   --shadow: rgba(0, 0, 0, 0.5);
-  --backdrop: rgba(4, 5, 6, 0.6);
+  --backdrop: rgba(0, 0, 0, 0.6);
 
-  --accent: #86abe6;
-  --accent-strong: #b3cbf2;
-  --accent-contrast: #10192a;
-  --accent-tint: rgba(134, 171, 230, 0.14);
+  --accent-100: #1b2740;
+  --accent-200: #223559;
+  --accent-300: #2b4780;
+  --accent-700: #9dbcff;
+  --accent-800: #cfe0ff;
+
   --danger: #d98b78;
   --danger-strong: #eeab9a;
   --danger-tint: rgba(217, 139, 120, 0.14);
@@ -117,40 +147,37 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font-family: var(--font-sans);
+  font-family: var(--font-body);
   font-size: var(--text-base);
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 h1,
 h2,
-h3 {
+h3,
+h4 {
   margin: 0;
   color: var(--ink);
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  letter-spacing: -0.015em;
+  line-height: 1.15;
 }
 
 h1 {
-  font-family: var(--font-serif);
-  font-weight: 400;
   font-size: var(--text-xl);
-  letter-spacing: 0;
 }
 
 h2 {
-  font-family: var(--font-serif);
-  font-weight: 400;
-  font-size: var(--text-2xl);
-  letter-spacing: 0;
-  line-height: 1.1;
+  font-size: var(--text-xl);
 }
 
 h3 {
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: var(--text-sm);
-  color: var(--ink-soft);
-  font-variant-caps: all-small-caps;
-  letter-spacing: 0.04em;
+  font-size: var(--text-md);
+}
+
+h4 {
+  font-size: var(--text-base);
 }
 
 p {
@@ -158,29 +185,40 @@ p {
 }
 
 a {
+  color: var(--accent-700);
+}
+
+a:hover {
   color: var(--accent);
 }
 
-/* Dek — italic subtitle line beneath a serif headline */
-.dek {
-  margin: var(--space-2) 0 0;
-  font-family: var(--font-sans);
-  font-style: italic;
+/* Kicker — small uppercase label above a heading, or a column/section caption */
+.caption {
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+.kicker {
+  font-size: var(--text-xs);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* Subtitle line beneath a page or section title */
+.subtitle {
+  margin: var(--space-1) 0 0;
   color: var(--ink-soft);
-  font-size: var(--text-md);
+  font-size: var(--text-sm);
 }
 
-/* Small-caps label — colophon lines, captions, column headers */
-.small-caps {
-  font-variant-caps: all-small-caps;
-  letter-spacing: 0.04em;
-}
-
-/* Hero/tabular numeral — serif, used for real numbers the reader compares */
+/* Numeral — a bold tabular figure the reader compares (durations, counts) */
 .numeral {
-  font-family: var(--font-serif);
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
   font-variant-numeric: tabular-nums;
-  font-weight: 400;
   color: var(--ink);
   line-height: 1;
 }
@@ -189,19 +227,10 @@ a {
   color: var(--accent);
 }
 
-/* Caption — small-caps label under a numeral or heading a data column */
-.caption {
-  font-family: var(--font-sans);
-  font-variant-caps: all-small-caps;
-  letter-spacing: 0.04em;
-  font-size: var(--text-xs);
-  color: var(--ink-faint);
-}
-
-/* Full-width hairline rule */
+/* Full-width rule: strong 2px divider between major sections */
 .rule {
   border: none;
-  height: 1px;
+  height: var(--border-width-strong);
   background: var(--border);
   margin: 0;
 }
@@ -223,7 +252,7 @@ textarea {
   font-size: var(--text-base);
   color: var(--ink);
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: var(--border-width) solid var(--border);
   border-radius: var(--radius-sm);
   padding: var(--space-2) var(--space-3);
   transition: border-color 120ms ease, box-shadow 120ms ease;
@@ -231,7 +260,7 @@ textarea {
 
 textarea {
   resize: vertical;
-  font-family: var(--font-sans);
+  font-family: var(--font-body);
 }
 
 input:focus-visible,
@@ -240,20 +269,20 @@ textarea:focus-visible,
 button:focus-visible {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px var(--accent-tint);
+  box-shadow: 0 0 0 2px var(--accent-tint);
 }
 
 button {
   font: inherit;
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
   font-size: var(--text-sm);
-  font-weight: 600;
-  font-variant-caps: all-small-caps;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   color: var(--bg);
   background: var(--ink);
-  border: 1px solid var(--ink);
+  border: var(--border-width) solid var(--ink);
   border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-2) calc(var(--space-3) * 1.2);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
@@ -267,8 +296,20 @@ button:hover:not(:disabled) {
 }
 
 button:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: default;
+}
+
+/* Primary button: accent fill, for the page's main action */
+button.primary {
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+button.primary:hover:not(:disabled) {
+  background: var(--accent-600);
+  border-color: var(--accent-600);
 }
 
 /* Secondary button: cancel / rename / low-emphasis actions */
@@ -295,7 +336,7 @@ button.danger:hover:not(:disabled) {
   background: var(--danger-tint);
 }
 
-/* Icon button — hover-revealed row action (pencil-nib / strike-mark / etc.) */
+/* Icon button — hover-revealed row action */
 .icon-btn {
   display: inline-flex;
   align-items: center;
@@ -326,11 +367,12 @@ button.danger:hover:not(:disabled) {
 }
 
 li:hover .icon-btn,
-.icon-btn:focus-visible {
+.icon-btn:focus-visible,
+.icon-btn.always {
   opacity: 1;
 }
 
-/* Text toggle — underlined-on-active filter switch, joined by middle dots */
+/* Text toggle — underlined-on-active filter switch */
 .text-toggle {
   background: none;
   border: none;
@@ -348,9 +390,8 @@ li:hover .icon-btn,
 }
 
 .text-toggle.active {
-  color: var(--ink);
+  color: var(--accent);
   text-decoration: underline;
-  text-decoration-color: var(--accent);
   text-decoration-thickness: 1.5px;
 }
 
@@ -369,6 +410,22 @@ li:hover .icon-btn,
   content: '\00B7';
   margin-right: var(--space-3);
   color: var(--ink-faint);
+}
+
+/* Segmented filter pill — bordered, filled solid accent when active */
+.pill {
+  padding: 6px 12px;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  border: var(--border-width) solid var(--border);
+  background: transparent;
+  color: var(--ink);
+}
+
+.pill.active {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-contrast);
 }
 
 /* Pushes a trailing element to the far right of a flex row */
@@ -391,13 +448,10 @@ li:hover .icon-btn,
   color: var(--ink-faint);
 }
 
-/*
- * Readout — a real number the reader compares (durations). Tabular mono,
- * no housing chip; the LCD-instrument treatment is retired with the old
- * design system.
- */
+/* Readout — a real number the reader compares (durations, the timer) */
 .readout {
-  font-family: var(--font-mono);
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
   font-variant-numeric: tabular-nums;
   color: var(--ink);
 }
@@ -406,11 +460,101 @@ li:hover .icon-btn,
   font-size: var(--text-lg);
 }
 
+/* Tags — small labels tinted from the accent or neutral ramp */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.tag-accent {
+  background: var(--accent-100);
+  color: var(--accent-700);
+}
+
+.tag-neutral {
+  background: var(--surface);
+  color: var(--ink-soft);
+  border: var(--border-width) solid var(--border);
+}
+
+.tag-outline {
+  border: var(--border-width) solid var(--accent);
+  color: var(--accent);
+}
+
+.tag-solid {
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+/* Cards — flat surface-filled blocks, a 2px top edge carries the emphasis */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  background: var(--surface);
+  border-top: var(--border-width-strong) solid var(--ink);
+}
+
+.card.accented {
+  border-top-color: var(--accent);
+  background: var(--accent-100);
+}
+
+.card-kicker {
+  font-size: var(--text-xs);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.card.accented .card-kicker {
+  color: var(--accent-700);
+}
+
+.card-title {
+  font-family: var(--font-heading);
+  font-weight: var(--font-heading-weight);
+  font-size: var(--text-lg);
+  line-height: 1.2;
+}
+
+.card-body {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-soft);
+  flex: 1;
+}
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-xs);
+  color: var(--ink-faint);
+}
+
+.elev-sm {
+  box-shadow: 0 1px 2px var(--shadow);
+}
+
+.elev-md {
+  box-shadow: 0 3px 10px var(--shadow);
+}
+
+.elev-lg {
+  box-shadow: 0 12px 32px var(--shadow);
+}
+
 /* Panel — a section's flat container */
 .panel {
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border: var(--border-width) solid var(--border);
   padding: var(--space-5);
   margin-bottom: var(--space-5);
 }
@@ -431,11 +575,11 @@ li:hover .icon-btn,
 .row-list > li {
   position: relative;
   padding: var(--space-3) 0;
-  border-bottom: 1px solid var(--border);
+  border-bottom: var(--border-width) solid var(--border);
 }
 
 .row-list > li.accented {
-  border-left: 1.5px solid var(--accent);
+  border-left: 3px solid var(--accent);
   padding-left: var(--space-3);
   margin-left: calc(var(--space-3) * -1);
 }
@@ -456,36 +600,39 @@ li:hover .icon-btn,
   margin: 0 0.5em;
 }
 
-/* Index table — real table for tabular data (per-piece breakdowns, etc.) */
-.index-table {
+/* Data table — themed header and row rules, per the Modernist system */
+.table {
   width: 100%;
   border-collapse: collapse;
   font-size: var(--text-sm);
 }
 
-.index-table th {
+.table th {
   text-align: left;
-  padding: 0 var(--space-2) var(--space-2) 0;
-  border-bottom: 1px solid var(--border);
-  font-weight: 600;
+  font-size: var(--text-xs);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--ink-faint);
-  font-variant-caps: all-small-caps;
-  letter-spacing: 0.03em;
+  padding: var(--space-2);
+  border-bottom: var(--border-width-strong) solid var(--border);
 }
 
-.index-table td {
-  padding: var(--space-2) var(--space-2) var(--space-2) 0;
-  border-bottom: 1px solid var(--border);
+.table td {
+  padding: var(--space-2);
+  border-bottom: var(--border-width) solid var(--border);
 }
 
-.index-table tr:last-child td {
+.table tbody tr:last-child td {
   border-bottom: none;
 }
 
-.index-table th.num,
-.index-table td.num {
+.table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.table th.num,
+.table td.num {
   text-align: right;
-  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
 
@@ -495,7 +642,7 @@ dialog {
   padding: 0;
   background: transparent;
   color: inherit;
-  max-width: min(30rem, calc(100vw - 2rem));
+  max-width: min(32rem, calc(100vw - 2rem));
   width: 100%;
   max-height: calc(100vh - 4rem);
   border-radius: var(--radius);

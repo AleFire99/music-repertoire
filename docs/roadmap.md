@@ -28,60 +28,72 @@ styling something that might still change shape.
 Work continues one small slice at a time via `scripts/new-feature.sh`, same
 cadence as issues #18–#46.
 
-## UI design system (Minimal Monochrome Editorial, established by #105)
+## UI design system (Modernist, established by #107)
 
-Issue #102's teal-accented "slick/modern/minimal" pass was replaced wholesale
-by #105 after live review — the single-scrolling-page layout read as
-document-like rather than app-like. **Minimal Monochrome Editorial** ("a
-critical edition's index") is the current system, applied to every view in
-one pass. New feature UI should follow it rather than reintroducing ad hoc
-styling:
+#105's **Minimal Monochrome Editorial** pass shipped but read as too
+severe/cold on live review. #107 replaced it (not a reopen of #105 — same
+underlying data/behavior, new presentation) with **Modernist**, imported
+directly from claude.ai/design and customized with a blue accent in place
+of the source system's default red. New feature UI should follow it rather
+than reintroducing ad hoc styling:
 
-- **Direction**: pure neutral grayscale plus one accent (the "editor's blue
-  pencil"), reserved strictly for annotation/reference — links, the
-  sidebar's active-nav tick, the current-streak numeral — never used
-  decoratively. `--radius: 0` everywhere (buttons, modal, inputs, sidebar
-  rows) is the loudest structural decision: sharp edges read as page/table,
-  not app card. Light/dark are both first-class (via
-  `prefers-color-scheme`).
+- **Direction**: flat and architectural — one typeface (Archivo,
+  self-hosted) distinguished only by weight, `--radius: 0` /
+  `--radius-sm: 0` everywhere (the loudest structural decision, unchanged
+  from #105), and strong 2px dividers between major sections (1px for
+  repeated row separators inside tables/lists) rather than hairlines. The
+  accent is used sparingly — the primary action, the active-nav rail, small
+  emphasis — the system is mostly ink on ground. Light/dark are both
+  first-class (`prefers-color-scheme` default, plus a manual toggle in the
+  sidebar footer that sets `data-theme` on `<html>`, persisted to
+  `localStorage` — same "plain state, no new dependency" approach as the
+  sidebar-collapse state).
 - **Shell, not a scrolling page**: `App.svelte` is a fixed-width sidebar +
   single active view, switched via a plain `activeView` `$state` string —
-  explicitly not a router. Six views: Pieces, Focus, Sessions, Statistics,
-  Resources, Lists. The sidebar is collapsible to a 64px icon-only rail,
-  state persisted to `localStorage`.
+  explicitly not a router (unchanged from #105). Six views: Today & Focus,
+  Sessions, Progress, Pieces, Sheet Music, Lists, grouped in the sidebar
+  under "Practice" and "Library" section labels. The sidebar is collapsible
+  to a 64px icon-only rail (state persisted to `localStorage`) and its
+  footer carries a weekly-goal mini progress bar, the "Start a session"
+  primary action, and the theme toggle.
 - **Interaction pattern**: create/edit forms open in `Modal.svelte`
   (unchanged mechanics — native `<dialog>`, Escape/backdrop-click to close,
-  explicit close button with the crossing-hairline close icon). Every form
+  explicit close button, now with a 3px accent top border). Every form
   component takes an `onCancel` prop.
 - **Tokens**: colors, type, and spacing are CSS custom properties in
   `frontend/src/app.css` — components consume tokens, never hardcode hex
   values or ad hoc sizes.
-- **Type — three roles**: `--font-serif` (Georgia/Times/Liberation Serif)
-  for display headlines and hero numerals; the existing `--font-sans` for
-  all UI chrome, forms, and labels; the existing `--font-mono` for
-  genuinely tabular data (dates, durations), with the old neon-LCD chip
-  styling retired — it's now plain tabular text via `.readout`.
-- **Iconography**: a hand-rolled ~14-glyph inline SVG sprite at
-  `frontend/public/icons.svg` (20x20 grid, 1.5px stroke, no fill, square
-  corners — "engraver's/proofing marks"), consumed via `Icon.svelte`
-  (`<svg><use href="/icons.svg#{name}"/></svg>`). Color comes from the
-  consumer's CSS `color` through `currentColor`.
-- **Recurring patterns**: `.panel`, `SectionHeader.svelte` (now a
-  page-level header per view: serif headline, italic dek line, full-width
-  hairline rule, then a filter/action row), `.row-list` with `.accented`
-  for a left accent bar, `.meta-line` (values joined by middle dots via
-  `::before` on `span + span`), `.text-toggle` / `.toggle-row` (underlined
-  text filters replacing boxed `<select>`s), `.icon-btn` (hover-revealed
-  row actions — pencil-nib edit, strike-mark delete), `.index-table` (real
-  tables for tabular breakdowns, right-aligned numerics), `.numeral` /
-  `.caption` (serif hero number + small-caps label pairing), `Modal.svelte`,
-  and shared `button`/`input`/`select`/`textarea` base styles plus
-  `.secondary`/`.danger` variants. The old `.chip`/`.chip-accent`/
-  `.chip-quiet` pill badges are retired in favor of small-caps text labels.
+- **Type — one family, two roles**: `--font-heading` / `--font-body` both
+  resolve to self-hosted Archivo (`frontend/src/assets/fonts/`, weights
+  400/600/800, `font-display: swap`), distinguished by
+  `--font-heading-weight: 800`. `.readout` (tabular numerals for durations,
+  totals, the session timer) and `.numeral` (bold tabular stat digits) both
+  use the heading weight.
+- **Iconography**: a Lucide-style, hand-copied (not the npm package)
+  inline SVG sprite at `frontend/public/icons.svg` (24x24 grid), consumed
+  via `Icon.svelte` (`<svg><use href="/icons.svg#{name}"/></svg>`). Color
+  comes from the consumer's CSS `color` through `currentColor`.
+- **Recurring patterns**: `.card` / `.card-kicker` / `.card-title` /
+  `.card-body` / `.card-meta` (flat surface blocks with a 2px top edge
+  carrying the emphasis — focus pieces, suggested-plan, repertoire lists),
+  `.tag` / `.tag-accent` / `.tag-neutral` / `.tag-outline` (genre chips,
+  status pills, list counts), `.table` (real tables — the Pieces view is
+  table-based per the imported design), `.pill` (segmented status filters),
+  `SectionHeader.svelte` (kicker/title/subtitle + a search/actions row,
+  per-view), `.row-list` with `.accented`, `.meta-line`, `.icon-btn`,
+  `Modal.svelte`, and shared `button`/`input`/`select`/`textarea` base
+  styles plus `.primary`/`.secondary`/`.danger` variants.
 - **Adding a new view**: reuse these tokens and patterns. Route any new
   create/edit interaction through `Modal.svelte`. If a new recurring
   element doesn't fit an existing pattern, add it to `app.css` as a
   token-driven utility class, not a one-off inline style.
+- **Two small backend-derived additions shipped with this pass**: the
+  Progress view's 14-week consistency heatmap (`consistency_heatmap` on
+  `GET /api/practice-sessions/stats`, a 98-day daily-minutes series) and
+  the Today & Focus view's suggested-plan card (`suggested_plan` on the
+  same endpoint — a deterministic heuristic over due/overdue goals,
+  longest-neglected pieces, and low-rated last sessions; no LLM, no
+  music-theory logic, same category as the neglected-pieces feature #56).
 
 This was intentionally a single cross-cutting pass (not spread across
 feature PRs) because a design system only holds together if it's applied

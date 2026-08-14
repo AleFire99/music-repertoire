@@ -211,6 +211,17 @@ export interface NeglectedPiece {
   last_practiced_at: string | null
 }
 
+export interface DayPracticeMinutes {
+  date: string
+  total_minutes: number
+}
+
+export interface SuggestedPlanItem {
+  piece_id: number
+  piece_title: string
+  reason: string
+}
+
 export interface PracticeStats {
   total_minutes: number
   pieces: PiecePracticeStats[]
@@ -220,6 +231,8 @@ export interface PracticeStats {
   longest_streak_days: number
   minutes_this_week: number
   minutes_this_month: number
+  consistency_heatmap: DayPracticeMinutes[]
+  suggested_plan: SuggestedPlanItem[]
 }
 
 export async function getPracticeStats(): Promise<PracticeStats> {

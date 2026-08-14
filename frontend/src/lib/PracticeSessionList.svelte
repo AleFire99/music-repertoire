@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { Piece, PracticeSession } from './api'
+  import Icon from './Icon.svelte'
 
   let {
     sessions,
@@ -26,12 +27,17 @@
       <li>
         <div class="line">
           <span class="title">{pieceTitle(session.piece_id)}</span>
-          <span class="tag small-caps">
+          <span class="tag tag-neutral">
             <span class="readout">{session.duration_minutes}</span> min{#if session.section}
-              <span class="dot-sep"> &middot; </span>{session.section}{/if}
+              &middot; {session.section}{/if}
           </span>
           {#if session.rating}
-            <span class="rating">{'★'.repeat(session.rating)}</span>
+            {@const rating = session.rating}
+            <span class="rating">
+              {#each [0, 1, 2, 3, 4] as n (n)}
+                <Icon name={n < rating ? 'star-filled' : 'star'} size={13} />
+              {/each}
+            </span>
           {/if}
         </div>
         <div class="meta-line"><span>{formatDate(session.practiced_at)}</span></div>
@@ -46,29 +52,23 @@
 <style>
   .line {
     display: flex;
-    align-items: baseline;
+    align-items: center;
     flex-wrap: wrap;
     gap: var(--space-2);
   }
   .title {
-    font-family: var(--font-serif);
-    font-size: var(--text-md);
-  }
-  .tag {
-    color: var(--ink-faint);
-    font-size: var(--text-sm);
-  }
-  .dot-sep {
-    color: var(--ink-faint);
+    font-family: var(--font-heading);
+    font-weight: var(--font-heading-weight);
+    font-size: var(--text-base);
   }
   .rating {
+    display: inline-flex;
+    gap: 2px;
     color: var(--accent);
-    font-size: var(--text-sm);
   }
   .notes {
     margin: var(--space-2) 0 0;
     color: var(--ink-soft);
     font-size: var(--text-sm);
-    font-style: italic;
   }
 </style>

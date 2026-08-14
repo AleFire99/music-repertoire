@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -52,6 +52,17 @@ class NeglectedPiece(BaseModel):
     last_practiced_at: datetime | None
 
 
+class DayPracticeMinutes(BaseModel):
+    date: date
+    total_minutes: int
+
+
+class SuggestedPlanItem(BaseModel):
+    piece_id: int
+    piece_title: str
+    reason: str
+
+
 class PracticeStatsRead(BaseModel):
     total_minutes: int
     pieces: list[PiecePracticeStats]
@@ -61,3 +72,5 @@ class PracticeStatsRead(BaseModel):
     longest_streak_days: int
     minutes_this_week: int
     minutes_this_month: int
+    consistency_heatmap: list[DayPracticeMinutes]
+    suggested_plan: list[SuggestedPlanItem]

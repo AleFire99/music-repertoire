@@ -18,40 +18,51 @@ description: Use when adding or changing a Svelte component or frontend feature 
 
 ## Styling convention (see docs/roadmap.md)
 
-The current design system is **Minimal Monochrome Editorial** (established
-by issue #105, replacing #102's teal "slick/modern" system wholesale) — a
-"critical edition's index" aesthetic: pure neutral grayscale, one accent
-(the "editor's blue pencil") reserved for annotation/reference only, and
-`--radius: 0` everywhere. Reuse it rather than reintroducing ad hoc styling:
+The current design system is **Modernist** (established by issue #107,
+replacing #105's Minimal Monochrome Editorial wholesale after it read as
+too severe/cold on live review) — imported directly from claude.ai/design
+and customized with a blue accent in place of the source system's default
+red. Flat and architectural: one typeface (Archivo, self-hosted) distinguished
+only by weight, `--radius: 0` everywhere, strong 2px dividers between major
+sections. Reuse it rather than reintroducing ad hoc styling:
 
 - Tokens (color, type, spacing) live as CSS custom properties in
   `frontend/src/app.css` — consume `var(--...)`, don't hardcode hex values
   or one-off `rem` sizes.
 - `App.svelte` is a sidebar + single-active-view shell (`activeView`
   `$state` string, not a router) — it is not a scrolling stack of panels.
-  A new top-level feature is a new nav entry + view branch, not a new
-  section appended to the page.
-- Wrap each view in a `SectionHeader.svelte` (serif headline, italic dek
-  line, full-width hairline rule, then a filter/action row) rather than
-  the old eyebrow-panel heading.
-- Three type roles: `--font-serif` for headlines/hero numerals (via the
-  `.numeral` utility), the existing `--font-sans` for UI chrome/forms/
-  labels, `--font-mono` for genuinely tabular data (`.readout`).
-- Use `.row-list` for list-of-items views, `.meta-line` for secondary
-  metadata (values auto-joined by middle dots), `.icon-btn` for
-  hover-revealed row actions (edit/delete), `.text-toggle`/`.toggle-row`
-  for filter switches (not boxed `<select>`s), `.index-table` for tabular
-  breakdowns, and the base `button`/`input`/`select`/`textarea` styles
-  plus `.secondary`/`.danger` button variants — don't redefine these per
-  component. The old `.chip`/`.chip-accent`/`.chip-quiet` pill badges are
-  retired.
-- Icons come from the hand-rolled sprite at `frontend/public/icons.svg` via
-  `<Icon name="..." />` (`frontend/src/lib/Icon.svelte`) — don't add a new
-  icon library or inline one-off SVGs.
+  A new top-level feature is a new nav entry (in the "Practice" or
+  "Library" sidebar group) + view branch, not a new section appended to
+  the page.
+- Wrap each view in a `SectionHeader.svelte` (kicker/title/subtitle, then
+  a search/actions row) rather than the old eyebrow-panel heading.
+- One family, two roles: `--font-heading` / `--font-body` both resolve to
+  self-hosted Archivo, distinguished by `--font-heading-weight: 800`.
+  `.readout` and `.numeral` (tabular durations, totals, stat digits) use
+  the heading weight.
+- Use `.card`/`.card-kicker`/`.card-title` for flat surface blocks (a 2px
+  top edge carries the emphasis), `.tag`/`.tag-accent`/`.tag-neutral`/
+  `.tag-outline` for chips and status pills, `.table` for tabular views
+  (not a `.row-list` when the data has several comparable columns —
+  Pieces is table-based), `.pill` for segmented filters, `.row-list` for
+  simpler list-of-items views, `.meta-line` for secondary metadata,
+  `.icon-btn` for hover-revealed row actions, and the base
+  `button`/`input`/`select`/`textarea` styles plus
+  `.primary`/`.secondary`/`.danger` button variants — don't redefine these
+  per component.
+- Icons come from the Lucide-style, hand-copied sprite at
+  `frontend/public/icons.svg` (24x24 grid) via `<Icon name="..." />`
+  (`frontend/src/lib/Icon.svelte`) — don't add a new icon library or
+  inline one-off SVGs.
 - Create/edit interactions go through the shared `Modal.svelte` component,
   not an inline form rendered in the page flow. A form component used in a
   modal should accept an `onCancel` prop and render a Cancel button
   alongside its submit button.
+- Theme is `prefers-color-scheme` by default, with a manual toggle (sidebar
+  footer) that sets `data-theme` on `<html>`, persisted to `localStorage`.
+  A new component's dark-mode look must come from the existing tokens
+  (which already flip under both the media query and `[data-theme]`), not
+  a bespoke `@media` block.
 - If a new element doesn't fit an existing pattern, add a token-driven
   utility class to `app.css` rather than inlining new colors/spacing.
 
