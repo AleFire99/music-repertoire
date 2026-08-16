@@ -88,6 +88,7 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 - [x] Practice stats: 14-week consistency heatmap — issue #107 (bundled with the UI redesign below; small deterministic addition, same category as already-shipped stats features)
 - [x] Practice stats: deterministic "suggested next" practice plan (due goals, neglected pieces, low-rated sessions — no LLM) — issue #107
 - [x] UI design pass v3 ("Modernist": Archivo, zero-radius, 2px dividers, blue accent, manual light/dark toggle, imported from claude.ai/design) — issue #107, replacing #105's Minimal Monochrome Editorial
+- [x] UI design pass v4 ("Iris": Material 3-inspired, violet accent, Figtree, per-element radius scale, state-layer hover/pressed, two-layer elevation shadows), plus a Pieces card-grid view and `PieceRead.sheet_resource_kinds` — issue #114, replacing #107's Modernist
 
 ---
 

@@ -1,8 +1,9 @@
 from datetime import date, datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from repertoire.models.piece import PieceDifficulty, PieceStatus
+from repertoire.models.sheet_resource import SheetResourceKind
 
 
 class PieceCreate(BaseModel):
@@ -48,5 +49,6 @@ class PieceRead(BaseModel):
     status: PieceStatus
     tags: list[str]
     is_favorite: bool
+    sheet_resource_kinds: list[SheetResourceKind] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime

@@ -18,17 +18,22 @@ description: Use when adding or changing a Svelte component or frontend feature 
 
 ## Styling convention (see docs/roadmap.md)
 
-The current design system is **Modernist** (established by issue #107,
-replacing #105's Minimal Monochrome Editorial wholesale after it read as
-too severe/cold on live review) — imported directly from claude.ai/design
-and customized with a blue accent in place of the source system's default
-red. Flat and architectural: one typeface (Archivo, self-hosted) distinguished
-only by weight, `--radius: 0` everywhere, strong 2px dividers between major
-sections. Reuse it rather than reintroducing ad hoc styling:
+The current design system is **Iris** (established by issue #114, replacing
+#107's Modernist), a Material 3-inspired direction: a violet-leaning accent,
+neutral surfaces tinted off that hue (`--surface-container*`, not true
+gray), real two-layer elevation shadows (`--elevation-1..4`), state-layer
+hover/pressed overlays (`color-mix()` composited at `--state-hover` /
+`--state-focus` / `--state-pressed` opacity), and a per-element radius
+scale (`--radius-xs` through `--radius-full`) in place of Modernist's flat
+`--radius: 0`. Reuse it rather than reintroducing ad hoc styling:
 
-- Tokens (color, type, spacing) live as CSS custom properties in
-  `frontend/src/app.css` — consume `var(--...)`, don't hardcode hex values
-  or one-off `rem` sizes.
+- Tokens (color, type, spacing, radius, elevation, state-layer opacity)
+  live as CSS custom properties in `frontend/src/app.css` — consume
+  `var(--...)`, don't hardcode hex values or one-off `rem` sizes. Some
+  legacy names (`--border`, `--surface-hover`, `--accent-tint`) are kept as
+  aliases onto the new tokens for components not individually restyled —
+  prefer the new names (`--outline`, `--outline-variant`, the
+  `--elevation-*`/`--radius-*` scales) in new code.
 - `App.svelte` is a sidebar + single-active-view shell (`activeView`
   `$state` string, not a router) — it is not a scrolling stack of panels.
   A new top-level feature is a new nav entry (in the "Practice" or
@@ -37,17 +42,19 @@ sections. Reuse it rather than reintroducing ad hoc styling:
 - Wrap each view in a `SectionHeader.svelte` (kicker/title/subtitle, then
   a search/actions row) rather than the old eyebrow-panel heading.
 - One family, two roles: `--font-heading` / `--font-body` both resolve to
-  self-hosted Archivo, distinguished by `--font-heading-weight: 800`.
+  self-hosted Figtree, distinguished by `--font-heading-weight: 700`.
   `.readout` and `.numeral` (tabular durations, totals, stat digits) use
   the heading weight.
-- Use `.card`/`.card-kicker`/`.card-title` for flat surface blocks (a 2px
-  top edge carries the emphasis), `.tag`/`.tag-accent`/`.tag-neutral`/
-  `.tag-outline` for chips and status pills, `.table` for tabular views
-  (not a `.row-list` when the data has several comparable columns —
-  Pieces is table-based), `.pill` for segmented filters, `.row-list` for
-  simpler list-of-items views, `.meta-line` for secondary metadata,
-  `.icon-btn` for hover-revealed row actions, and the base
-  `button`/`input`/`select`/`textarea` styles plus
+- Use `.card`/`.card-kicker`/`.card-title` for surface-container tiles
+  (`--radius-lg`, elevation promotes + 1px lift on hover),
+  `.tag`/`.tag-accent`/`.tag-neutral`/`.tag-outline` for pill-shaped chips
+  and status pills, `.table` for tabular views (not a `.row-list` when the
+  data has several comparable columns — Pieces is table-based, with a
+  `PieceGrid.svelte` card-view alternative behind a view-mode toggle),
+  `.row-list` for simpler list-of-items views, `.meta-line` for secondary
+  metadata, `.row-hover` on the row element + `.icon-btn` for
+  hover-*or*-focus-revealed row actions (circular state-layer background),
+  and the base `button`/`input`/`select`/`textarea` styles plus
   `.primary`/`.secondary`/`.danger` button variants — don't redefine these
   per component.
 - Icons come from the Lucide-style, hand-copied sprite at
@@ -55,9 +62,12 @@ sections. Reuse it rather than reintroducing ad hoc styling:
   (`frontend/src/lib/Icon.svelte`) — don't add a new icon library or
   inline one-off SVGs.
 - Create/edit interactions go through the shared `Modal.svelte` component,
-  not an inline form rendered in the page flow. A form component used in a
-  modal should accept an `onCancel` prop and render a Cancel button
-  alongside its submit button.
+  not an inline form rendered in the page flow. `Modal` takes a
+  `size?: 'small' | 'medium' | 'large'` prop (default `'medium'`) — use
+  `'large'` for field-heavy forms (e.g. `PieceForm`, which switches to a
+  two-column grid at that size) and `'small'` for single-field forms. A
+  form component used in a modal should accept an `onCancel` prop and
+  render a Cancel button alongside its submit button.
 - Theme is `prefers-color-scheme` by default, with a manual toggle (sidebar
   footer) that sets `data-theme` on `<html>`, persisted to `localStorage`.
   A new component's dark-mode look must come from the existing tokens

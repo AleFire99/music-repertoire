@@ -5,11 +5,13 @@
   let {
     open,
     title,
+    size = 'medium',
     onClose,
     children,
   }: {
     open: boolean
     title: string
+    size?: 'small' | 'medium' | 'large'
     onClose: () => void
     children: Snippet
   } = $props()
@@ -39,7 +41,13 @@
   }
 </script>
 
-<dialog bind:this={dialogEl} onclose={onClose} onclick={handleDialogClick} aria-labelledby="modal-title">
+<dialog
+  bind:this={dialogEl}
+  data-size={size}
+  onclose={onClose}
+  onclick={handleDialogClick}
+  aria-labelledby="modal-title"
+>
   <div class="panel">
     <header>
       <h2 id="modal-title">{title}</h2>
@@ -53,12 +61,13 @@
 
 <style>
   .panel {
-    background: var(--surface);
-    border-top: var(--border-width-strong) solid var(--accent);
-    box-shadow: var(--shadow, 0 12px 32px rgba(0, 0, 0, 0.2));
+    background: var(--surface-container-high);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--elevation-4);
     max-height: calc(100vh - 4rem);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
   header {
     display: flex;
@@ -66,7 +75,7 @@
     justify-content: space-between;
     gap: var(--space-3);
     padding: var(--space-4) var(--space-5);
-    border-bottom: var(--border-width-strong) solid var(--border);
+    border-bottom: var(--border-width) solid var(--outline-variant);
     flex: none;
   }
   h2 {
@@ -84,9 +93,11 @@
     color: var(--ink-soft);
     background: transparent;
     border: none;
+    border-radius: var(--radius-full);
+    transition: background 120ms ease, color 120ms ease;
   }
   .close:hover {
-    background: none;
+    background: color-mix(in srgb, var(--ink) calc(var(--state-hover) * 100%), transparent);
     color: var(--ink);
   }
   .body {

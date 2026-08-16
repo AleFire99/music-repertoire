@@ -321,6 +321,36 @@ def test_list_pieces_in_focus_status_without_goal_excluded(client: TestClient) -
     assert response.json() == []
 
 
+def test_list_pieces_includes_sheet_resource_kinds(client: TestClient) -> None:
+    client.post("/api/pieces", json={"title": "A"})
+    one_resource = client.post("/api/pieces", json={"title": "B"}).json()
+    multi_resource = client.post("/api/pieces", json={"title": "C"}).json()
+
+    client.post(
+        "/api/sheet-resources",
+        json={"piece_id": one_resource["id"], "kind": "url", "reference": "https://example.com"},
+    )
+    client.post(
+        "/api/sheet-resources",
+        json={"piece_id": multi_resource["id"], "kind": "url", "reference": "https://example.com"},
+    )
+    client.post(
+        "/api/sheet-resources",
+        json={"piece_id": multi_resource["id"], "kind": "physical", "reference": "Book p.4"},
+    )
+    client.post(
+        "/api/sheet-resources",
+        json={"piece_id": multi_resource["id"], "kind": "local-doc", "reference": "/scores/c.pdf"},
+    )
+
+    response = client.get("/api/pieces")
+    assert response.status_code == 200
+    by_title = {piece["title"]: piece["sheet_resource_kinds"] for piece in response.json()}
+    assert by_title["A"] == []
+    assert by_title["B"] == ["url"]
+    assert by_title["C"] == ["url", "physical", "local-doc"]
+
+
 def test_list_pieces_in_focus_goal_without_matching_status_excluded(client: TestClient) -> None:
     client.post(
         "/api/pieces",
