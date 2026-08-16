@@ -111,7 +111,7 @@
   </label>
   <label>
     Duration (minutes)
-    <input type="number" bind:value={durationMinutes} min="1" required />
+    <input type="text" inputmode="numeric" bind:value={durationMinutes} min="1" required />
   </label>
   <div class="timer">
     <span class="readout readout-lg timer-display">{formatElapsed(elapsedSeconds)}</span>

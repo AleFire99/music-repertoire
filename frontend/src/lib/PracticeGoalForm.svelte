@@ -38,7 +38,7 @@
 <form onsubmit={handleSubmit}>
   <label>
     Weekly target (minutes)
-    <input type="number" bind:value={targetMinutes} required min="1" step="1" />
+    <input type="text" inputmode="numeric" bind:value={targetMinutes} required min="1" step="1" />
   </label>
 
   {#if formError}

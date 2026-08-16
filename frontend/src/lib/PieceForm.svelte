@@ -97,7 +97,7 @@
   </label>
   <label>
     Tempo (BPM)
-    <input type="number" min="1" bind:value={tempoBpmRaw} />
+    <input type="text" inputmode="numeric" min="1" bind:value={tempoBpmRaw} />
   </label>
   <label>
     Difficulty
