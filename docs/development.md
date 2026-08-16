@@ -41,6 +41,8 @@ docker compose exec frontend npm run check   # svelte-check, doubles as lint + t
 docker compose exec frontend npm run build
 ```
 
+**Windows caveat:** the frontend dev container's Vite file-watcher can silently stop picking up host-side edits — a Docker-on-Windows bind-mount quirk, not specific to this repo. If hot-reload seems stuck (you edit a file but the running app doesn't change), `docker compose restart frontend` first before assuming something's actually broken. Not worth a permanent `usePolling` workaround in `vite.config.ts` (it trades this occasional annoyance for constant extra CPU/disk polling) unless it starts happening often enough to be worse than the restart.
+
 ## Environment variables
 
 See `.env.example` at repo root — consumed by both `docker-compose.yml` and `backend/src/repertoire/config.py`.
