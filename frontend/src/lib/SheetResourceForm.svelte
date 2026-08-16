@@ -9,15 +9,18 @@
 
   let {
     pieces,
+    fixedPieceId,
     onSaved,
     onCancel,
   }: {
     pieces: Piece[]
+    fixedPieceId?: number
     onSaved: (resource: SheetResource) => void
     onCancel?: () => void
   } = $props()
 
-  let pieceId = $state<number | ''>('')
+  let selectedPieceId = $state<number | ''>('')
+  const pieceId = $derived(fixedPieceId ?? selectedPieceId)
   let kind = $state<SheetResourceKind>('url')
   let reference = $state('')
   let label = $state('')
@@ -51,15 +54,17 @@
 </script>
 
 <form onsubmit={handleSubmit}>
-  <label>
-    Piece
-    <select bind:value={pieceId} required>
-      <option value="" disabled>Select a piece…</option>
-      {#each pieces as piece (piece.id)}
-        <option value={piece.id}>{piece.title}</option>
-      {/each}
-    </select>
-  </label>
+  {#if fixedPieceId === undefined}
+    <label>
+      Piece
+      <select bind:value={selectedPieceId} required>
+        <option value="" disabled>Select a piece…</option>
+        {#each pieces as piece (piece.id)}
+          <option value={piece.id}>{piece.title}</option>
+        {/each}
+      </select>
+    </label>
+  {/if}
   <label>
     Kind
     <select bind:value={kind}>
@@ -92,7 +97,10 @@
   {/if}
 
   <div class="actions">
-    <button type="submit" disabled={submitting || pieceId === '' || reference.trim() === ''}>
+    <button
+      type="submit"
+      disabled={submitting || pieceId === '' || reference.trim() === ''}
+    >
       {submitting ? 'Saving…' : 'Add Resource'}
     </button>
     <button type="button" class="secondary" onclick={onCancel} disabled={submitting}>Cancel</button>

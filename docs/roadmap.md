@@ -50,9 +50,11 @@ than reintroducing ad hoc styling:
   sidebar-collapse state).
 - **Shell, not a scrolling page**: `App.svelte` is a fixed-width sidebar +
   single active view, switched via a plain `activeView` `$state` string —
-  explicitly not a router (unchanged from #105). Six views: Today & Focus,
-  Sessions, Progress, Pieces, Sheet Music, Lists, grouped in the sidebar
-  under "Practice" and "Library" section labels. The sidebar is collapsible
+  explicitly not a router (unchanged from #105). Five views: Today & Focus,
+  Sessions, Progress, Pieces, Lists, grouped in the sidebar under "Practice"
+  and "Library" section labels (#112 folded Sheet Music into Pieces as a
+  per-piece expandable disclosure, since it's per-piece metadata rather
+  than an independent domain). The sidebar is collapsible
   to a 64px icon-only rail (state persisted to `localStorage`) and its
   footer carries a weekly-goal mini progress bar, the "Start a session"
   primary action, and the theme toggle.
@@ -78,7 +80,8 @@ than reintroducing ad hoc styling:
   carrying the emphasis — focus pieces, suggested-plan, repertoire lists),
   `.tag` / `.tag-accent` / `.tag-neutral` / `.tag-outline` (genre chips,
   status pills, list counts), `.table` (real tables — the Pieces view is
-  table-based per the imported design), `.pill` (segmented status filters),
+  table-based per the imported design; native `<select>` elements are used
+  for its status/difficulty filters, not segmented pill buttons, per #112),
   `SectionHeader.svelte` (kicker/title/subtitle + a search/actions row,
   per-view), `.row-list` with `.accented`, `.meta-line`, `.icon-btn`,
   `Modal.svelte`, and shared `button`/`input`/`select`/`textarea` base

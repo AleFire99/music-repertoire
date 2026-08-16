@@ -7,7 +7,6 @@
     listPieces,
     listPracticeSessions,
     listRepertoireLists,
-    listSheetResources,
     PIECE_STATUSES,
     PIECE_DIFFICULTIES,
     type Piece,
@@ -17,7 +16,6 @@
     type PracticeSession,
     type PracticeStats,
     type RepertoireList,
-    type SheetResource,
   } from './lib/api'
   import Icon from './lib/Icon.svelte'
   import Modal from './lib/Modal.svelte'
@@ -31,10 +29,8 @@
   import RepertoireListList from './lib/RepertoireListList.svelte'
   import RotationPlanner from './lib/RotationPlanner.svelte'
   import SectionHeader from './lib/SectionHeader.svelte'
-  import SheetResourceForm from './lib/SheetResourceForm.svelte'
-  import SheetResourceList from './lib/SheetResourceList.svelte'
 
-  type ViewId = 'pieces' | 'focus' | 'sessions' | 'stats' | 'resources' | 'lists'
+  type ViewId = 'pieces' | 'focus' | 'sessions' | 'stats' | 'lists'
 
   const NAV_GROUPS: { label: string; items: { id: ViewId; label: string; icon: string }[] }[] = [
     {
@@ -49,7 +45,6 @@
       label: 'Library',
       items: [
         { id: 'pieces', label: 'Pieces', icon: 'pieces' },
-        { id: 'resources', label: 'Sheet Music', icon: 'sheet' },
         { id: 'lists', label: 'Lists', icon: 'list' },
       ],
     },
@@ -111,8 +106,6 @@
   })
   let goal = $state<PracticeGoal | null>(null)
   let goalModalOpen = $state(false)
-  let sheetResources = $state<SheetResource[]>([])
-  let resourceModalOpen = $state(false)
   let repertoireLists = $state<RepertoireList[]>([])
   let editingRepertoireList = $state<RepertoireList | null>(null)
   let listModalOpen = $state(false)
@@ -152,10 +145,6 @@
     goal = await getPracticeGoal()
   }
 
-  async function refreshSheetResources(): Promise<void> {
-    sheetResources = await listSheetResources()
-  }
-
   async function refreshRepertoireLists(): Promise<void> {
     repertoireLists = await listRepertoireLists()
   }
@@ -172,7 +161,6 @@
       await refreshSessions()
       await refreshStats()
       await refreshGoal()
-      await refreshSheetResources()
       await refreshRepertoireLists()
       await refreshFocusPieces()
     } catch (err) {
@@ -247,22 +235,12 @@
   function handlePieceDeleted(id: number): void {
     pieces = pieces.filter((p) => p.id !== id)
     if (editingPiece?.id === id) closePieceModal()
-    sheetResources = sheetResources.filter((r) => r.piece_id !== id)
     refreshRepertoireLists().catch((err) => {
       error = err instanceof Error ? err.message : String(err)
     })
     refreshFocusPieces().catch((err) => {
       error = err instanceof Error ? err.message : String(err)
     })
-  }
-
-  function handleSheetResourceSaved(saved: SheetResource): void {
-    sheetResources = [saved, ...sheetResources]
-    resourceModalOpen = false
-  }
-
-  function handleSheetResourceDeleted(id: number): void {
-    sheetResources = sheetResources.filter((r) => r.id !== id)
   }
 
   function openAddList(): void {
@@ -393,32 +371,30 @@
       </SectionHeader>
 
       <div class="filter-groups">
-        <span class="toggle-row">
-          <button type="button" class="pill" class:active={statusFilter === ''} onclick={() => setStatusFilter('')}>All</button>
-          {#each PIECE_STATUSES as status (status)}
-            <button
-              type="button"
-              class="pill"
-              class:active={statusFilter === status}
-              onclick={() => setStatusFilter(status)}
-            >
-              {status}
-            </button>
-          {/each}
-        </span>
-        <span class="toggle-row">
-          <button type="button" class="text-toggle" class:active={difficultyFilter === ''} onclick={() => setDifficultyFilter('')}>all difficulties</button>
-          {#each PIECE_DIFFICULTIES as d (d)}
-            <button
-              type="button"
-              class="text-toggle"
-              class:active={difficultyFilter === d}
-              onclick={() => setDifficultyFilter(d)}
-            >
-              {d}
-            </button>
-          {/each}
-        </span>
+        <label class="filter-field">
+          Status
+          <select
+            value={statusFilter}
+            onchange={(e) => setStatusFilter(e.currentTarget.value as PieceStatus | '')}
+          >
+            <option value="">All</option>
+            {#each PIECE_STATUSES as status (status)}
+              <option value={status}>{status}</option>
+            {/each}
+          </select>
+        </label>
+        <label class="filter-field">
+          Difficulty
+          <select
+            value={difficultyFilter}
+            onchange={(e) => setDifficultyFilter(e.currentTarget.value as PieceDifficulty | '')}
+          >
+            <option value="">All difficulties</option>
+            {#each PIECE_DIFFICULTIES as d (d)}
+              <option value={d}>{d}</option>
+            {/each}
+          </select>
+        </label>
         <button type="button" class="text-toggle" class:active={favoritesOnly} onclick={toggleFavoritesOnly}>
           favorites only
         </button>
@@ -444,13 +420,6 @@
         {/snippet}
       </SectionHeader>
       <PracticeStatsView {stats} {goal} />
-    {:else if activeView === 'resources'}
-      <SectionHeader kicker="Charts & scores" title="Sheet Music" subtitle="Where to find the score, part, or edition for each piece.">
-        {#snippet actions()}
-          <button type="button" onclick={() => (resourceModalOpen = true)}><Icon name="add" size={14} /> Add resource</button>
-        {/snippet}
-      </SectionHeader>
-      <SheetResourceList resources={sheetResources} {pieces} onDeleted={handleSheetResourceDeleted} />
     {:else if activeView === 'lists'}
       <SectionHeader kicker="Groupings" title="Lists" subtitle="Custom groupings for programs, recitals, and rotations.">
         {#snippet actions()}
@@ -481,10 +450,6 @@
 
 <Modal open={goalModalOpen} title={goal ? 'Edit weekly goal' : 'Set weekly goal'} onClose={() => (goalModalOpen = false)}>
   <PracticeGoalForm {goal} onSaved={handleGoalSaved} onCancel={() => (goalModalOpen = false)} />
-</Modal>
-
-<Modal open={resourceModalOpen} title="Add sheet resource" onClose={() => (resourceModalOpen = false)}>
-  <SheetResourceForm {pieces} onSaved={handleSheetResourceSaved} onCancel={() => (resourceModalOpen = false)} />
 </Modal>
 
 <Modal open={listModalOpen} title={editingRepertoireList ? 'Rename list' : 'New repertoire list'} onClose={closeListModal}>
@@ -718,6 +683,15 @@
     align-items: center;
     gap: var(--space-4);
     margin-bottom: var(--space-5);
+  }
+
+  .filter-field {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--ink-soft);
   }
 
   .search-field {
