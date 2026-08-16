@@ -1,9 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg">
   <!--
-    Modernist icon set — Lucide-style, hand-copied (not the npm package), per
-    the imported design's icon guidance. 24x24 grid. Consumed via
-    Icon.svelte's <use href="/icons.svg#{name}">; color comes from the
-    consumer's CSS `color`, never hardcoded here.
+    Lucide-style icon set, hand-copied (not the npm package). 24x24 grid.
+    Consumed via Icon.svelte's <use href="/icons.svg#{name}">; color comes
+    from the consumer's CSS `color`, never hardcoded here.
   -->
 
   <symbol id="brand" viewBox="0 0 24 24">
@@ -104,10 +103,11 @@
     <path fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" d="m9 5 7 7-7 7"/>
   </symbol>
 
-  <symbol id="rail" viewBox="0 0 24 24">
+  <symbol id="sidebar-toggle" viewBox="0 0 24 24">
     <g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M9.5 4.8H6a1 1 0 0 0-1 1v12.4a1 1 0 0 0 1 1h3.5"/>
-      <path d="M14.5 4.8H18a1 1 0 0 1 1 1v12.4a1 1 0 0 1-1 1h-3.5"/>
+      <rect x="3" y="4.5" width="18" height="15" rx="2.5"/>
+      <path d="M9.5 4.5v15"/>
+      <path d="M5.8 9.5l-1.6 2.5 1.6 2.5"/>
     </g>
   </symbol>
 
@@ -137,6 +137,36 @@
     <g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round">
       <circle cx="12" cy="12" r="9"/>
       <path d="M12 8v4l3 2"/>
+    </g>
+  </symbol>
+
+  <symbol id="view-table" viewBox="0 0 24 24">
+    <g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="4" width="18" height="16" rx="1.5"/>
+      <path d="M3 10h18M9 4v16"/>
+    </g>
+  </symbol>
+
+  <symbol id="view-grid" viewBox="0 0 24 24">
+    <g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">
+      <rect x="3.5" y="3.5" width="7.5" height="7.5" rx="1.2"/>
+      <rect x="13" y="3.5" width="7.5" height="7.5" rx="1.2"/>
+      <rect x="3.5" y="13" width="7.5" height="7.5" rx="1.2"/>
+      <rect x="13" y="13" width="7.5" height="7.5" rx="1.2"/>
+    </g>
+  </symbol>
+
+  <symbol id="link" viewBox="0 0 24 24">
+    <g fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1.5 1.5"/>
+      <path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1.5-1.5"/>
+    </g>
+  </symbol>
+
+  <symbol id="book" viewBox="0 0 24 24">
+    <g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5.5 3H19a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2V4.5A1.5 1.5 0 0 1 5.5 3Z"/>
+      <path d="M8 3v18"/>
     </g>
   </symbol>
 </svg>

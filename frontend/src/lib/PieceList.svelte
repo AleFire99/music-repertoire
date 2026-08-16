@@ -150,7 +150,7 @@
         {#each pieces as piece (piece.id)}
           {@const pieceGenre = genre(piece)}
           {@const pieceStats = statsByPiece.get(piece.id)}
-          <tr>
+          <tr class="row-hover">
             <td>
               <button
                 type="button"
@@ -188,9 +188,9 @@
             <td><span class="tag tag-accent">{piece.status}</span></td>
             <td>
               {#if piece.difficulty}
-                <span class="diff-bars">
+                <span class="diff-dots">
                   {#each [0, 1, 2, 3] as n (n)}
-                    <i class:filled={n < DIFFICULTY_RANK[piece.difficulty]} style="height:{5 + n * 2.5}px"></i>
+                    <i class:filled={n < DIFFICULTY_RANK[piece.difficulty]}></i>
                   {/each}
                 </span>
                 {piece.difficulty}
@@ -242,6 +242,10 @@
 <style>
   .table-scroll {
     overflow-x: auto;
+    overflow-y: hidden;
+    background: var(--surface-container);
+    border-radius: var(--radius-md);
+    box-shadow: var(--elevation-1);
   }
   .table {
     min-width: 52rem;
@@ -272,9 +276,10 @@
   }
   .disclosure {
     padding: var(--space-4);
-    background: var(--surface);
-    border: var(--border-width) solid var(--border);
-    border-top: none;
+    margin-bottom: var(--space-3);
+    background: var(--surface-container-high);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--elevation-1);
   }
   .add-resource {
     margin-top: var(--space-3);
@@ -292,23 +297,8 @@
     font-size: var(--text-xs);
     color: var(--accent-700);
     background: var(--accent-100);
-    padding: 3px 8px;
-  }
-  .diff-bars {
-    display: inline-flex;
-    gap: 3px;
-    align-items: flex-end;
-    height: 13px;
-    margin-right: var(--space-1);
-    vertical-align: -2px;
-  }
-  .diff-bars i {
-    width: 3px;
-    display: block;
-    background: var(--border);
-  }
-  .diff-bars i.filled {
-    background: var(--ink);
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
   }
   .favorite {
     color: var(--ink-faint);

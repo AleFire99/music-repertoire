@@ -1,12 +1,17 @@
+from collections import defaultdict
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import any_, or_
 from sqlalchemy.orm import Session
 
 from repertoire.db import get_db
 from repertoire.models.piece import Piece, PieceDifficulty, PieceStatus
+from repertoire.models.sheet_resource import SheetResource, SheetResourceKind
 from repertoire.schemas.piece import PieceCreate, PieceRead, PieceUpdate
 
 router = APIRouter(prefix="/pieces", tags=["pieces"])
+
+KIND_ORDER = {kind: index for index, kind in enumerate(SheetResourceKind)}
 
 
 @router.post("", response_model=PieceRead, status_code=201)
@@ -53,7 +58,26 @@ def list_pieces(
             Piece.status.in_(IN_FOCUS_STATUSES),
             or_(Piece.goal_text.isnot(None), Piece.goal_target_date.isnot(None)),
         )
-    return list(query.order_by(Piece.id).all())
+    pieces = list(query.order_by(Piece.id).all())
+
+    piece_ids = [piece.id for piece in pieces]
+    kinds_by_piece: dict[int, list[SheetResourceKind]] = defaultdict(list)
+    if piece_ids:
+        rows = (
+            db.query(SheetResource.piece_id, SheetResource.kind)
+            .filter(SheetResource.piece_id.in_(piece_ids))
+            .distinct()
+            .all()
+        )
+        for piece_id, kind in rows:
+            kinds_by_piece[piece_id].append(kind)
+
+    for piece in pieces:
+        piece.sheet_resource_kinds = sorted(  # type: ignore[attr-defined]
+            kinds_by_piece.get(piece.id, []), key=lambda kind: KIND_ORDER[kind]
+        )
+
+    return pieces
 
 
 def _get_piece_or_404(piece_id: int, db: Session) -> Piece:

@@ -83,7 +83,7 @@
 </script>
 
 <form onsubmit={handleSubmit}>
-  <label>
+  <label class="span-2">
     Title
     <input type="text" bind:value={title} required maxlength="200" />
   </label>
@@ -113,6 +113,14 @@
     <input type="text" bind:value={instrument} maxlength="100" />
   </label>
   <label>
+    Status
+    <select bind:value={status}>
+      {#each PIECE_STATUSES as s (s)}
+        <option value={s}>{s}</option>
+      {/each}
+    </select>
+  </label>
+  <label class="span-2">
     Goal
     <input
       type="text"
@@ -126,23 +134,15 @@
     <input type="date" bind:value={goalTargetDate} />
   </label>
   <label>
-    Status
-    <select bind:value={status}>
-      {#each PIECE_STATUSES as s (s)}
-        <option value={s}>{s}</option>
-      {/each}
-    </select>
-  </label>
-  <label>
     Tags (comma-separated)
     <input type="text" bind:value={tagsRaw} placeholder="jazz, sight-reading" />
   </label>
 
   {#if formError}
-    <p class="error">{formError}</p>
+    <p class="error span-2">{formError}</p>
   {/if}
 
-  <div class="actions">
+  <div class="actions span-2">
     <button type="submit" disabled={submitting}>
       {#if submitting}Saving…{:else}{piece ? 'Save' : 'Add Piece'}{/if}
     </button>
@@ -152,8 +152,16 @@
 
 <style>
   form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-3);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-3) var(--space-4);
+  }
+  @media (min-width: 32rem) {
+    form {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+  .span-2 {
+    grid-column: 1 / -1;
   }
 </style>

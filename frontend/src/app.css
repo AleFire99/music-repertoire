@@ -1,71 +1,104 @@
 /*
- * Design system tokens — Modernist, imported from claude.ai/design and
- * customized with a blue accent in place of the source system's red.
- *
- * Flat and architectural: one typeface (Archivo, self-hosted) distinguished
- * only by weight, zero corner radius everywhere, strong 2px dividers between
- * major sections (1px for repeated row separators), and an accent used
- * sparingly — the primary action, the active-nav rail, small emphasis.
+ * Design system tokens — Iris, a Material 3-inspired direction (issue #114),
+ * replacing Modernist (#107). A violet-leaning accent with neutral surfaces
+ * tinted off that hue (not true gray), so elevation reads through both
+ * shadow and tone shift. Real two-layer elevation shadows, state-layer
+ * hover/pressed overlays, a per-element radius scale, and Figtree
+ * (self-hosted) in place of Archivo.
  */
 
 @font-face {
-  font-family: 'Archivo';
+  font-family: 'Figtree';
   font-weight: 400;
   font-style: normal;
   font-display: swap;
-  src: local('Archivo'), url('./assets/fonts/archivo-400.woff2') format('woff2');
+  src: local('Figtree'), url('./assets/fonts/figtree-400.woff2') format('woff2');
 }
 @font-face {
-  font-family: 'Archivo';
-  font-weight: 600;
+  font-family: 'Figtree';
+  font-weight: 500;
   font-style: normal;
   font-display: swap;
-  src: local('Archivo SemiBold'), url('./assets/fonts/archivo-600.woff2') format('woff2');
+  src: local('Figtree Medium'), url('./assets/fonts/figtree-500.woff2') format('woff2');
 }
 @font-face {
-  font-family: 'Archivo';
-  font-weight: 800;
+  font-family: 'Figtree';
+  font-weight: 700;
   font-style: normal;
   font-display: swap;
-  src: local('Archivo ExtraBold'), url('./assets/fonts/archivo-800.woff2') format('woff2');
+  src: local('Figtree Bold'), url('./assets/fonts/figtree-700.woff2') format('woff2');
 }
 
 :root {
   color-scheme: light dark;
 
-  /* Surfaces */
-  --bg: #f3f2f2;
-  --surface: #eae9e9;
-  --surface-hover: color-mix(in srgb, #201e1d 6%, transparent);
-  --ink: #201e1d;
-  --ink-soft: #5c5957;
-  --ink-faint: #8c8985;
-  --border: color-mix(in srgb, #201e1d 40%, transparent);
-  --shadow: color-mix(in srgb, #201e1d 16%, transparent);
+  /* Accent — violet-leaning */
+  --accent-100: #edebff;
+  --accent-200: #dcd8ff;
+  --accent-300: #c1b9ff;
+  --accent-400: #9f92ff;
+  --accent: #5b4fea;
+  --accent-600: #4e43d6;
+  --accent-700: #4638c2;
+  --accent-800: #33299a;
+  --accent-900: #221c6e;
+  --accent-contrast: #ffffff;
+
+  /* Surfaces — tinted off the accent hue, not true gray */
+  --bg: #faf9ff;
+  --surface: #f3f1fc;
+  --surface-container-low: #efebfa;
+  --surface-container: #e9e4f7;
+  --surface-container-high: #e1daf2;
+  --surface-container-highest: #d9d0ec;
+
+  --ink: #1c1a22;
+  --ink-soft: #4b4758;
+  --ink-faint: #7a7488;
+
+  --outline: rgba(28, 26, 34, 0.16);
+  --outline-variant: rgba(28, 26, 34, 0.09);
   --backdrop: color-mix(in srgb, #000000 55%, transparent);
 
-  /* Accent — a blue substituted for Modernist's default red */
-  --accent-100: #eef3ff;
-  --accent-200: #dbe6ff;
-  --accent-300: #bacfff;
-  --accent-400: #85a8f6;
-  --accent-500: #4a7cef;
-  --accent-600: #2455c4;
-  --accent-700: #1c419a;
-  --accent-800: #16326f;
-  --accent-900: #142545;
-  --accent: #2f68e0;
-  --accent-contrast: #ffffff;
+  /* Backward-compatible aliases consumed by views not restyled in this pass —
+     they resolve through the tokens above so every view updates together. */
+  --border: var(--outline);
+  --border-width: 1px;
+  --border-width-strong: 1px;
+  --surface-hover: color-mix(in srgb, var(--ink) calc(var(--state-hover) * 100%), transparent);
   --accent-tint: var(--accent-100);
 
-  --danger: #a1402f;
-  --danger-strong: #7c2f22;
-  --danger-tint: rgba(161, 64, 47, 0.08);
+  --danger: #ba1a1a;
+  --danger-contrast: #ffffff;
+  --danger-tint: #ffdad6;
+  --danger-strong: #410002;
 
-  /* Type — one family, Archivo, distinguished by weight */
-  --font-heading: 'Archivo', system-ui, sans-serif;
-  --font-heading-weight: 800;
-  --font-body: 'Archivo', system-ui, sans-serif;
+  /* State layers — flat overlays of a foreground color at a fixed opacity,
+     composited over whatever's beneath. Use with color-mix(in srgb,
+     var(--layer-color) calc(var(--state-hover) * 100%), <base>). */
+  --state-hover: 0.08;
+  --state-focus: 0.1;
+  --state-pressed: 0.12;
+
+  /* Radius — specific per element, not one blanket value */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-full: 999px;
+
+  /* Elevation — a tight "key" shadow + a soft wide "ambient" shadow */
+  --elevation-1: 0 1px 2px rgba(28, 26, 34, 0.12), 0 1px 3px 1px rgba(28, 26, 34, 0.1);
+  --elevation-2: 0 1px 2px rgba(28, 26, 34, 0.14), 0 2px 6px 2px rgba(28, 26, 34, 0.1);
+  --elevation-3: 0 2px 4px rgba(28, 26, 34, 0.16), 0 4px 12px 4px rgba(28, 26, 34, 0.1);
+  --elevation-4: 0 4px 8px rgba(28, 26, 34, 0.18), 0 8px 24px 8px rgba(28, 26, 34, 0.12);
+
+  /* Type — Figtree throughout, headings at 700 (Material's scale tops out
+     lower than Modernist's 800) */
+  --font-heading: 'Figtree', system-ui, sans-serif;
+  --font-heading-weight: 700;
+  --font-body: 'Figtree', system-ui, sans-serif;
 
   --text-xs: 0.6875rem;
   --text-sm: 0.75rem;
@@ -83,60 +116,84 @@
   --space-5: 1.5rem;
   --space-6: 2rem;
   --space-7: 2.5rem;
-
-  /* Radius — the loudest structural decision: zero, everywhere */
-  --radius: 0;
-  --radius-sm: 0;
-
-  /* Divider weights: 2px between major sections, 1px for repeated rows */
-  --border-width: 1px;
-  --border-width-strong: 2px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #181a1d;
-    --surface: #22252a;
-    --surface-hover: color-mix(in srgb, #edeeef 8%, transparent);
-    --ink: #edeeef;
-    --ink-soft: #a9abae;
-    --ink-faint: #74777b;
-    --border: color-mix(in srgb, #edeeef 30%, transparent);
-    --shadow: rgba(0, 0, 0, 0.5);
+    --accent-100: #2c2560;
+    --accent-200: #382e78;
+    --accent-300: #4e43a6;
+    --accent-400: #8a7ef0;
+    --accent: #c4bbff;
+    --accent-600: #d6cfff;
+    --accent-700: #e4dfff;
+    --accent-800: #f1eeff;
+    --accent-900: #faf9ff;
+    --accent-contrast: #251d66;
+
+    --bg: #15131c;
+    --surface: #1d1a26;
+    --surface-container-low: #211e2b;
+    --surface-container: #262230;
+    --surface-container-high: #302b3b;
+    --surface-container-highest: #3a3446;
+
+    --ink: #eae6f5;
+    --ink-soft: #b7b1c9;
+    --ink-faint: #8b84a0;
+
+    --outline: rgba(234, 230, 245, 0.2);
+    --outline-variant: rgba(234, 230, 245, 0.11);
     --backdrop: rgba(0, 0, 0, 0.6);
 
-    --accent-100: #1b2740;
-    --accent-200: #223559;
-    --accent-300: #2b4780;
-    --accent-700: #9dbcff;
-    --accent-800: #cfe0ff;
+    --danger: #ffb4ab;
+    --danger-contrast: #690005;
+    --danger-tint: #93000a;
+    --danger-strong: #ffdad6;
 
-    --danger: #d98b78;
-    --danger-strong: #eeab9a;
-    --danger-tint: rgba(217, 139, 120, 0.14);
+    --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.24), 0 1px 3px 1px rgba(0, 0, 0, 0.2);
+    --elevation-2: 0 1px 2px rgba(0, 0, 0, 0.28), 0 2px 6px 2px rgba(0, 0, 0, 0.2);
+    --elevation-3: 0 2px 4px rgba(0, 0, 0, 0.32), 0 4px 12px 4px rgba(0, 0, 0, 0.2);
+    --elevation-4: 0 4px 8px rgba(0, 0, 0, 0.36), 0 8px 24px 8px rgba(0, 0, 0, 0.24);
   }
 }
 
 :root[data-theme='dark'] {
-  --bg: #181a1d;
-  --surface: #22252a;
-  --surface-hover: color-mix(in srgb, #edeeef 8%, transparent);
-  --ink: #edeeef;
-  --ink-soft: #a9abae;
-  --ink-faint: #74777b;
-  --border: color-mix(in srgb, #edeeef 30%, transparent);
-  --shadow: rgba(0, 0, 0, 0.5);
+  --accent-100: #2c2560;
+  --accent-200: #382e78;
+  --accent-300: #4e43a6;
+  --accent-400: #8a7ef0;
+  --accent: #c4bbff;
+  --accent-600: #d6cfff;
+  --accent-700: #e4dfff;
+  --accent-800: #f1eeff;
+  --accent-900: #faf9ff;
+  --accent-contrast: #251d66;
+
+  --bg: #15131c;
+  --surface: #1d1a26;
+  --surface-container-low: #211e2b;
+  --surface-container: #262230;
+  --surface-container-high: #302b3b;
+  --surface-container-highest: #3a3446;
+
+  --ink: #eae6f5;
+  --ink-soft: #b7b1c9;
+  --ink-faint: #8b84a0;
+
+  --outline: rgba(234, 230, 245, 0.2);
+  --outline-variant: rgba(234, 230, 245, 0.11);
   --backdrop: rgba(0, 0, 0, 0.6);
 
-  --accent-100: #1b2740;
-  --accent-200: #223559;
-  --accent-300: #2b4780;
-  --accent-700: #9dbcff;
-  --accent-800: #cfe0ff;
+  --danger: #ffb4ab;
+  --danger-contrast: #690005;
+  --danger-tint: #93000a;
+  --danger-strong: #ffdad6;
 
-  --danger: #d98b78;
-  --danger-strong: #eeab9a;
-  --danger-tint: rgba(217, 139, 120, 0.14);
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.24), 0 1px 3px 1px rgba(0, 0, 0, 0.2);
+  --elevation-2: 0 1px 2px rgba(0, 0, 0, 0.28), 0 2px 6px 2px rgba(0, 0, 0, 0.2);
+  --elevation-3: 0 2px 4px rgba(0, 0, 0, 0.32), 0 4px 12px 4px rgba(0, 0, 0, 0.2);
+  --elevation-4: 0 4px 8px rgba(0, 0, 0, 0.36), 0 8px 24px 8px rgba(0, 0, 0, 0.24);
 }
 
 * {
@@ -160,7 +217,7 @@ h4 {
   color: var(--ink);
   font-family: var(--font-heading);
   font-weight: var(--font-heading-weight);
-  letter-spacing: -0.015em;
+  letter-spacing: -0.01em;
   line-height: 1.15;
 }
 
@@ -227,11 +284,11 @@ a:hover {
   color: var(--accent);
 }
 
-/* Full-width rule: strong 2px divider between major sections */
+/* Full-width rule between major sections */
 .rule {
   border: none;
-  height: var(--border-width-strong);
-  background: var(--border);
+  height: var(--border-width);
+  background: var(--outline);
   margin: 0;
 }
 
@@ -251,8 +308,8 @@ textarea {
   font: inherit;
   font-size: var(--text-base);
   color: var(--ink);
-  background: var(--surface);
-  border: var(--border-width) solid var(--border);
+  background: var(--surface-container-low);
+  border: var(--border-width) solid var(--outline);
   border-radius: var(--radius-sm);
   padding: var(--space-2) var(--space-3);
   transition: border-color 120ms ease, box-shadow 120ms ease;
@@ -269,7 +326,7 @@ textarea:focus-visible,
 button:focus-visible {
   outline: none;
   border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-tint);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) calc(var(--state-focus) * 100%), transparent);
 }
 
 button {
@@ -280,19 +337,18 @@ button {
   letter-spacing: 0;
   color: var(--bg);
   background: var(--ink);
-  border: var(--border-width) solid var(--ink);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) calc(var(--space-3) * 1.2);
+  border: none;
+  border-radius: var(--radius-full);
+  padding: var(--space-2) calc(var(--space-3) * 1.4);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
-  transition: background 120ms ease, border-color 120ms ease, opacity 120ms ease;
+  transition: background 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
 }
 
 button:hover:not(:disabled) {
-  background: var(--ink-soft);
-  border-color: var(--ink-soft);
+  background: color-mix(in srgb, var(--bg) calc(var(--state-hover) * 100%), var(--ink));
 }
 
 button:disabled {
@@ -304,39 +360,35 @@ button:disabled {
 button.primary {
   color: var(--accent-contrast);
   background: var(--accent);
-  border-color: var(--accent);
 }
 
 button.primary:hover:not(:disabled) {
-  background: var(--accent-600);
-  border-color: var(--accent-600);
+  background: color-mix(in srgb, var(--accent-contrast) calc(var(--state-hover) * 100%), var(--accent));
 }
 
 /* Secondary button: cancel / rename / low-emphasis actions */
 button.secondary {
   color: var(--ink);
   background: transparent;
-  border-color: var(--border);
+  border: var(--border-width) solid var(--outline);
 }
 
 button.secondary:hover:not(:disabled) {
-  background: var(--surface-hover);
-  border-color: var(--ink-faint);
+  background: color-mix(in srgb, var(--ink) calc(var(--state-hover) * 100%), transparent);
 }
 
 /* Danger button: destructive text action */
 button.danger {
   color: var(--danger);
   background: transparent;
-  border-color: transparent;
   padding: var(--space-1) var(--space-2);
 }
 
 button.danger:hover:not(:disabled) {
-  background: var(--danger-tint);
+  background: color-mix(in srgb, var(--danger) calc(var(--state-hover) * 100%), transparent);
 }
 
-/* Icon button — hover-revealed row action */
+/* Icon button — hover-revealed row action, circular state-layer on hover */
 .icon-btn {
   display: inline-flex;
   align-items: center;
@@ -347,13 +399,13 @@ button.danger:hover:not(:disabled) {
   color: var(--ink-faint);
   background: none;
   border: none;
+  border-radius: var(--radius-full);
   opacity: 0;
-  transition: opacity 120ms ease, color 120ms ease;
+  transition: opacity 120ms ease, color 120ms ease, background 120ms ease;
 }
 
 .icon-btn:hover:not(:disabled) {
-  background: none;
-  border-color: transparent;
+  background: color-mix(in srgb, var(--ink) calc(var(--state-hover) * 100%), transparent);
   color: var(--ink);
 }
 
@@ -362,13 +414,19 @@ button.danger:hover:not(:disabled) {
 }
 
 .icon-btn.danger:hover:not(:disabled) {
-  background: none;
+  background: color-mix(in srgb, var(--danger) calc(var(--state-hover) * 100%), transparent);
   color: var(--danger);
 }
 
-li:hover .icon-btn,
+.row-hover:hover .icon-btn,
+.row-hover:focus-within .icon-btn,
 .icon-btn:focus-visible,
 .icon-btn.always {
+  opacity: 1;
+}
+
+/* Legacy selector kept for any list markup not yet using .row-hover */
+li:hover .icon-btn {
   opacity: 1;
 }
 
@@ -385,7 +443,6 @@ li:hover .icon-btn,
 
 .text-toggle:hover:not(:disabled) {
   background: none;
-  border-color: transparent;
   text-decoration: underline;
 }
 
@@ -428,13 +485,14 @@ li:hover .icon-btn,
   font-size: var(--text-lg);
 }
 
-/* Tags — small labels tinted from the accent or neutral ramp */
+/* Tags — small pill-shaped labels tinted from the accent or neutral ramp */
 .tag {
   display: inline-flex;
   align-items: center;
   font-size: var(--text-xs);
   letter-spacing: 0.02em;
-  padding: 2px 8px;
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
   white-space: nowrap;
 }
 
@@ -444,9 +502,8 @@ li:hover .icon-btn,
 }
 
 .tag-neutral {
-  background: var(--surface);
+  background: var(--surface-container-high);
   color: var(--ink-soft);
-  border: var(--border-width) solid var(--border);
 }
 
 .tag-outline {
@@ -459,19 +516,60 @@ li:hover .icon-btn,
   color: var(--accent-contrast);
 }
 
-/* Cards — flat surface-filled blocks, a 2px top edge carries the emphasis */
+/* Difficulty dots — small filled-dot indicator shared by table and grid piece views */
+.diff-dots {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+  margin-right: var(--space-1);
+  vertical-align: 1px;
+}
+
+.diff-dots i {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  display: block;
+  background: var(--outline-variant);
+}
+
+.diff-dots i.filled {
+  background: var(--accent);
+}
+
+/* Cards — surface-container tiles with elevation, promoting on hover */
 .card {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   padding: var(--space-4);
-  background: var(--surface);
-  border-top: var(--border-width-strong) solid var(--ink);
+  background: var(--surface-container);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-1);
+  transition: box-shadow 150ms ease, background 150ms ease, transform 150ms ease;
+}
+
+.card:hover {
+  background: var(--surface-container-high);
+  box-shadow: var(--elevation-2);
+  transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: box-shadow 150ms ease, background 150ms ease;
+  }
+  .card:hover {
+    transform: none;
+  }
 }
 
 .card.accented {
-  border-top-color: var(--accent);
   background: var(--accent-100);
+}
+
+.card.accented:hover {
+  background: var(--accent-200);
 }
 
 .card-kicker {
@@ -507,22 +605,24 @@ li:hover .icon-btn,
   color: var(--ink-faint);
 }
 
+/* Elevation utilities — consume the shared token scheme, never a bare
+   --shadow color, per the bug fix in #114 */
 .elev-sm {
-  box-shadow: 0 1px 2px var(--shadow);
+  box-shadow: var(--elevation-1);
 }
 
 .elev-md {
-  box-shadow: 0 3px 10px var(--shadow);
+  box-shadow: var(--elevation-2);
 }
 
 .elev-lg {
-  box-shadow: 0 12px 32px var(--shadow);
+  box-shadow: var(--elevation-3);
 }
 
 /* Panel — a section's flat container */
 .panel {
-  background: var(--surface);
-  border: var(--border-width) solid var(--border);
+  background: var(--surface-container);
+  border-radius: var(--radius-md);
   padding: var(--space-5);
   margin-bottom: var(--space-5);
 }
@@ -543,7 +643,7 @@ li:hover .icon-btn,
 .row-list > li {
   position: relative;
   padding: var(--space-3) 0;
-  border-bottom: var(--border-width) solid var(--border);
+  border-bottom: var(--border-width) solid var(--outline-variant);
 }
 
 .row-list > li.accented {
@@ -568,7 +668,7 @@ li:hover .icon-btn,
   margin: 0 0.5em;
 }
 
-/* Data table — themed header and row rules, per the Modernist system */
+/* Data table — themed header and row rules */
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -581,13 +681,13 @@ li:hover .icon-btn,
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-faint);
-  padding: var(--space-2);
-  border-bottom: var(--border-width-strong) solid var(--border);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border-width) solid var(--outline);
 }
 
 .table td {
-  padding: var(--space-2);
-  border-bottom: var(--border-width) solid var(--border);
+  padding: var(--space-2) var(--space-3);
+  border-bottom: var(--border-width) solid var(--outline-variant);
 }
 
 .table tbody tr:last-child td {
@@ -613,7 +713,15 @@ dialog {
   max-width: min(32rem, calc(100vw - 2rem));
   width: 100%;
   max-height: calc(100vh - 4rem);
-  border-radius: var(--radius);
+  border-radius: var(--radius-xl);
+}
+
+dialog[data-size='small'] {
+  max-width: min(24rem, calc(100vw - 2rem));
+}
+
+dialog[data-size='large'] {
+  max-width: min(46rem, calc(100vw - 2rem));
 }
 
 dialog::backdrop {

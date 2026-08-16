@@ -37,6 +37,7 @@ export interface Piece {
   status: PieceStatus
   tags: string[]
   is_favorite: boolean
+  sheet_resource_kinds: SheetResourceKind[]
   created_at: string
   updated_at: string
 }

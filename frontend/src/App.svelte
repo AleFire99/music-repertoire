@@ -20,6 +20,7 @@
   import Icon from './lib/Icon.svelte'
   import Modal from './lib/Modal.svelte'
   import PieceForm from './lib/PieceForm.svelte'
+  import PieceGrid from './lib/PieceGrid.svelte'
   import PieceList from './lib/PieceList.svelte'
   import PracticeGoalForm from './lib/PracticeGoalForm.svelte'
   import PracticeSessionForm from './lib/PracticeSessionForm.svelte'
@@ -79,6 +80,20 @@
   function toggleSidebar(): void {
     sidebarCollapsed = !sidebarCollapsed
     localStorage.setItem('sidebar-collapsed', String(sidebarCollapsed))
+  }
+
+  type PieceViewMode = 'table' | 'grid'
+
+  function storedPieceViewMode(): PieceViewMode {
+    const stored = localStorage.getItem('pieces-view-mode')
+    return stored === 'grid' ? 'grid' : 'table'
+  }
+
+  let pieceViewMode = $state<PieceViewMode>(storedPieceViewMode())
+
+  function setPieceViewMode(mode: PieceViewMode): void {
+    pieceViewMode = mode
+    localStorage.setItem('pieces-view-mode', mode)
   }
 
   let health = $state<string>('checking...')
@@ -316,7 +331,9 @@
           </div>
         </div>
       {:else}
-        <p class="goal-mini-empty caption">No weekly goal set</p>
+        <button type="button" class="goal-mini-empty caption" onclick={() => (goalModalOpen = true)}>
+          Set a weekly goal
+        </button>
       {/if}
 
       <button type="button" class="primary start-session" onclick={() => (sessionModalOpen = true)}>
@@ -336,7 +353,7 @@
           onclick={toggleSidebar}
           aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
         >
-          <Icon name="rail" size={16} />
+          <Icon name="sidebar-toggle" size={17} />
         </button>
         <div class="health">
           <span class="dot" class:online={health === 'ok'} aria-hidden="true"></span>
@@ -366,6 +383,28 @@
               bind:value={pieceQuery}
             />
           </label>
+          <div class="view-toggle" role="group" aria-label="Pieces view">
+            <button
+              type="button"
+              class="view-toggle-btn"
+              class:active={pieceViewMode === 'table'}
+              onclick={() => setPieceViewMode('table')}
+              aria-label="Table view"
+              aria-pressed={pieceViewMode === 'table'}
+            >
+              <Icon name="view-table" size={16} />
+            </button>
+            <button
+              type="button"
+              class="view-toggle-btn"
+              class:active={pieceViewMode === 'grid'}
+              onclick={() => setPieceViewMode('grid')}
+              aria-label="Grid view"
+              aria-pressed={pieceViewMode === 'grid'}
+            >
+              <Icon name="view-grid" size={16} />
+            </button>
+          </div>
           <button type="button" onclick={openAddPiece}><Icon name="add" size={14} /> Add piece</button>
         {/snippet}
       </SectionHeader>
@@ -400,7 +439,11 @@
         </button>
       </div>
 
-      <PieceList pieces={filteredPieces} stats={stats.pieces} onEdit={openEditPiece} onDeleted={handlePieceDeleted} onUpdated={handlePieceSaved} />
+      {#if pieceViewMode === 'grid'}
+        <PieceGrid pieces={filteredPieces} />
+      {:else}
+        <PieceList pieces={filteredPieces} stats={stats.pieces} onEdit={openEditPiece} onDeleted={handlePieceDeleted} onUpdated={handlePieceSaved} />
+      {/if}
     {:else if activeView === 'focus'}
       <SectionHeader kicker="Right now" title="Today & Focus" subtitle="A plan for the next hour, and what you're actively carrying." />
       <RotationPlanner pieces={focusPieces} suggestedPlan={stats.suggested_plan} onStartSession={() => (sessionModalOpen = true)} onAddPiece={openAddPiece} />
@@ -440,7 +483,7 @@
   </main>
 </div>
 
-<Modal open={pieceModalOpen} title={editingPiece ? 'Edit piece' : 'Add piece'} onClose={closePieceModal}>
+<Modal open={pieceModalOpen} title={editingPiece ? 'Edit piece' : 'Add piece'} size="large" onClose={closePieceModal}>
   <PieceForm piece={editingPiece} onSaved={handlePieceSaved} onCancel={closePieceModal} />
 </Modal>
 
@@ -448,7 +491,7 @@
   <PracticeSessionForm {pieces} onSaved={handleSessionSaved} onCancel={() => (sessionModalOpen = false)} />
 </Modal>
 
-<Modal open={goalModalOpen} title={goal ? 'Edit weekly goal' : 'Set weekly goal'} onClose={() => (goalModalOpen = false)}>
+<Modal open={goalModalOpen} title={goal ? 'Edit weekly goal' : 'Set weekly goal'} size="small" onClose={() => (goalModalOpen = false)}>
   <PracticeGoalForm {goal} onSaved={handleGoalSaved} onCancel={() => (goalModalOpen = false)} />
 </Modal>
 
@@ -534,6 +577,7 @@
     padding: var(--space-2) var(--space-3);
     background: none;
     border: none;
+    border-radius: var(--radius-full);
     color: var(--ink);
     font-family: var(--font-body);
     font-weight: 400;
@@ -542,15 +586,16 @@
     cursor: pointer;
   }
   .nav-item:hover:not(:disabled) {
-    background: var(--surface-hover);
-    border-color: transparent;
+    background: color-mix(in srgb, var(--ink) calc(var(--state-hover) * 100%), transparent);
   }
   .nav-item.active {
-    background: var(--bg);
-    color: var(--accent);
+    background: var(--accent-100);
+    color: var(--accent-700);
     font-family: var(--font-heading);
     font-weight: var(--font-heading-weight);
-    box-shadow: inset 3px 0 0 var(--accent);
+  }
+  .nav-item.active:hover:not(:disabled) {
+    background: var(--accent-200);
   }
   .label {
     white-space: nowrap;
@@ -602,6 +647,20 @@
   }
   .goal-mini-empty {
     margin: 0;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: 0;
+    color: var(--ink-faint);
+    text-align: left;
+    text-decoration: underline;
+    text-decoration-color: var(--outline);
+    text-underline-offset: 2px;
+  }
+  .goal-mini-empty:hover:not(:disabled) {
+    background: none;
+    color: var(--accent);
+    text-decoration-color: currentColor;
   }
 
   .start-session {
@@ -655,14 +714,16 @@
   }
   .dot {
     flex: none;
-    width: 7px;
-    height: 7px;
-    border: 1px solid var(--ink-faint);
-    background: transparent;
+    width: 8px;
+    height: 8px;
+    border-radius: var(--radius-full);
+    background: var(--ink-faint);
+    box-shadow: 0 0 0 0 transparent;
+    transition: background 200ms ease, box-shadow 200ms ease;
   }
   .dot.online {
     background: var(--accent);
-    border-color: var(--accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
   }
   .health-label {
     white-space: nowrap;
@@ -698,24 +759,59 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
-    background: var(--surface);
-    border: var(--border-width) solid var(--border);
-    padding: 0 var(--space-3);
+    background: var(--surface-container-low);
+    border: var(--border-width) solid var(--outline);
+    border-radius: var(--radius-full);
+    padding: 0 var(--space-4);
     height: 36px;
-    width: 15rem;
+    width: 18rem;
     color: var(--ink-faint);
   }
   .search-field input {
     flex: 1;
     min-width: 0;
+    width: 100%;
     border: 0;
     padding: 0;
     background: transparent;
     color: var(--ink);
     font-size: var(--text-sm);
+    text-overflow: ellipsis;
   }
   .search-field input:focus-visible {
     outline: none;
     box-shadow: none;
+  }
+
+  .view-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px;
+    background: var(--surface-container);
+    border-radius: var(--radius-full);
+  }
+  .view-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background: none;
+    border: none;
+    border-radius: var(--radius-full);
+    color: var(--ink-faint);
+  }
+  .view-toggle-btn:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--ink) calc(var(--state-hover) * 100%), transparent);
+    color: var(--ink);
+  }
+  .view-toggle-btn.active {
+    background: var(--accent-100);
+    color: var(--accent-700);
+  }
+  .view-toggle-btn.active:hover:not(:disabled) {
+    background: var(--accent-200);
   }
 </style>
