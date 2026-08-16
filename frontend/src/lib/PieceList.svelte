@@ -1,6 +1,15 @@
 <script lang="ts">
-  import { deletePiece, updatePiece, type Piece, type PiecePracticeStats } from './api'
+  import {
+    deletePiece,
+    listSheetResources,
+    updatePiece,
+    type Piece,
+    type PiecePracticeStats,
+    type SheetResource,
+  } from './api'
   import Icon from './Icon.svelte'
+  import SheetResourceForm from './SheetResourceForm.svelte'
+  import SheetResourceList from './SheetResourceList.svelte'
 
   const KNOWN_GENRES = ['Jazz', 'Classical', 'Anime', 'Film', 'Contemporary', 'Mine']
   const DIFFICULTY_RANK: Record<string, number> = {
@@ -28,6 +37,11 @@
   let deleteError = $state<string | null>(null)
   let togglingFavoriteId = $state<number | null>(null)
   let favoriteError = $state<string | null>(null)
+
+  let expandedId = $state<number | null>(null)
+  let expandedResources = $state<SheetResource[]>([])
+  let expandError = $state<string | null>(null)
+  let addResourceOpen = $state(false)
 
   const statsByPiece = $derived(new Map(stats.map((s) => [s.piece_id, s])))
 
@@ -81,6 +95,30 @@
       togglingFavoriteId = null
     }
   }
+
+  async function toggleExpand(piece: Piece): Promise<void> {
+    if (expandedId === piece.id) {
+      expandedId = null
+      return
+    }
+    expandError = null
+    addResourceOpen = false
+    try {
+      expandedResources = await listSheetResources({ piece_id: piece.id })
+      expandedId = piece.id
+    } catch (err) {
+      expandError = err instanceof Error ? err.message : String(err)
+    }
+  }
+
+  function handleResourceSaved(resource: SheetResource): void {
+    expandedResources = [resource, ...expandedResources]
+    addResourceOpen = false
+  }
+
+  function handleResourceDeleted(id: number): void {
+    expandedResources = expandedResources.filter((r) => r.id !== id)
+  }
 </script>
 
 {#if deleteError}
@@ -127,6 +165,15 @@
             </td>
             <td>
               <div class="title-row">
+                <button
+                  type="button"
+                  class="icon-btn disclose always"
+                  class:expanded={expandedId === piece.id}
+                  onclick={() => toggleExpand(piece)}
+                  aria-label={expandedId === piece.id ? 'Hide sheet resources' : 'Show sheet resources'}
+                >
+                  <Icon name="disclose" size={14} />
+                </button>
                 <span class="title">{piece.title}</span>
                 {#if pieceGenre}<span class="tag tag-neutral">{pieceGenre}</span>{/if}
               </div>
@@ -162,6 +209,30 @@
               </button>
             </td>
           </tr>
+          {#if expandedId === piece.id}
+            <tr class="disclosure-row">
+              <td colspan="9">
+                <div class="disclosure">
+                  {#if expandError}
+                    <p class="error">{expandError}</p>
+                  {/if}
+                  <SheetResourceList resources={expandedResources} onDeleted={handleResourceDeleted} />
+                  {#if addResourceOpen}
+                    <SheetResourceForm
+                      {pieces}
+                      fixedPieceId={piece.id}
+                      onSaved={handleResourceSaved}
+                      onCancel={() => (addResourceOpen = false)}
+                    />
+                  {:else}
+                    <button type="button" class="secondary add-resource" onclick={() => (addResourceOpen = true)}>
+                      <Icon name="add" size={14} /> Add a resource
+                    </button>
+                  {/if}
+                </div>
+              </td>
+            </tr>
+          {/if}
         {/each}
       </tbody>
     </table>
@@ -185,6 +256,28 @@
     font-family: var(--font-heading);
     font-weight: var(--font-heading-weight);
     font-size: var(--text-base);
+  }
+  .disclose {
+    color: var(--ink-faint);
+    transition: transform 120ms ease, color 120ms ease;
+  }
+  .disclose:hover:not(:disabled) {
+    color: var(--ink);
+  }
+  .disclose.expanded {
+    transform: rotate(90deg);
+  }
+  .disclosure-row td {
+    padding-top: 0;
+  }
+  .disclosure {
+    padding: var(--space-4);
+    background: var(--surface);
+    border: var(--border-width) solid var(--border);
+    border-top: none;
+  }
+  .add-resource {
+    margin-top: var(--space-3);
   }
   .composer {
     color: var(--ink-soft);

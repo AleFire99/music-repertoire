@@ -1,23 +1,17 @@
 <script lang="ts">
-  import { deleteSheetResource, type Piece, type SheetResource } from './api'
+  import { deleteSheetResource, type SheetResource } from './api'
   import Icon from './Icon.svelte'
 
   let {
     resources,
-    pieces,
     onDeleted,
   }: {
     resources: SheetResource[]
-    pieces: Piece[]
     onDeleted: (id: number) => void
   } = $props()
 
   let deletingId = $state<number | null>(null)
   let deleteError = $state<string | null>(null)
-
-  function pieceTitle(pieceId: number): string {
-    return pieces.find((p) => p.id === pieceId)?.title ?? `Piece #${pieceId}`
-  }
 
   async function handleDelete(resource: SheetResource): Promise<void> {
     if (!window.confirm(`Delete this sheet resource? This cannot be undone.`)) return
@@ -48,7 +42,6 @@
           <Icon name="sheet" size={17} />
         </span>
         <div class="body">
-          <div class="title">{pieceTitle(resource.piece_id)}</div>
           <div class="reference">{resource.reference}</div>
           <div class="meta-line">
             <span>{resource.kind}</span>
@@ -75,14 +68,13 @@
 <style>
   .resource-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 0 var(--space-6);
-    border-top: var(--border-width-strong) solid var(--ink);
   }
   .resource-row {
     display: flex;
     gap: var(--space-3);
-    padding: var(--space-4) 0;
+    padding: var(--space-3) 0;
     border-bottom: var(--border-width) solid var(--border);
   }
   .icon-wrap {
@@ -99,13 +91,7 @@
     flex: 1;
     min-width: 0;
   }
-  .title {
-    font-family: var(--font-heading);
-    font-weight: var(--font-heading-weight);
-    font-size: var(--text-base);
-  }
   .reference {
-    margin-top: 2px;
     color: var(--ink);
     font-size: var(--text-sm);
     overflow-wrap: break-word;

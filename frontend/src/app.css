@@ -395,38 +395,6 @@ li:hover .icon-btn,
   text-decoration-thickness: 1.5px;
 }
 
-.toggle-row {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  flex-wrap: wrap;
-}
-
-.toggle-row > .text-toggle + .text-toggle {
-  margin-left: var(--space-3);
-}
-
-.toggle-row > .text-toggle + .text-toggle::before {
-  content: '\00B7';
-  margin-right: var(--space-3);
-  color: var(--ink-faint);
-}
-
-/* Segmented filter pill — bordered, filled solid accent when active */
-.pill {
-  padding: 6px 12px;
-  font-size: var(--text-sm);
-  cursor: pointer;
-  border: var(--border-width) solid var(--border);
-  background: transparent;
-  color: var(--ink);
-}
-
-.pill.active {
-  border-color: var(--accent);
-  background: var(--accent);
-  color: var(--accent-contrast);
-}
 
 /* Pushes a trailing element to the far right of a flex row */
 .push-right {
