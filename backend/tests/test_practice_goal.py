@@ -1,4 +1,4 @@
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
 from fastapi.testclient import TestClient
 
@@ -7,18 +7,20 @@ def _create_piece(client: TestClient, title: str) -> int:
     return client.post("/api/pieces", json={"title": title}).json()["id"]
 
 
-def _at_days_ago(days: int, hour: int = 10) -> str:
-    """ISO timestamp on the UTC calendar date `days` before today, at `hour`."""
-    moment = datetime.now(UTC) - timedelta(days=days)
-    return moment.strftime("%Y-%m-%dT") + f"{hour:02d}:00:00Z"
+def _week_start_utc_date() -> date:
+    """Monday of the current UTC calendar week (matches the endpoint's convention)."""
+    today = datetime.now(UTC).date()
+    return today - timedelta(days=today.weekday())
 
 
-def _log_session(client: TestClient, piece_id: int, days_ago: int, duration_minutes: int) -> None:
+def _log_session_at(
+    client: TestClient, piece_id: int, practiced_at: str, duration_minutes: int
+) -> None:
     client.post(
         "/api/practice-sessions",
         json={
             "piece_id": piece_id,
-            "practiced_at": _at_days_ago(days_ago),
+            "practiced_at": practiced_at,
             "duration_minutes": duration_minutes,
         },
     )
@@ -67,10 +69,15 @@ def test_set_goal_rejects_non_positive_target(client: TestClient) -> None:
 
 def test_goal_progress_reflects_minutes_this_week(client: TestClient) -> None:
     piece_id = _create_piece(client, "Etude")
-    _log_session(client, piece_id, days_ago=0, duration_minutes=90)
-    _log_session(client, piece_id, days_ago=1, duration_minutes=30)
-    # Outside the current week — must not count toward progress.
-    _log_session(client, piece_id, days_ago=7, duration_minutes=1000)
+    week_start = _week_start_utc_date()
+    # Both anchored to this week's Monday, so they land in the current week
+    # regardless of which weekday the test actually runs on.
+    _log_session_at(client, piece_id, f"{week_start.isoformat()}T01:00:00Z", duration_minutes=90)
+    _log_session_at(client, piece_id, f"{week_start.isoformat()}T02:00:00Z", duration_minutes=30)
+    # 7 days before this week's Monday — always in the prior week, must not count.
+    _log_session_at(
+        client, piece_id, f"{(week_start - timedelta(days=7)).isoformat()}T10:00:00Z", 1000
+    )
 
     client.put("/api/practice-goal", json={"target_minutes": 300})
 
