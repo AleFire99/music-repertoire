@@ -15,12 +15,14 @@
     url: 'link',
     physical: 'book',
     'local-doc': 'sheet',
+    uploaded: 'download',
   }
 
   const KIND_LABEL: Record<SheetResourceKind, string> = {
     url: 'Has a linked URL',
     physical: 'Has a physical copy',
     'local-doc': 'Has a local file',
+    uploaded: 'Has an uploaded file',
   }
 
   let { pieces }: { pieces: Piece[] } = $props()
