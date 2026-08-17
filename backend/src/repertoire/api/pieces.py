@@ -14,12 +14,32 @@ router = APIRouter(prefix="/pieces", tags=["pieces"])
 KIND_ORDER = {kind: index for index, kind in enumerate(SheetResourceKind)}
 
 
+def _attach_sheet_resource_kinds(pieces: list[Piece], db: Session) -> None:
+    piece_ids = [piece.id for piece in pieces]
+    kinds_by_piece: dict[int, list[SheetResourceKind]] = defaultdict(list)
+    if piece_ids:
+        rows = (
+            db.query(SheetResource.piece_id, SheetResource.kind)
+            .filter(SheetResource.piece_id.in_(piece_ids))
+            .distinct()
+            .all()
+        )
+        for piece_id, kind in rows:
+            kinds_by_piece[piece_id].append(kind)
+
+    for piece in pieces:
+        piece.sheet_resource_kinds = sorted(  # type: ignore[attr-defined]
+            kinds_by_piece.get(piece.id, []), key=lambda kind: KIND_ORDER[kind]
+        )
+
+
 @router.post("", response_model=PieceRead, status_code=201)
 def create_piece(payload: PieceCreate, db: Session = Depends(get_db)) -> Piece:
     piece = Piece(**payload.model_dump())
     db.add(piece)
     db.commit()
     db.refresh(piece)
+    _attach_sheet_resource_kinds([piece], db)
     return piece
 
 
@@ -59,24 +79,7 @@ def list_pieces(
             or_(Piece.goal_text.isnot(None), Piece.goal_target_date.isnot(None)),
         )
     pieces = list(query.order_by(Piece.id).all())
-
-    piece_ids = [piece.id for piece in pieces]
-    kinds_by_piece: dict[int, list[SheetResourceKind]] = defaultdict(list)
-    if piece_ids:
-        rows = (
-            db.query(SheetResource.piece_id, SheetResource.kind)
-            .filter(SheetResource.piece_id.in_(piece_ids))
-            .distinct()
-            .all()
-        )
-        for piece_id, kind in rows:
-            kinds_by_piece[piece_id].append(kind)
-
-    for piece in pieces:
-        piece.sheet_resource_kinds = sorted(  # type: ignore[attr-defined]
-            kinds_by_piece.get(piece.id, []), key=lambda kind: KIND_ORDER[kind]
-        )
-
+    _attach_sheet_resource_kinds(pieces, db)
     return pieces
 
 
@@ -89,7 +92,9 @@ def _get_piece_or_404(piece_id: int, db: Session) -> Piece:
 
 @router.get("/{piece_id}", response_model=PieceRead)
 def get_piece(piece_id: int, db: Session = Depends(get_db)) -> Piece:
-    return _get_piece_or_404(piece_id, db)
+    piece = _get_piece_or_404(piece_id, db)
+    _attach_sheet_resource_kinds([piece], db)
+    return piece
 
 
 @router.patch("/{piece_id}", response_model=PieceRead)
@@ -99,6 +104,7 @@ def update_piece(piece_id: int, payload: PieceUpdate, db: Session = Depends(get_
         setattr(piece, field, value)
     db.commit()
     db.refresh(piece)
+    _attach_sheet_resource_kinds([piece], db)
     return piece
 
 
