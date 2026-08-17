@@ -94,17 +94,25 @@ Source of truth until these are transcribed into GitHub Issues (`gh issue create
 
 ## Future epics (not implemented, do not start without a new milestone)
 
+**Confirmed next direction (scoped in a recap/planning conversation after v0.5.0 + the Iris redesign)**: File storage → Jazz reference wiki → Music theory engine, in that order. Each is its own epic, shipped one slice at a time like everything else — the order below reflects that sequencing, not just a flat list.
+
 ### Repertoire
 Fully delivered — see issue #5 for the shipped-item checklist. No remaining scope; new Repertoire-epic ideas need their own scoping discussion before being added here.
 
 ### Practice
 Fully delivered — see issue #6 for the shipped-item checklist. No remaining scope; new Practice-epic ideas need their own scoping discussion before being added here.
 
+### Sheet-music file storage (epic 1 of the confirmed next direction — in progress)
+Real upload/storage for sheet-music PDFs, reversing the "no file storage" decision sheet resources shipped with (#43) — the user wants to move their existing downloaded PDFs (mostly from musescore.com) into the app itself, alongside continued references for physical books and not-yet-downloaded pieces. Scope: a new `SheetResourceKind` for uploaded files (distinct from `local-doc`, which means "a path on your machine," not "stored by the app"), a Docker named volume for storage (local-first, no cloud storage), upload/download/delete endpoints with PDF-only + size-cap validation, and frontend upload UI. No in-app PDF viewer for v1 — download/open is enough to start.
+
+### Jazz reference wiki (epic 2 of the confirmed next direction)
+A navigable personal reference wiki (pages the user writes/browses), initially standalone with no AI dependency — build it useful on its own first. Explicit eventual intent (not scoped yet): an AI agent reading from it to answer questions, once the Music theory engine below exists to ground those answers in something deterministic. Needs its own scoping pass when its turn comes (content model, navigation, whether pages are freeform or piece-linked).
+
 ### Music representation
 MIDI import, MusicXML import, chord representation, measure representation, sections, annotations. **Audio → MIDI → chord extraction is explicitly out of scope indefinitely** — not a v-next item, a permanent non-goal unless a concrete future requirement changes that.
 
-### Music theory engine
-Deterministic analysis: ii-V-I / ii-V-i, cadences, secondary dominants, substitutions, modulations, repeated harmonic/melodic patterns, transposed patterns, cross-piece relationships. Must stay deterministic — see `docs/architecture.md`'s "LLM is never the source of truth for musical facts" rule.
+### Music theory engine (epic 3 of the confirmed next direction)
+Deterministic analysis: ii-V-I / ii-V-i, cadences, secondary dominants, substitutions, modulations, repeated harmonic/melodic patterns, transposed patterns, cross-piece relationships, especially across lead sheets. Must stay deterministic — see `docs/architecture.md`'s "LLM is never the source of truth for musical facts" rule. **Confirmed input method: manual entry** of chords/key/form by the user (the PDF stays a reference read while typing it in) — OCR/parsing the user's actual PDF/scan files was explicitly considered and rejected as a starting point (research-grade, unreliable even in commercial tools, not advisable for a personal project). Looking up existing chord-chart metadata for known standards online is a possible easier future input path the user wants to research separately later — not scoped as work yet, just noted so it isn't forgotten.
 
 ### Learning assistant
 LLM explanations of theoretical findings (never the source of the findings themselves), piece similarity, related-piece suggestions, focused practice exercise generation, recurring-concept identification across the repertoire.
