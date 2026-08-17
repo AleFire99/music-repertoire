@@ -351,6 +351,41 @@ def test_list_pieces_includes_sheet_resource_kinds(client: TestClient) -> None:
     assert by_title["C"] == ["url", "physical", "local-doc"]
 
 
+def test_get_piece_includes_sheet_resource_kinds(client: TestClient) -> None:
+    piece = client.post("/api/pieces", json={"title": "Nocturne"}).json()
+    client.post(
+        "/api/sheet-resources",
+        json={"piece_id": piece["id"], "kind": "url", "reference": "https://example.com"},
+    )
+    client.post(
+        "/api/sheet-resources",
+        json={"piece_id": piece["id"], "kind": "physical", "reference": "Book p.4"},
+    )
+
+    response = client.get(f"/api/pieces/{piece['id']}")
+    assert response.status_code == 200
+    assert response.json()["sheet_resource_kinds"] == ["url", "physical"]
+
+
+def test_create_piece_includes_empty_sheet_resource_kinds(client: TestClient) -> None:
+    response = client.post("/api/pieces", json={"title": "Waltz"})
+    assert response.status_code == 201
+    assert response.json()["sheet_resource_kinds"] == []
+
+
+def test_update_piece_includes_sheet_resource_kinds(client: TestClient) -> None:
+    piece = client.post("/api/pieces", json={"title": "Ballade"}).json()
+    client.post(
+        "/api/sheet-resources",
+        json={"piece_id": piece["id"], "kind": "url", "reference": "https://example.com"},
+    )
+
+    response = client.patch(f"/api/pieces/{piece['id']}", json={"title": "Ballade No. 1"})
+    assert response.status_code == 200
+    assert response.json()["title"] == "Ballade No. 1"
+    assert response.json()["sheet_resource_kinds"] == ["url"]
+
+
 def test_list_pieces_in_focus_goal_without_matching_status_excluded(client: TestClient) -> None:
     client.post(
         "/api/pieces",
