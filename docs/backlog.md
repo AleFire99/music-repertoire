@@ -105,6 +105,9 @@ Fully delivered — see issue #6 for the shipped-item checklist. No remaining sc
 ### Sheet-music file storage (epic 1 of the confirmed next direction — in progress)
 Real upload/storage for sheet-music PDFs, reversing the "no file storage" decision sheet resources shipped with (#43) — the user wants to move their existing downloaded PDFs (mostly from musescore.com) into the app itself, alongside continued references for physical books and not-yet-downloaded pieces. Scope: a new `SheetResourceKind` for uploaded files (distinct from `local-doc`, which means "a path on your machine," not "stored by the app"), a Docker named volume for storage (local-first, no cloud storage), upload/download/delete endpoints with PDF-only + size-cap validation, and frontend upload UI. No in-app PDF viewer for v1 — download/open is enough to start.
 
+Shipped so far:
+- [x] `uploaded` `SheetResourceKind` + file metadata columns, named-volume storage, upload/download/delete endpoints (PDF-only, 20MB cap), frontend upload/download UI — issue #123
+
 ### Jazz reference wiki (epic 2 of the confirmed next direction)
 A navigable personal reference wiki (pages the user writes/browses), initially standalone with no AI dependency — build it useful on its own first. Explicit eventual intent (not scoped yet): an AI agent reading from it to answer questions, once the Music theory engine below exists to ground those answers in something deterministic. Needs its own scoping pass when its turn comes (content model, navigation, whether pages are freeform or piece-linked).
 

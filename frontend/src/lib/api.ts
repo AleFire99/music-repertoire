@@ -270,9 +270,14 @@ export async function setPracticeGoal(input: PracticeGoalSetInput): Promise<Prac
   return response.json()
 }
 
-export type SheetResourceKind = 'url' | 'physical' | 'local-doc'
+export type SheetResourceKind = 'url' | 'physical' | 'local-doc' | 'uploaded'
 
-export const SHEET_RESOURCE_KINDS: SheetResourceKind[] = ['url', 'physical', 'local-doc']
+export const SHEET_RESOURCE_KINDS: SheetResourceKind[] = [
+  'url',
+  'physical',
+  'local-doc',
+  'uploaded',
+]
 
 export interface SheetResource {
   id: number
@@ -281,6 +286,9 @@ export interface SheetResource {
   reference: string
   label: string | null
   notes: string | null
+  original_filename: string | null
+  content_type: string | null
+  file_size_bytes: number | null
   created_at: string
   updated_at: string
 }
@@ -289,6 +297,13 @@ export interface SheetResourceCreateInput {
   piece_id: number
   kind: SheetResourceKind
   reference: string
+  label?: string | null
+  notes?: string | null
+}
+
+export interface SheetResourceUploadInput {
+  piece_id: number
+  file: File
   label?: string | null
   notes?: string | null
 }
@@ -323,6 +338,29 @@ export async function deleteSheetResource(id: number): Promise<void> {
   if (!response.ok) {
     throw new Error(await describeError('failed to delete sheet resource', response))
   }
+}
+
+export async function uploadSheetResource(
+  input: SheetResourceUploadInput,
+): Promise<SheetResource> {
+  const formData = new FormData()
+  formData.set('piece_id', String(input.piece_id))
+  formData.set('file', input.file)
+  if (input.label) formData.set('label', input.label)
+  if (input.notes) formData.set('notes', input.notes)
+
+  const response = await fetch('/api/sheet-resources/upload', {
+    method: 'POST',
+    body: formData,
+  })
+  if (!response.ok) {
+    throw new Error(await describeError('failed to upload sheet resource', response))
+  }
+  return response.json()
+}
+
+export function sheetResourceFileUrl(id: number): string {
+  return `/api/sheet-resources/${id}/file`
 }
 
 export interface RepertoireList {

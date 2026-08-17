@@ -22,5 +22,8 @@ class SheetResourceRead(BaseModel):
     reference: str
     label: str | None
     notes: str | None
+    original_filename: str | None
+    content_type: str | None
+    file_size_bytes: int | None
     created_at: datetime
     updated_at: datetime

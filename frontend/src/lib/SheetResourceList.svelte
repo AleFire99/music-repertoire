@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { deleteSheetResource, type SheetResource } from './api'
+  import { deleteSheetResource, sheetResourceFileUrl, type SheetResource } from './api'
   import Icon from './Icon.svelte'
 
   let {
@@ -51,6 +51,17 @@
             <p class="notes">{resource.notes}</p>
           {/if}
         </div>
+        {#if resource.kind === 'uploaded'}
+          <a
+            class="icon-btn always"
+            href={sheetResourceFileUrl(resource.id)}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Download"
+          >
+            <Icon name="download" size={16} />
+          </a>
+        {/if}
         <button
           type="button"
           class="icon-btn danger always"
@@ -100,5 +111,8 @@
     margin: var(--space-1) 0 0;
     color: var(--ink-soft);
     font-size: var(--text-xs);
+  }
+  a.icon-btn {
+    text-decoration: none;
   }
 </style>
