@@ -1,0 +1,159 @@
+from collections.abc import Generator
+from pathlib import Path
+from unittest.mock import Mock
+
+import pytest
+from fastapi.testclient import TestClient
+from pdf_fixtures import build_blank_pdf, build_simple_pdf
+
+from repertoire.api import pieces as pieces_module
+from repertoire.config import settings
+
+TITLE_ONLY_PDF = build_simple_pdf([("Rhapsody in Blue", 24, 50, 700)])
+TITLE_AND_COMPOSER_PDF = build_simple_pdf(
+    [
+        ("Rhapsody in Blue", 24, 50, 700),
+        ("by George Gershwin", 12, 50, 670),
+    ]
+)
+BLANK_PDF = build_blank_pdf()
+
+
+@pytest.fixture(autouse=True)
+def _sheet_resource_storage_settings(tmp_path: Path) -> Generator[None, None, None]:
+    original_dir = settings.sheet_resource_storage_dir
+    original_max_bytes = settings.sheet_resource_max_upload_bytes
+    settings.sheet_resource_storage_dir = str(tmp_path)
+    try:
+        yield
+    finally:
+        settings.sheet_resource_storage_dir = original_dir
+        settings.sheet_resource_max_upload_bytes = original_max_bytes
+
+
+def test_quick_upload_full_happy_path(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    mock_find_composer = Mock(return_value="George Gershwin")
+    monkeypatch.setattr(pieces_module, "find_composer_for_title", mock_find_composer)
+
+    response = client.post(
+        "/api/pieces/quick-upload",
+        files={"file": ("rhapsody.pdf", TITLE_ONLY_PDF, "application/pdf")},
+    )
+
+    assert response.status_code == 201
+    piece = response.json()
+    assert piece["title"] == "Rhapsody in Blue"
+    assert piece["composer"] == "George Gershwin"
+    assert piece["sheet_resource_kinds"] == ["uploaded"]
+    mock_find_composer.assert_called_once_with("Rhapsody in Blue")
+
+    stored_files = list(Path(settings.sheet_resource_storage_dir).iterdir())
+    assert len(stored_files) == 1
+
+
+def test_quick_upload_extracted_composer_takes_precedence(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    mock_find_composer = Mock(return_value="Should not be used")
+    monkeypatch.setattr(pieces_module, "find_composer_for_title", mock_find_composer)
+
+    response = client.post(
+        "/api/pieces/quick-upload",
+        files={"file": ("rhapsody.pdf", TITLE_AND_COMPOSER_PDF, "application/pdf")},
+    )
+
+    assert response.status_code == 201
+    piece = response.json()
+    assert piece["title"] == "Rhapsody in Blue"
+    assert piece["composer"] == "George Gershwin"
+    mock_find_composer.assert_not_called()
+
+
+def test_quick_upload_fallback_chain_uses_filename_stem(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(pieces_module, "find_composer_for_title", Mock(return_value=None))
+
+    response = client.post(
+        "/api/pieces/quick-upload",
+        files={"file": ("my_favorite_song.pdf", BLANK_PDF, "application/pdf")},
+    )
+
+    assert response.status_code == 201
+    piece = response.json()
+    assert piece["title"] == "my_favorite_song"
+    assert piece["composer"] is None
+
+
+def test_title_from_filename_blank_or_missing_falls_through() -> None:
+    # A multipart request can't actually carry a file part with an empty filename
+    # (Starlette parses it as a plain form field instead), so the "no usable
+    # filename" edge of the fallback chain is exercised at the function level.
+    assert pieces_module._title_from_filename(None) is None
+    assert pieces_module._title_from_filename("") is None
+    assert pieces_module._title_from_filename("   ") is None
+
+
+def test_quick_upload_fallback_chain_untitled_piece_when_title_and_filename_absent(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(pieces_module, "find_composer_for_title", Mock(return_value=None))
+    monkeypatch.setattr(pieces_module, "_title_from_filename", lambda filename: None)
+
+    response = client.post(
+        "/api/pieces/quick-upload",
+        files={"file": ("blank.pdf", BLANK_PDF, "application/pdf")},
+    )
+
+    assert response.status_code == 201
+    piece = response.json()
+    assert piece["title"] == "Untitled piece"
+    assert piece["composer"] is None
+
+
+def test_quick_upload_musicbrainz_degrades_gracefully(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(pieces_module, "find_composer_for_title", Mock(return_value=None))
+
+    response = client.post(
+        "/api/pieces/quick-upload",
+        files={"file": ("rhapsody.pdf", TITLE_ONLY_PDF, "application/pdf")},
+    )
+
+    assert response.status_code == 201
+    piece = response.json()
+    assert piece["title"] == "Rhapsody in Blue"
+    assert piece["composer"] is None
+
+
+def test_quick_upload_wrong_content_type_415_creates_nothing(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    mock_find_composer = Mock()
+    monkeypatch.setattr(pieces_module, "find_composer_for_title", mock_find_composer)
+    before = client.get("/api/pieces").json()
+
+    response = client.post(
+        "/api/pieces/quick-upload",
+        files={"file": ("notes.txt", b"not a pdf", "text/plain")},
+    )
+
+    assert response.status_code == 415
+    assert client.get("/api/pieces").json() == before
+    assert list(Path(settings.sheet_resource_storage_dir).iterdir()) == []
+    mock_find_composer.assert_not_called()
+
+
+def test_quick_upload_oversized_413_creates_nothing(client: TestClient) -> None:
+    settings.sheet_resource_max_upload_bytes = 10
+    before = client.get("/api/pieces").json()
+
+    response = client.post(
+        "/api/pieces/quick-upload",
+        files={"file": ("rhapsody.pdf", TITLE_ONLY_PDF, "application/pdf")},
+    )
+
+    assert response.status_code == 413
+    assert client.get("/api/pieces").json() == before
+    assert list(Path(settings.sheet_resource_storage_dir).iterdir()) == []

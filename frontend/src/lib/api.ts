@@ -140,6 +140,18 @@ export async function deletePiece(id: number): Promise<void> {
   if (!response.ok) throw new Error(await describeError('failed to delete piece', response))
 }
 
+export async function quickUploadPiece(file: File): Promise<Piece> {
+  const formData = new FormData()
+  formData.set('file', file)
+
+  const response = await fetch('/api/pieces/quick-upload', {
+    method: 'POST',
+    body: formData,
+  })
+  if (!response.ok) throw new Error(await describeError('failed to upload piece', response))
+  return response.json()
+}
+
 export interface PracticeSession {
   id: number
   piece_id: number
