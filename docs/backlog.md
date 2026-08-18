@@ -107,6 +107,7 @@ Real upload/storage for sheet-music PDFs, reversing the "no file storage" decisi
 
 Shipped so far:
 - [x] `uploaded` `SheetResourceKind` + file metadata columns, named-volume storage, upload/download/delete endpoints (PDF-only, 20MB cap), frontend upload/download UI — issue #123
+- [x] Quick-upload path: `POST /api/pieces/quick-upload` creates a `Piece` + `SheetResource` from just a PDF, with title/composer guessed via PDF text-layer extraction (`pdfplumber`) and MusicBrainz composer backfill, then opens the edit form pre-filled for a one-time review — issue #125
 
 ### Jazz reference wiki (epic 2 of the confirmed next direction)
 A navigable personal reference wiki (pages the user writes/browses), initially standalone with no AI dependency — build it useful on its own first. Explicit eventual intent (not scoped yet): an AI agent reading from it to answer questions, once the Music theory engine below exists to ground those answers in something deterministic. Needs its own scoping pass when its turn comes (content model, navigation, whether pages are freeform or piece-linked).
