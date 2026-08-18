@@ -26,6 +26,7 @@
   import PracticeSessionForm from './lib/PracticeSessionForm.svelte'
   import PracticeSessionList from './lib/PracticeSessionList.svelte'
   import PracticeStatsView from './lib/PracticeStats.svelte'
+  import QuickUploadPieceForm from './lib/QuickUploadPieceForm.svelte'
   import RepertoireListForm from './lib/RepertoireListForm.svelte'
   import RepertoireListList from './lib/RepertoireListList.svelte'
   import RotationPlanner from './lib/RotationPlanner.svelte'
@@ -105,6 +106,7 @@
   let pieceQuery = $state('')
   let editingPiece = $state<Piece | null>(null)
   let pieceModalOpen = $state(false)
+  let quickUploadModalOpen = $state(false)
   let sessions = $state<PracticeSession[]>([])
   let sessionModalOpen = $state(false)
   let stats = $state<PracticeStats>({
@@ -245,6 +247,16 @@
     refreshFocusPieces().catch((err) => {
       error = err instanceof Error ? err.message : String(err)
     })
+  }
+
+  function handleQuickUploadSuccess(piece: Piece): void {
+    const exists = pieces.some((p) => p.id === piece.id)
+    pieces = exists ? pieces.map((p) => (p.id === piece.id ? piece : p)) : [...pieces, piece]
+    quickUploadModalOpen = false
+    refreshFocusPieces().catch((err) => {
+      error = err instanceof Error ? err.message : String(err)
+    })
+    openEditPiece(piece)
   }
 
   function handlePieceDeleted(id: number): void {
@@ -405,6 +417,9 @@
               <Icon name="view-grid" size={16} />
             </button>
           </div>
+          <button type="button" class="secondary" onclick={() => (quickUploadModalOpen = true)}>
+            <Icon name="upload" size={14} /> Upload PDF
+          </button>
           <button type="button" onclick={openAddPiece}><Icon name="add" size={14} /> Add piece</button>
         {/snippet}
       </SectionHeader>
@@ -485,6 +500,10 @@
 
 <Modal open={pieceModalOpen} title={editingPiece ? 'Edit piece' : 'Add piece'} size="large" onClose={closePieceModal}>
   <PieceForm piece={editingPiece} onSaved={handlePieceSaved} onCancel={closePieceModal} />
+</Modal>
+
+<Modal open={quickUploadModalOpen} title="Upload PDF" size="small" onClose={() => (quickUploadModalOpen = false)}>
+  <QuickUploadPieceForm onUploaded={handleQuickUploadSuccess} onCancel={() => (quickUploadModalOpen = false)} />
 </Modal>
 
 <Modal open={sessionModalOpen} title="Log practice session" onClose={() => (sessionModalOpen = false)}>

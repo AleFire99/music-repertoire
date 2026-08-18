@@ -1,17 +1,22 @@
 from collections import defaultdict
+from pathlib import Path
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import any_, or_
 from sqlalchemy.orm import Session
 
 from repertoire.db import get_db
 from repertoire.models.piece import Piece, PieceDifficulty, PieceStatus
 from repertoire.models.sheet_resource import SheetResource, SheetResourceKind
+from repertoire.musicbrainz import find_composer_for_title
+from repertoire.pdf_metadata import extract_title_and_composer
+from repertoire.pdf_upload import validate_and_store_pdf
 from repertoire.schemas.piece import PieceCreate, PieceRead, PieceUpdate
 
 router = APIRouter(prefix="/pieces", tags=["pieces"])
 
 KIND_ORDER = {kind: index for index, kind in enumerate(SheetResourceKind)}
+DEFAULT_QUICK_UPLOAD_TITLE = "Untitled piece"
 
 
 def _attach_sheet_resource_kinds(pieces: list[Piece], db: Session) -> None:
@@ -37,6 +42,45 @@ def _attach_sheet_resource_kinds(pieces: list[Piece], db: Session) -> None:
 def create_piece(payload: PieceCreate, db: Session = Depends(get_db)) -> Piece:
     piece = Piece(**payload.model_dump())
     db.add(piece)
+    db.commit()
+    db.refresh(piece)
+    _attach_sheet_resource_kinds([piece], db)
+    return piece
+
+
+def _title_from_filename(filename: str | None) -> str | None:
+    if not filename:
+        return None
+    stem = Path(filename).stem.strip()
+    return stem or None
+
+
+@router.post("/quick-upload", response_model=PieceRead, status_code=201)
+def quick_upload_piece(file: UploadFile = File(...), db: Session = Depends(get_db)) -> Piece:
+    stored = validate_and_store_pdf(file)
+
+    extracted_title, extracted_composer = extract_title_and_composer(stored.contents)
+    title = (
+        extracted_title
+        or _title_from_filename(stored.original_filename)
+        or DEFAULT_QUICK_UPLOAD_TITLE
+    )
+    composer = extracted_composer or find_composer_for_title(title)
+
+    piece = Piece(title=title, composer=composer)
+    db.add(piece)
+    db.flush()
+
+    resource = SheetResource(
+        piece_id=piece.id,
+        kind=SheetResourceKind.UPLOADED,
+        reference=stored.original_filename or stored.storage_key,
+        original_filename=stored.original_filename,
+        content_type=stored.content_type,
+        file_size_bytes=len(stored.contents),
+        storage_key=stored.storage_key,
+    )
+    db.add(resource)
     db.commit()
     db.refresh(piece)
     _attach_sheet_resource_kinds([piece], db)

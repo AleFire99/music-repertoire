@@ -1,4 +1,3 @@
-import uuid
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
@@ -9,11 +8,10 @@ from repertoire.config import settings
 from repertoire.db import get_db
 from repertoire.models.piece import Piece
 from repertoire.models.sheet_resource import SheetResource, SheetResourceKind
+from repertoire.pdf_upload import ALLOWED_UPLOAD_CONTENT_TYPE, validate_and_store_pdf
 from repertoire.schemas.sheet_resource import SheetResourceCreate, SheetResourceRead
 
 router = APIRouter(prefix="/sheet-resources", tags=["sheet-resources"])
-
-ALLOWED_UPLOAD_CONTENT_TYPE = "application/pdf"
 
 
 @router.post("", response_model=SheetResourceRead, status_code=201)
@@ -50,32 +48,18 @@ def upload_sheet_resource(
     if db.get(Piece, piece_id) is None:
         raise HTTPException(status_code=404, detail="Piece not found")
 
-    if file.content_type != ALLOWED_UPLOAD_CONTENT_TYPE:
-        raise HTTPException(status_code=415, detail="Only PDF uploads are supported")
-
-    max_bytes = settings.sheet_resource_max_upload_bytes
-    contents = file.file.read(max_bytes + 1)
-    if len(contents) > max_bytes:
-        raise HTTPException(
-            status_code=413,
-            detail=f"File exceeds the {max_bytes // (1024 * 1024)}MB upload limit",
-        )
-
-    storage_dir = Path(settings.sheet_resource_storage_dir)
-    storage_dir.mkdir(parents=True, exist_ok=True)
-    storage_key = f"{uuid.uuid4().hex}.pdf"
-    (storage_dir / storage_key).write_bytes(contents)
+    stored = validate_and_store_pdf(file)
 
     resource = SheetResource(
         piece_id=piece_id,
         kind=SheetResourceKind.UPLOADED,
-        reference=file.filename or storage_key,
+        reference=stored.original_filename or stored.storage_key,
         label=label,
         notes=notes,
-        original_filename=file.filename,
-        content_type=file.content_type,
-        file_size_bytes=len(contents),
-        storage_key=storage_key,
+        original_filename=stored.original_filename,
+        content_type=stored.content_type,
+        file_size_bytes=len(stored.contents),
+        storage_key=stored.storage_key,
     )
     db.add(resource)
     db.commit()
