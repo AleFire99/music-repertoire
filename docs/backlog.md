@@ -108,9 +108,20 @@ Real upload/storage for sheet-music PDFs, reversing the "no file storage" decisi
 Shipped so far:
 - [x] `uploaded` `SheetResourceKind` + file metadata columns, named-volume storage, upload/download/delete endpoints (PDF-only, 20MB cap), frontend upload/download UI — issue #123
 - [x] Quick-upload path: `POST /api/pieces/quick-upload` creates a `Piece` + `SheetResource` from just a PDF, with title/composer guessed via PDF text-layer extraction (`pdfplumber`) and MusicBrainz composer backfill, then opens the edit form pre-filled for a one-time review — issue #125
+- [x] In-app PDF viewer (native browser embed, no new frontend dependency) + server-rendered card-view preview thumbnails (via Poppler's `pdftoppm`) — issue #130
 
-### Jazz reference wiki (epic 2 of the confirmed next direction)
-A navigable personal reference wiki (pages the user writes/browses), initially standalone with no AI dependency — build it useful on its own first. Explicit eventual intent (not scoped yet): an AI agent reading from it to answer questions, once the Music theory engine below exists to ground those answers in something deterministic. Needs its own scoping pass when its turn comes (content model, navigation, whether pages are freeform or piece-linked).
+Deferred, needs its own investigation before being scoped as work: improving the quick-upload title/composer recognition heuristic, before revisiting bulk/multi-file upload on top of it.
+
+### Jazz reference wiki (epic 2 of the confirmed next direction — scoped, not yet started)
+A navigable personal reference wiki, with the explicit eventual intent of an AI agent reading from it to answer questions (once the Music theory engine below exists to ground those answers in something deterministic) — this is *why* the format below was chosen, not an afterthought.
+
+Scoped via a multi-round discussion with the user:
+- **Content**: structured/templated Markdown pages with YAML front matter (not freeform prose) — a defined schema (title, composer, form, common keys, style/era, notable recordings, tags) plus a freeform body per page.
+- **Format choice reasoning**: plain Markdown files, git-tracked, not database rows — directly consumable by a future RAG/agent pipeline with zero export step, regardless of which rendering tool sits on top.
+- **Tooling**: MkDocs + Material theme, not Zensical (the same team's newer tool) — Zensical uses an identical Markdown+front-matter model and is `mkdocs.yml`-compatible, but is pre-1.0 and too immature for a wiki meant to last; migrating later is config-compatible, not a rewrite.
+- **Location**: a new top-level `wiki/` folder in this same repo, its own independent Python+MkDocs toolchain (not part of the FastAPI/Svelte/Docker stack).
+- **App integration**: light link-out only — a new nullable `Piece.wiki_reference` field, shown as a link when set. No deep coupling, no content sync, no in-app rendering.
+- Hosting/publishing (e.g. GitHub Pages) and bulk content population are explicitly out of scope for the first slice — local `mkdocs serve` and one real example page is enough to prove the scaffold works; the user writes the rest by hand over time.
 
 ### Music representation
 MIDI import, MusicXML import, chord representation, measure representation, sections, annotations. **Audio → MIDI → chord extraction is explicitly out of scope indefinitely** — not a v-next item, a permanent non-goal unless a concrete future requirement changes that.
