@@ -5,9 +5,11 @@
   let {
     resources,
     onDeleted,
+    onPreview,
   }: {
     resources: SheetResource[]
     onDeleted: (id: number) => void
+    onPreview: (resource: SheetResource) => void
   } = $props()
 
   let deletingId = $state<number | null>(null)
@@ -52,6 +54,14 @@
           {/if}
         </div>
         {#if resource.kind === 'uploaded'}
+          <button
+            type="button"
+            class="icon-btn always"
+            onclick={() => onPreview(resource)}
+            aria-label="Preview"
+          >
+            <Icon name="eye" size={16} />
+          </button>
           <a
             class="icon-btn always"
             href={sheetResourceFileUrl(resource.id)}

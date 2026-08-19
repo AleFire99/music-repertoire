@@ -5,12 +5,13 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from sqlalchemy import any_, or_
 from sqlalchemy.orm import Session
 
+from repertoire.config import settings
 from repertoire.db import get_db
 from repertoire.models.piece import Piece, PieceDifficulty, PieceStatus
 from repertoire.models.sheet_resource import SheetResource, SheetResourceKind
 from repertoire.musicbrainz import find_composer_for_title
 from repertoire.pdf_metadata import extract_title_and_composer
-from repertoire.pdf_upload import validate_and_store_pdf
+from repertoire.pdf_upload import generate_pdf_thumbnail, validate_and_store_pdf
 from repertoire.schemas.piece import PieceCreate, PieceRead, PieceUpdate
 
 router = APIRouter(prefix="/pieces", tags=["pieces"])
@@ -22,6 +23,7 @@ DEFAULT_QUICK_UPLOAD_TITLE = "Untitled piece"
 def _attach_sheet_resource_kinds(pieces: list[Piece], db: Session) -> None:
     piece_ids = [piece.id for piece in pieces]
     kinds_by_piece: dict[int, list[SheetResourceKind]] = defaultdict(list)
+    preview_by_piece: dict[int, int] = {}
     if piece_ids:
         rows = (
             db.query(SheetResource.piece_id, SheetResource.kind)
@@ -32,10 +34,28 @@ def _attach_sheet_resource_kinds(pieces: list[Piece], db: Session) -> None:
         for piece_id, kind in rows:
             kinds_by_piece[piece_id].append(kind)
 
+        preview_rows = (
+            db.query(SheetResource.piece_id, SheetResource.id)
+            .filter(
+                SheetResource.piece_id.in_(piece_ids),
+                SheetResource.kind == SheetResourceKind.UPLOADED,
+                SheetResource.thumbnail_key.isnot(None),
+            )
+            .order_by(
+                SheetResource.piece_id,
+                SheetResource.created_at.desc(),
+                SheetResource.id.desc(),
+            )
+            .all()
+        )
+        for piece_id, resource_id in preview_rows:
+            preview_by_piece.setdefault(piece_id, resource_id)
+
     for piece in pieces:
         piece.sheet_resource_kinds = sorted(  # type: ignore[attr-defined]
             kinds_by_piece.get(piece.id, []), key=lambda kind: KIND_ORDER[kind]
         )
+        piece.preview_sheet_resource_id = preview_by_piece.get(piece.id)  # type: ignore[attr-defined]
 
 
 @router.post("", response_model=PieceRead, status_code=201)
@@ -58,6 +78,9 @@ def _title_from_filename(filename: str | None) -> str | None:
 @router.post("/quick-upload", response_model=PieceRead, status_code=201)
 def quick_upload_piece(file: UploadFile = File(...), db: Session = Depends(get_db)) -> Piece:
     stored = validate_and_store_pdf(file)
+    thumbnail_key = generate_pdf_thumbnail(
+        Path(settings.sheet_resource_storage_dir) / stored.storage_key
+    )
 
     extracted_title, extracted_composer = extract_title_and_composer(stored.contents)
     title = (
@@ -79,6 +102,7 @@ def quick_upload_piece(file: UploadFile = File(...), db: Session = Depends(get_d
         content_type=stored.content_type,
         file_size_bytes=len(stored.contents),
         storage_key=stored.storage_key,
+        thumbnail_key=thumbnail_key,
     )
     db.add(resource)
     db.commit()

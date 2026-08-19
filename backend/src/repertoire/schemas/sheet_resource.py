@@ -25,5 +25,6 @@ class SheetResourceRead(BaseModel):
     original_filename: str | None
     content_type: str | None
     file_size_bytes: int | None
+    thumbnail_key: str | None
     created_at: datetime
     updated_at: datetime

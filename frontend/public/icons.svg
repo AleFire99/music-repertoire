@@ -183,4 +183,11 @@
       <path d="M17 8l-5-5-5 5M12 3v12"/>
     </g>
   </symbol>
+
+  <symbol id="eye" viewBox="0 0 24 24">
+    <g fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/>
+      <circle cx="12" cy="12" r="3"/>
+    </g>
+  </symbol>
 </svg>

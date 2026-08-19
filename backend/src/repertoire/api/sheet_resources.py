@@ -8,7 +8,11 @@ from repertoire.config import settings
 from repertoire.db import get_db
 from repertoire.models.piece import Piece
 from repertoire.models.sheet_resource import SheetResource, SheetResourceKind
-from repertoire.pdf_upload import ALLOWED_UPLOAD_CONTENT_TYPE, validate_and_store_pdf
+from repertoire.pdf_upload import (
+    ALLOWED_UPLOAD_CONTENT_TYPE,
+    generate_pdf_thumbnail,
+    validate_and_store_pdf,
+)
 from repertoire.schemas.sheet_resource import SheetResourceCreate, SheetResourceRead
 
 router = APIRouter(prefix="/sheet-resources", tags=["sheet-resources"])
@@ -49,6 +53,9 @@ def upload_sheet_resource(
         raise HTTPException(status_code=404, detail="Piece not found")
 
     stored = validate_and_store_pdf(file)
+    thumbnail_key = generate_pdf_thumbnail(
+        Path(settings.sheet_resource_storage_dir) / stored.storage_key
+    )
 
     resource = SheetResource(
         piece_id=piece_id,
@@ -60,6 +67,7 @@ def upload_sheet_resource(
         content_type=stored.content_type,
         file_size_bytes=len(stored.contents),
         storage_key=stored.storage_key,
+        thumbnail_key=thumbnail_key,
     )
     db.add(resource)
     db.commit()
@@ -67,10 +75,7 @@ def upload_sheet_resource(
     return resource
 
 
-@router.get("/{sheet_resource_id}/file")
-def download_sheet_resource_file(
-    sheet_resource_id: int, db: Session = Depends(get_db)
-) -> FileResponse:
+def _resolve_uploaded_file(sheet_resource_id: int, db: Session) -> tuple[SheetResource, Path]:
     resource = db.get(SheetResource, sheet_resource_id)
     if (
         resource is None
@@ -83,11 +88,49 @@ def download_sheet_resource_file(
     if not file_path.is_file():
         raise HTTPException(status_code=404, detail="Stored file not found")
 
+    return resource, file_path
+
+
+@router.get("/{sheet_resource_id}/file")
+def download_sheet_resource_file(
+    sheet_resource_id: int, db: Session = Depends(get_db)
+) -> FileResponse:
+    resource, file_path = _resolve_uploaded_file(sheet_resource_id, db)
+
     return FileResponse(
         path=file_path,
         media_type=resource.content_type or ALLOWED_UPLOAD_CONTENT_TYPE,
         filename=resource.original_filename or resource.storage_key,
     )
+
+
+@router.get("/{sheet_resource_id}/view")
+def view_sheet_resource_file(
+    sheet_resource_id: int, db: Session = Depends(get_db)
+) -> FileResponse:
+    resource, file_path = _resolve_uploaded_file(sheet_resource_id, db)
+
+    return FileResponse(
+        path=file_path,
+        media_type=resource.content_type or ALLOWED_UPLOAD_CONTENT_TYPE,
+        filename=resource.original_filename or resource.storage_key,
+        content_disposition_type="inline",
+    )
+
+
+@router.get("/{sheet_resource_id}/thumbnail")
+def get_sheet_resource_thumbnail(
+    sheet_resource_id: int, db: Session = Depends(get_db)
+) -> FileResponse:
+    resource = db.get(SheetResource, sheet_resource_id)
+    if resource is None or resource.thumbnail_key is None:
+        raise HTTPException(status_code=404, detail="Thumbnail not found")
+
+    file_path = Path(settings.sheet_resource_storage_dir) / resource.thumbnail_key
+    if not file_path.is_file():
+        raise HTTPException(status_code=404, detail="Thumbnail not found")
+
+    return FileResponse(path=file_path, media_type="image/png")
 
 
 @router.delete("/{sheet_resource_id}", status_code=204)
@@ -98,5 +141,8 @@ def delete_sheet_resource(sheet_resource_id: int, db: Session = Depends(get_db))
     if resource.kind == SheetResourceKind.UPLOADED and resource.storage_key is not None:
         file_path = Path(settings.sheet_resource_storage_dir) / resource.storage_key
         file_path.unlink(missing_ok=True)
+    if resource.thumbnail_key is not None:
+        thumbnail_path = Path(settings.sheet_resource_storage_dir) / resource.thumbnail_key
+        thumbnail_path.unlink(missing_ok=True)
     db.delete(resource)
     db.commit()

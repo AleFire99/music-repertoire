@@ -25,12 +25,14 @@
     onEdit,
     onDeleted,
     onUpdated,
+    onPreview,
   }: {
     pieces: Piece[]
     stats?: PiecePracticeStats[]
     onEdit: (piece: Piece) => void
     onDeleted: (id: number) => void
     onUpdated: (piece: Piece) => void
+    onPreview: (resource: SheetResource) => void
   } = $props()
 
   let deletingId = $state<number | null>(null)
@@ -216,7 +218,11 @@
                   {#if expandError}
                     <p class="error">{expandError}</p>
                   {/if}
-                  <SheetResourceList resources={expandedResources} onDeleted={handleResourceDeleted} />
+                  <SheetResourceList
+                    resources={expandedResources}
+                    onDeleted={handleResourceDeleted}
+                    {onPreview}
+                  />
                   {#if addResourceOpen}
                     <SheetResourceForm
                       {pieces}
