@@ -1,6 +1,7 @@
 import io
 import re
 from dataclasses import dataclass
+from pathlib import Path
 
 import pdfplumber
 
@@ -8,6 +9,21 @@ TOP_FRACTION = 0.4
 LINE_TOLERANCE = 2.0
 MAX_COMPOSER_LINE_LENGTH = 60
 COMPOSER_LOOKAHEAD_LINES = 3
+MIN_TITLE_LENGTH = 1
+MAX_TITLE_LENGTH = 120
+
+# Some notation-software exports draw title text as duplicated/overlapping glyphs
+# for a faux-bold effect (confirmed against real files: repeated same-character
+# draws land within ~0.24pt of each other, while genuine adjacent-character
+# advances are never below ~2.2pt at these font sizes) — collapse those before
+# joining a line's text.
+DUPLICATE_GLYPH_X_TOLERANCE = 1.0
+
+# Matches the "Composer - Title" filename convention, including en/em-dash
+# variants, but only when the separator is surrounded by spaces — this keeps
+# compound-hyphenated slugs like "bach-aria-quarta-corda.pdf" from being
+# mis-split.
+FILENAME_SEPARATOR_RE = re.compile(r"\s[-–—]\s")
 
 TEMPO_MARKINGS = {
     "adagio",
@@ -60,7 +76,8 @@ def _lines_from_chars(chars: list[dict]) -> list[_Line]:
     lines = []
     for group in groups:
         group.sort(key=lambda c: c["x0"])
-        text = "".join(c["text"] for c in group).strip()
+        deduped = _dedupe_overlapping_glyphs(group)
+        text = "".join(c["text"] for c in deduped).strip()
         if not text:
             continue
         lines.append(
@@ -71,6 +88,32 @@ def _lines_from_chars(chars: list[dict]) -> list[_Line]:
             )
         )
     return lines
+
+
+def _dedupe_overlapping_glyphs(group: list[dict]) -> list[dict]:
+    """Collapse consecutive same-character draws at (near-)identical x0.
+
+    `group` must already be sorted by x0. Requiring matching text (not just
+    proximity) avoids collapsing legitimate adjacent characters that happen to
+    sit close together.
+    """
+    deduped: list[dict] = []
+    for ch in group:
+        if (
+            deduped
+            and ch["text"] == deduped[-1]["text"]
+            and abs(ch["x0"] - deduped[-1]["x0"]) <= DUPLICATE_GLYPH_X_TOLERANCE
+        ):
+            continue
+        deduped.append(ch)
+    return deduped
+
+
+def _is_plausible_title(text: str) -> bool:
+    text = text.strip()
+    if not (MIN_TITLE_LENGTH <= len(text) <= MAX_TITLE_LENGTH):
+        return False
+    return any(ch.isalpha() for ch in text)
 
 
 def _looks_like_tempo_marking(text: str) -> bool:
@@ -111,11 +154,35 @@ def extract_title_and_composer(pdf_bytes: bytes) -> tuple[str | None, str | None
 
     top_region_limit = page_height * TOP_FRACTION
     candidates = [line for line in lines if line.top <= top_region_limit]
-    if not candidates:
+    plausible_candidates = [line for line in candidates if _is_plausible_title(line.text)]
+    if not plausible_candidates:
         return None, None
 
-    title_line = max(candidates, key=lambda line: line.font_size)
+    title_line = max(plausible_candidates, key=lambda line: line.font_size)
     title_index = lines.index(title_line)
     composer = _guess_composer(lines, title_index)
 
     return title_line.text, composer
+
+
+def parse_composer_title_from_filename(filename: str | None) -> tuple[str | None, str | None]:
+    """Split an uploaded filename on the "Composer - Title" convention.
+
+    Returns (composer, title). If the filename doesn't follow the convention
+    (no ` - `/en-dash/em-dash separator, or one side would be empty), `composer`
+    is None and `title` falls back to the whole filename stem — matching the
+    long-standing filename-as-title fallback behavior for files that don't
+    follow the convention. A blank/missing filename returns (None, None).
+    """
+    stem = Path(filename).stem.strip() if filename else ""
+    if not stem:
+        return None, None
+
+    match = FILENAME_SEPARATOR_RE.search(stem)
+    if match:
+        composer = stem[: match.start()].strip()
+        title = stem[match.end() :].strip()
+        if composer and title:
+            return composer, title
+
+    return None, stem

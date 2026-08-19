@@ -10,7 +10,7 @@ from repertoire.db import get_db
 from repertoire.models.piece import Piece, PieceDifficulty, PieceStatus
 from repertoire.models.sheet_resource import SheetResource, SheetResourceKind
 from repertoire.musicbrainz import find_composer_for_title
-from repertoire.pdf_metadata import extract_title_and_composer
+from repertoire.pdf_metadata import extract_title_and_composer, parse_composer_title_from_filename
 from repertoire.pdf_upload import generate_pdf_thumbnail, validate_and_store_pdf
 from repertoire.schemas.piece import PieceCreate, PieceRead, PieceUpdate
 
@@ -68,11 +68,33 @@ def create_piece(payload: PieceCreate, db: Session = Depends(get_db)) -> Piece:
     return piece
 
 
-def _title_from_filename(filename: str | None) -> str | None:
-    if not filename:
-        return None
-    stem = Path(filename).stem.strip()
-    return stem or None
+def _resolve_title_and_composer(
+    original_filename: str | None, pdf_bytes: bytes
+) -> tuple[str, str | None]:
+    """Priority chain for quick-upload title/composer guessing.
+
+    The user's own filenames (`Composer - Title.pdf`) are a stronger signal
+    than anything extracted from the PDF's text layer, so a filename that
+    follows that convention wins outright — even over a plausible-looking
+    heuristic result. Otherwise the content heuristic's title guess is
+    preferred, falling back to the bare filename stem, then a fixed default.
+    """
+    filename_composer, filename_title = parse_composer_title_from_filename(original_filename)
+    heuristic_title, heuristic_composer = extract_title_and_composer(pdf_bytes)
+
+    title: str
+    composer: str | None
+    if filename_composer is not None:
+        title = filename_title or DEFAULT_QUICK_UPLOAD_TITLE
+        composer = filename_composer
+    else:
+        title = heuristic_title or filename_title or DEFAULT_QUICK_UPLOAD_TITLE
+        composer = heuristic_composer
+
+    if composer is None:
+        composer = find_composer_for_title(title)
+
+    return title, composer
 
 
 @router.post("/quick-upload", response_model=PieceRead, status_code=201)
@@ -82,13 +104,7 @@ def quick_upload_piece(file: UploadFile = File(...), db: Session = Depends(get_d
         Path(settings.sheet_resource_storage_dir) / stored.storage_key
     )
 
-    extracted_title, extracted_composer = extract_title_and_composer(stored.contents)
-    title = (
-        extracted_title
-        or _title_from_filename(stored.original_filename)
-        or DEFAULT_QUICK_UPLOAD_TITLE
-    )
-    composer = extracted_composer or find_composer_for_title(title)
+    title, composer = _resolve_title_and_composer(stored.original_filename, stored.contents)
 
     piece = Piece(title=title, composer=composer)
     db.add(piece)

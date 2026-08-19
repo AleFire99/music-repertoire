@@ -130,6 +130,17 @@
   let listModalOpen = $state(false)
   let focusPieces = $state<Piece[]>([])
   let viewerResourceId = $state<number | null>(null)
+  let quickUploadConfirmation = $state<Piece | null>(null)
+
+  const QUICK_UPLOAD_CONFIRMATION_TIMEOUT_MS = 8000
+
+  $effect(() => {
+    if (!quickUploadConfirmation) return
+    const timer = setTimeout(() => {
+      quickUploadConfirmation = null
+    }, QUICK_UPLOAD_CONFIRMATION_TIMEOUT_MS)
+    return () => clearTimeout(timer)
+  })
 
   function openViewer(resource: SheetResource): void {
     viewerResourceId = resource.id
@@ -267,7 +278,16 @@
     refreshFocusPieces().catch((err) => {
       error = err instanceof Error ? err.message : String(err)
     })
-    openEditPiece(piece)
+    quickUploadConfirmation = piece
+  }
+
+  function dismissQuickUploadConfirmation(): void {
+    quickUploadConfirmation = null
+  }
+
+  function editQuickUploadedPiece(): void {
+    if (quickUploadConfirmation) openEditPiece(quickUploadConfirmation)
+    quickUploadConfirmation = null
   }
 
   function handlePieceDeleted(id: number): void {
@@ -530,6 +550,25 @@
 </Modal>
 
 <PdfViewerModal resourceId={viewerResourceId} onClose={closeViewer} />
+
+{#if quickUploadConfirmation}
+  <div class="quick-upload-toast" role="status">
+    <span>
+      Added "{quickUploadConfirmation.title}"{quickUploadConfirmation.composer
+        ? ` by ${quickUploadConfirmation.composer}`
+        : ''}
+    </span>
+    <button type="button" class="text-toggle" onclick={editQuickUploadedPiece}>Edit</button>
+    <button
+      type="button"
+      class="icon-btn"
+      onclick={dismissQuickUploadConfirmation}
+      aria-label="Dismiss"
+    >
+      <Icon name="close" size={14} />
+    </button>
+  </div>
+{/if}
 
 <style>
   .app-shell {
@@ -845,5 +884,21 @@
   }
   .view-toggle-btn.active:hover:not(:disabled) {
     background: var(--accent-200);
+  }
+
+  .quick-upload-toast {
+    position: fixed;
+    bottom: var(--space-5);
+    right: var(--space-5);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: var(--surface-container-high);
+    border: var(--border-width) solid var(--outline);
+    border-radius: var(--radius-md);
+    box-shadow: var(--elevation-2);
+    font-size: var(--text-sm);
+    z-index: 100;
   }
 </style>
