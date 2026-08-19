@@ -1,0 +1,37 @@
+site_name: Jazz Reference Wiki
+site_description: Structured reference pages for jazz standards.
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - content.code.copy
+
+plugins:
+  - search
+  - material/tags
+
+markdown_extensions:
+  - meta
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+
+nav:
+  - Home: index.md
+  - Standards:
+      - Template: standards/_template.md
+      - Autumn Leaves: standards/autumn-leaves.md

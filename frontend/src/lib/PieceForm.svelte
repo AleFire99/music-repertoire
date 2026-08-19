@@ -29,6 +29,7 @@
   let goalTargetDate = $state('')
   let status = $state<PieceStatus>('backlog')
   let tagsRaw = $state('')
+  let wikiReference = $state('')
   let submitting = $state(false)
   let formError = $state<string | null>(null)
 
@@ -43,6 +44,7 @@
     goalTargetDate = piece?.goal_target_date ?? ''
     status = piece?.status ?? 'backlog'
     tagsRaw = piece?.tags.join(', ') ?? ''
+    wikiReference = piece?.wiki_reference ?? ''
     formError = null
   })
 
@@ -71,6 +73,7 @@
         goal_target_date: goalTargetDate.trim() || null,
         status,
         tags: parseTags(tagsRaw),
+        wiki_reference: wikiReference.trim() || null,
       }
       const saved = piece ? await updatePiece(piece.id, payload) : await createPiece(payload)
       onSaved(saved)
@@ -136,6 +139,15 @@
   <label>
     Tags (comma-separated)
     <input type="text" bind:value={tagsRaw} placeholder="jazz, sight-reading" />
+  </label>
+  <label class="span-2">
+    Wiki reference
+    <input
+      type="text"
+      bind:value={wikiReference}
+      maxlength="1000"
+      placeholder="/standards/autumn-leaves or a full URL"
+    />
   </label>
 
   {#if formError}

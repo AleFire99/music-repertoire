@@ -37,6 +37,7 @@ export interface Piece {
   status: PieceStatus
   tags: string[]
   is_favorite: boolean
+  wiki_reference: string | null
   sheet_resource_kinds: SheetResourceKind[]
   preview_sheet_resource_id: number | null
   created_at: string
@@ -55,6 +56,7 @@ export interface PieceCreateInput {
   status?: PieceStatus
   tags?: string[]
   is_favorite?: boolean
+  wiki_reference?: string | null
 }
 
 export interface PieceUpdateInput {
@@ -69,6 +71,7 @@ export interface PieceUpdateInput {
   status?: PieceStatus
   tags?: string[]
   is_favorite?: boolean
+  wiki_reference?: string | null
 }
 
 export async function getHealth(): Promise<{ status: string }> {

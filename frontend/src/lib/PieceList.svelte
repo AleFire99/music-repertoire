@@ -178,6 +178,18 @@
                 </button>
                 <span class="title">{piece.title}</span>
                 {#if pieceGenre}<span class="tag tag-neutral">{pieceGenre}</span>{/if}
+                {#if piece.wiki_reference}
+                  <a
+                    class="icon-btn"
+                    href={piece.wiki_reference}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Open wiki reference"
+                    aria-label="Open wiki reference"
+                  >
+                    <Icon name="link" size={14} />
+                  </a>
+                {/if}
               </div>
               {#if piece.composer}<div class="composer">{piece.composer}</div>{/if}
               {#if piece.goal_text || piece.goal_target_date}

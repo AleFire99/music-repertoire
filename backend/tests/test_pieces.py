@@ -135,6 +135,27 @@ def test_list_pieces_filter_by_favorite(client: TestClient) -> None:
     assert titles == ["A"]
 
 
+def test_create_piece_defaults_wiki_reference(client: TestClient) -> None:
+    created = client.post("/api/pieces", json={"title": "Autumn Leaves"}).json()
+    assert created["wiki_reference"] is None
+
+
+def test_create_piece_with_wiki_reference(client: TestClient) -> None:
+    payload = {"title": "Autumn Leaves", "wiki_reference": "/standards/autumn-leaves"}
+    created = client.post("/api/pieces", json=payload).json()
+    assert created["wiki_reference"] == "/standards/autumn-leaves"
+
+
+def test_update_piece_wiki_reference(client: TestClient) -> None:
+    created = client.post("/api/pieces", json={"title": "So What"}).json()
+    response = client.patch(
+        f"/api/pieces/{created['id']}",
+        json={"wiki_reference": "https://example.com/wiki/so-what"},
+    )
+    assert response.status_code == 200
+    assert response.json()["wiki_reference"] == "https://example.com/wiki/so-what"
+
+
 def test_create_piece_defaults_key_tempo_difficulty_instrument(client: TestClient) -> None:
     created = client.post("/api/pieces", json={"title": "Arabesque"}).json()
     assert created["key"] is None
