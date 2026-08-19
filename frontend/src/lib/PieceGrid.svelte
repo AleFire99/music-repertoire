@@ -106,13 +106,24 @@
           {/if}
         </button>
 
-        {#if piece.sheet_resource_kinds.length > 0}
+        {#if piece.sheet_resource_kinds.length > 0 || piece.wiki_reference}
           <div class="badge-row">
             {#each piece.sheet_resource_kinds.slice(0, 3) as kind (kind)}
               <button type="button" class="badge" title={KIND_LABEL[kind]} onclick={() => toggleExpand(piece)}>
                 <Icon name={KIND_ICON[kind]} size={11} />
               </button>
             {/each}
+            {#if piece.wiki_reference}
+              <a
+                class="badge"
+                href={piece.wiki_reference}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Open wiki reference"
+              >
+                <Icon name="link" size={11} />
+              </a>
+            {/if}
           </div>
         {/if}
 

@@ -18,6 +18,7 @@ class PieceCreate(BaseModel):
     status: PieceStatus = PieceStatus.BACKLOG
     tags: list[str] = []
     is_favorite: bool = False
+    wiki_reference: str | None = None
 
 
 class PieceUpdate(BaseModel):
@@ -32,6 +33,7 @@ class PieceUpdate(BaseModel):
     status: PieceStatus | None = None
     tags: list[str] | None = None
     is_favorite: bool | None = None
+    wiki_reference: str | None = None
 
 
 class PieceRead(BaseModel):
@@ -49,6 +51,7 @@ class PieceRead(BaseModel):
     status: PieceStatus
     tags: list[str]
     is_favorite: bool
+    wiki_reference: str | None
     sheet_resource_kinds: list[SheetResourceKind] = Field(default_factory=list)
     preview_sheet_resource_id: int | None = None
     created_at: datetime
