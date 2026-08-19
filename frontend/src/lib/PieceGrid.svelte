@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { listSheetResources, type Piece, type SheetResource, type SheetResourceKind } from './api'
+  import {
+    listSheetResources,
+    sheetResourceThumbnailUrl,
+    type Piece,
+    type SheetResource,
+    type SheetResourceKind,
+  } from './api'
   import Icon from './Icon.svelte'
   import SheetResourceForm from './SheetResourceForm.svelte'
   import SheetResourceList from './SheetResourceList.svelte'
@@ -25,7 +31,13 @@
     uploaded: 'Has an uploaded file',
   }
 
-  let { pieces }: { pieces: Piece[] } = $props()
+  let {
+    pieces,
+    onPreview,
+  }: {
+    pieces: Piece[]
+    onPreview: (resource: SheetResource) => void
+  } = $props()
 
   let expandedId = $state<number | null>(null)
   let expandedResources = $state<SheetResource[]>([])
@@ -63,6 +75,13 @@
   <div class="grid">
     {#each pieces as piece (piece.id)}
       <div class="tile card">
+        {#if piece.preview_sheet_resource_id}
+          <img
+            class="tile-thumb"
+            src={sheetResourceThumbnailUrl(piece.preview_sheet_resource_id)}
+            alt=""
+          />
+        {/if}
         <button
           type="button"
           class="tile-trigger"
@@ -102,7 +121,11 @@
             {#if expandError}
               <p class="error">{expandError}</p>
             {/if}
-            <SheetResourceList resources={expandedResources} onDeleted={handleResourceDeleted} />
+            <SheetResourceList
+              resources={expandedResources}
+              onDeleted={handleResourceDeleted}
+              {onPreview}
+            />
             {#if addResourceOpen}
               <SheetResourceForm
                 {pieces}
@@ -133,6 +156,14 @@
     padding: 0;
     overflow: hidden;
     cursor: default;
+  }
+  .tile-thumb {
+    display: block;
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    background: var(--surface-container-high);
+    border-bottom: var(--border-width) solid var(--outline-variant);
   }
   .tile-trigger {
     display: flex;

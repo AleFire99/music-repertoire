@@ -38,6 +38,7 @@ export interface Piece {
   tags: string[]
   is_favorite: boolean
   sheet_resource_kinds: SheetResourceKind[]
+  preview_sheet_resource_id: number | null
   created_at: string
   updated_at: string
 }
@@ -301,6 +302,7 @@ export interface SheetResource {
   original_filename: string | null
   content_type: string | null
   file_size_bytes: number | null
+  thumbnail_key: string | null
   created_at: string
   updated_at: string
 }
@@ -373,6 +375,14 @@ export async function uploadSheetResource(
 
 export function sheetResourceFileUrl(id: number): string {
   return `/api/sheet-resources/${id}/file`
+}
+
+export function sheetResourceViewUrl(id: number): string {
+  return `/api/sheet-resources/${id}/view`
+}
+
+export function sheetResourceThumbnailUrl(id: number): string {
+  return `/api/sheet-resources/${id}/thumbnail`
 }
 
 export interface RepertoireList {

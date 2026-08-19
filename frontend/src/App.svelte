@@ -16,9 +16,11 @@
     type PracticeSession,
     type PracticeStats,
     type RepertoireList,
+    type SheetResource,
   } from './lib/api'
   import Icon from './lib/Icon.svelte'
   import Modal from './lib/Modal.svelte'
+  import PdfViewerModal from './lib/PdfViewerModal.svelte'
   import PieceForm from './lib/PieceForm.svelte'
   import PieceGrid from './lib/PieceGrid.svelte'
   import PieceList from './lib/PieceList.svelte'
@@ -127,6 +129,15 @@
   let editingRepertoireList = $state<RepertoireList | null>(null)
   let listModalOpen = $state(false)
   let focusPieces = $state<Piece[]>([])
+  let viewerResourceId = $state<number | null>(null)
+
+  function openViewer(resource: SheetResource): void {
+    viewerResourceId = resource.id
+  }
+
+  function closeViewer(): void {
+    viewerResourceId = null
+  }
 
   const filteredPieces = $derived(
     pieceQuery.trim() === ''
@@ -455,9 +466,9 @@
       </div>
 
       {#if pieceViewMode === 'grid'}
-        <PieceGrid pieces={filteredPieces} />
+        <PieceGrid pieces={filteredPieces} onPreview={openViewer} />
       {:else}
-        <PieceList pieces={filteredPieces} stats={stats.pieces} onEdit={openEditPiece} onDeleted={handlePieceDeleted} onUpdated={handlePieceSaved} />
+        <PieceList pieces={filteredPieces} stats={stats.pieces} onEdit={openEditPiece} onDeleted={handlePieceDeleted} onUpdated={handlePieceSaved} onPreview={openViewer} />
       {/if}
     {:else if activeView === 'focus'}
       <SectionHeader kicker="Right now" title="Today & Focus" subtitle="A plan for the next hour, and what you're actively carrying." />
@@ -517,6 +528,8 @@
 <Modal open={listModalOpen} title={editingRepertoireList ? 'Rename list' : 'New repertoire list'} onClose={closeListModal}>
   <RepertoireListForm list={editingRepertoireList} onSaved={handleRepertoireListSaved} onCancel={closeListModal} />
 </Modal>
+
+<PdfViewerModal resourceId={viewerResourceId} onClose={closeViewer} />
 
 <style>
   .app-shell {

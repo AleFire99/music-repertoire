@@ -50,5 +50,6 @@ class PieceRead(BaseModel):
     tags: list[str]
     is_favorite: bool
     sheet_resource_kinds: list[SheetResourceKind] = Field(default_factory=list)
+    preview_sheet_resource_id: int | None = None
     created_at: datetime
     updated_at: datetime

@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
+from repertoire.api import sheet_resources as sheet_resources_module
 from repertoire.config import settings
 
 MINIMAL_PDF = b"%PDF-1.4\n%\xe2\xe3\xcf\xd3\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF"
@@ -237,6 +238,137 @@ def test_delete_uploaded_sheet_resource_removes_file(client: TestClient) -> None
         files={"file": ("prelude.pdf", MINIMAL_PDF, "application/pdf")},
     ).json()
     assert len(list(Path(settings.sheet_resource_storage_dir).iterdir())) == 1
+
+    delete_response = client.delete(f"/api/sheet-resources/{uploaded['id']}")
+    assert delete_response.status_code == 204
+
+    assert list(Path(settings.sheet_resource_storage_dir).iterdir()) == []
+
+
+def _fake_thumbnail_key(key: str) -> object:
+    def _generate(pdf_path: Path) -> str:
+        (pdf_path.parent / key).write_bytes(b"fake-png-bytes")
+        return key
+
+    return _generate
+
+
+def test_upload_sheet_resource_sets_thumbnail_key(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    piece_id = _create_piece(client, "Prelude")
+    monkeypatch.setattr(
+        sheet_resources_module, "generate_pdf_thumbnail", _fake_thumbnail_key("thumb.png")
+    )
+
+    response = client.post(
+        "/api/sheet-resources/upload",
+        data={"piece_id": piece_id},
+        files={"file": ("prelude.pdf", MINIMAL_PDF, "application/pdf")},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["thumbnail_key"] == "thumb.png"
+
+
+def test_upload_sheet_resource_thumbnail_failure_does_not_block_upload(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    piece_id = _create_piece(client, "Prelude")
+    monkeypatch.setattr(sheet_resources_module, "generate_pdf_thumbnail", lambda path: None)
+
+    response = client.post(
+        "/api/sheet-resources/upload",
+        data={"piece_id": piece_id},
+        files={"file": ("prelude.pdf", MINIMAL_PDF, "application/pdf")},
+    )
+
+    assert response.status_code == 201
+    assert response.json()["thumbnail_key"] is None
+
+
+def test_get_sheet_resource_thumbnail_404_when_absent(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Prelude")
+    uploaded = client.post(
+        "/api/sheet-resources/upload",
+        data={"piece_id": piece_id},
+        files={"file": ("prelude.pdf", MINIMAL_PDF, "application/pdf")},
+    ).json()
+
+    response = client.get(f"/api/sheet-resources/{uploaded['id']}/thumbnail")
+    assert response.status_code == 404
+
+
+def test_get_sheet_resource_thumbnail_404_when_missing_resource(client: TestClient) -> None:
+    response = client.get("/api/sheet-resources/999999/thumbnail")
+    assert response.status_code == 404
+
+
+def test_get_sheet_resource_thumbnail_200_when_present(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    piece_id = _create_piece(client, "Prelude")
+    monkeypatch.setattr(
+        sheet_resources_module, "generate_pdf_thumbnail", _fake_thumbnail_key("thumb.png")
+    )
+    uploaded = client.post(
+        "/api/sheet-resources/upload",
+        data={"piece_id": piece_id},
+        files={"file": ("prelude.pdf", MINIMAL_PDF, "application/pdf")},
+    ).json()
+
+    response = client.get(f"/api/sheet-resources/{uploaded['id']}/thumbnail")
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "image/png"
+    assert response.content == b"fake-png-bytes"
+
+
+def test_view_uploaded_sheet_resource_is_inline(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Prelude")
+    uploaded = client.post(
+        "/api/sheet-resources/upload",
+        data={"piece_id": piece_id},
+        files={"file": ("prelude.pdf", MINIMAL_PDF, "application/pdf")},
+    ).json()
+
+    response = client.get(f"/api/sheet-resources/{uploaded['id']}/view")
+
+    assert response.status_code == 200
+    assert response.content == MINIMAL_PDF
+    assert response.headers["content-type"] == "application/pdf"
+    assert "inline" in response.headers["content-disposition"]
+
+
+def test_view_sheet_resource_missing_404(client: TestClient) -> None:
+    response = client.get("/api/sheet-resources/999999/view")
+    assert response.status_code == 404
+
+
+def test_view_non_uploaded_sheet_resource_404(client: TestClient) -> None:
+    piece_id = _create_piece(client, "Prelude")
+    created = client.post(
+        "/api/sheet-resources",
+        json={"piece_id": piece_id, "kind": "url", "reference": "https://example.com"},
+    ).json()
+
+    response = client.get(f"/api/sheet-resources/{created['id']}/view")
+    assert response.status_code == 404
+
+
+def test_delete_uploaded_sheet_resource_removes_thumbnail_file(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    piece_id = _create_piece(client, "Prelude")
+    monkeypatch.setattr(
+        sheet_resources_module, "generate_pdf_thumbnail", _fake_thumbnail_key("thumb.png")
+    )
+    uploaded = client.post(
+        "/api/sheet-resources/upload",
+        data={"piece_id": piece_id},
+        files={"file": ("prelude.pdf", MINIMAL_PDF, "application/pdf")},
+    ).json()
+    assert len(list(Path(settings.sheet_resource_storage_dir).iterdir())) == 2
 
     delete_response = client.delete(f"/api/sheet-resources/{uploaded['id']}")
     assert delete_response.status_code == 204

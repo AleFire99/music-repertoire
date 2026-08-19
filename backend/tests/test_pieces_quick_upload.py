@@ -47,7 +47,7 @@ def test_quick_upload_full_happy_path(client: TestClient, monkeypatch: pytest.Mo
     assert piece["sheet_resource_kinds"] == ["uploaded"]
     mock_find_composer.assert_called_once_with("Rhapsody in Blue")
 
-    stored_files = list(Path(settings.sheet_resource_storage_dir).iterdir())
+    stored_files = list(Path(settings.sheet_resource_storage_dir).glob("*.pdf"))
     assert len(stored_files) == 1
 
 
@@ -143,6 +143,45 @@ def test_quick_upload_wrong_content_type_415_creates_nothing(
     assert client.get("/api/pieces").json() == before
     assert list(Path(settings.sheet_resource_storage_dir).iterdir()) == []
     mock_find_composer.assert_not_called()
+
+
+def test_quick_upload_generates_thumbnail(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(pieces_module, "find_composer_for_title", Mock(return_value=None))
+
+    def _fake_thumbnail(pdf_path: Path) -> str:
+        (pdf_path.parent / "thumb.png").write_bytes(b"fake-png-bytes")
+        return "thumb.png"
+
+    monkeypatch.setattr(pieces_module, "generate_pdf_thumbnail", _fake_thumbnail)
+
+    response = client.post(
+        "/api/pieces/quick-upload",
+        files={"file": ("rhapsody.pdf", TITLE_ONLY_PDF, "application/pdf")},
+    )
+
+    assert response.status_code == 201
+    piece_id = response.json()["id"]
+    resources = client.get("/api/sheet-resources", params={"piece_id": piece_id}).json()
+    assert resources[0]["thumbnail_key"] == "thumb.png"
+
+
+def test_quick_upload_thumbnail_failure_does_not_block_upload(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(pieces_module, "find_composer_for_title", Mock(return_value=None))
+    monkeypatch.setattr(pieces_module, "generate_pdf_thumbnail", lambda pdf_path: None)
+
+    response = client.post(
+        "/api/pieces/quick-upload",
+        files={"file": ("rhapsody.pdf", TITLE_ONLY_PDF, "application/pdf")},
+    )
+
+    assert response.status_code == 201
+    piece_id = response.json()["id"]
+    resources = client.get("/api/sheet-resources", params={"piece_id": piece_id}).json()
+    assert resources[0]["thumbnail_key"] is None
 
 
 def test_quick_upload_oversized_413_creates_nothing(client: TestClient) -> None:

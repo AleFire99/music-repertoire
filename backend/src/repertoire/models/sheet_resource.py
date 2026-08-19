@@ -36,6 +36,7 @@ class SheetResource(Base):
     content_type: Mapped[str | None] = mapped_column(String(100), default=None)
     file_size_bytes: Mapped[int | None] = mapped_column(Integer, default=None)
     storage_key: Mapped[str | None] = mapped_column(String(255), default=None)
+    thumbnail_key: Mapped[str | None] = mapped_column(String(255), default=None)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
