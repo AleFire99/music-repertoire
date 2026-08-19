@@ -8,6 +8,7 @@
     type PieceStatus,
     type PieceDifficulty,
   } from './api'
+  import Icon from './Icon.svelte'
 
   let {
     piece = null,
@@ -32,6 +33,7 @@
   let wikiReference = $state('')
   let submitting = $state(false)
   let formError = $state<string | null>(null)
+  let moreDetailsOpen = $state(false)
 
   $effect(() => {
     title = piece?.title ?? ''
@@ -46,6 +48,7 @@
     tagsRaw = piece?.tags.join(', ') ?? ''
     wikiReference = piece?.wiki_reference ?? ''
     formError = null
+    moreDetailsOpen = piece != null
   })
 
   function parseTags(raw: string): string[] {
@@ -90,65 +93,80 @@
     Title
     <input type="text" bind:value={title} required maxlength="200" />
   </label>
-  <label>
+  <label class="span-2">
     Composer
     <input type="text" bind:value={composer} maxlength="200" />
   </label>
-  <label>
-    Key
-    <input type="text" bind:value={key} maxlength="50" />
-  </label>
-  <label>
-    Tempo (BPM)
-    <input type="text" inputmode="numeric" min="1" bind:value={tempoBpmRaw} />
-  </label>
-  <label>
-    Difficulty
-    <select bind:value={difficulty}>
-      <option value="">Unset</option>
-      {#each PIECE_DIFFICULTIES as d (d)}
-        <option value={d}>{d}</option>
-      {/each}
-    </select>
-  </label>
-  <label>
-    Instrument
-    <input type="text" bind:value={instrument} maxlength="100" />
-  </label>
-  <label>
-    Status
-    <select bind:value={status}>
-      {#each PIECE_STATUSES as s (s)}
-        <option value={s}>{s}</option>
-      {/each}
-    </select>
-  </label>
-  <label class="span-2">
-    Goal
-    <input
-      type="text"
-      bind:value={goalText}
-      maxlength="500"
-      placeholder="performance-ready for the June recital"
-    />
-  </label>
-  <label>
-    Goal target date
-    <input type="date" bind:value={goalTargetDate} />
-  </label>
-  <label>
-    Tags (comma-separated)
-    <input type="text" bind:value={tagsRaw} placeholder="jazz, sight-reading" />
-  </label>
-  <label class="span-2">
-    Wiki reference
-    <input
-      type="text"
-      bind:value={wikiReference}
-      maxlength="1000"
-      placeholder="/standards/autumn-leaves or a full URL"
-    />
-  </label>
+
+  <button
+    type="button"
+    class="text-toggle more-details-toggle span-2"
+    onclick={() => (moreDetailsOpen = !moreDetailsOpen)}
+    aria-expanded={moreDetailsOpen}
+  >
+    <span class="disclose-icon" class:expanded={moreDetailsOpen}>
+      <Icon name="disclose" size={12} />
+    </span>
+    More details
+  </button>
+
+  {#if moreDetailsOpen}
+    <label>
+      Key
+      <input type="text" bind:value={key} maxlength="50" />
+    </label>
+    <label>
+      Tempo (BPM)
+      <input type="text" inputmode="numeric" min="1" bind:value={tempoBpmRaw} />
+    </label>
+    <label>
+      Difficulty
+      <select bind:value={difficulty}>
+        <option value="">Unset</option>
+        {#each PIECE_DIFFICULTIES as d (d)}
+          <option value={d}>{d}</option>
+        {/each}
+      </select>
+    </label>
+    <label>
+      Instrument
+      <input type="text" bind:value={instrument} maxlength="100" />
+    </label>
+    <label>
+      Status
+      <select bind:value={status}>
+        {#each PIECE_STATUSES as s (s)}
+          <option value={s}>{s}</option>
+        {/each}
+      </select>
+    </label>
+    <label class="span-2">
+      Goal
+      <input
+        type="text"
+        bind:value={goalText}
+        maxlength="500"
+        placeholder="performance-ready for the June recital"
+      />
+    </label>
+    <label>
+      Goal target date
+      <input type="date" bind:value={goalTargetDate} />
+    </label>
+    <label>
+      Tags (comma-separated)
+      <input type="text" bind:value={tagsRaw} placeholder="jazz, sight-reading" />
+    </label>
+    <label class="span-2">
+      Wiki reference
+      <input
+        type="text"
+        bind:value={wikiReference}
+        maxlength="1000"
+        placeholder="/standards/autumn-leaves or a full URL"
+      />
+    </label>
+  {/if}
 
   {#if formError}
     <p class="error span-2">{formError}</p>
@@ -175,5 +193,19 @@
   }
   .span-2 {
     grid-column: 1 / -1;
+  }
+  .more-details-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    justify-self: start;
+  }
+  .disclose-icon {
+    display: inline-flex;
+    color: var(--ink-faint);
+    transition: transform 120ms ease;
+  }
+  .disclose-icon.expanded {
+    transform: rotate(90deg);
   }
 </style>

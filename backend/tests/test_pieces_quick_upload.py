@@ -16,6 +16,12 @@ TITLE_AND_COMPOSER_PDF = build_simple_pdf(
         ("by George Gershwin", 12, 50, 670),
     ]
 )
+CONTENT_TITLE_AND_COMPOSER_PDF = build_simple_pdf(
+    [
+        ("Content Title", 24, 50, 700),
+        ("by Content Composer", 12, 50, 670),
+    ]
+)
 BLANK_PDF = build_blank_pdf()
 
 
@@ -85,20 +91,78 @@ def test_quick_upload_fallback_chain_uses_filename_stem(
     assert piece["composer"] is None
 
 
-def test_title_from_filename_blank_or_missing_falls_through() -> None:
-    # A multipart request can't actually carry a file part with an empty filename
-    # (Starlette parses it as a plain form field instead), so the "no usable
-    # filename" edge of the fallback chain is exercised at the function level.
-    assert pieces_module._title_from_filename(None) is None
-    assert pieces_module._title_from_filename("") is None
-    assert pieces_module._title_from_filename("   ") is None
+def test_quick_upload_filename_composer_wins_over_heuristic(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    # The filename follows the "Composer - Title" convention, so it should win
+    # even though the PDF content also has a plausible (but different) guess.
+    mock_find_composer = Mock(return_value="Should not be used")
+    monkeypatch.setattr(pieces_module, "find_composer_for_title", mock_find_composer)
+
+    response = client.post(
+        "/api/pieces/quick-upload",
+        files={
+            "file": (
+                "Filename Composer - Filename Title.pdf",
+                CONTENT_TITLE_AND_COMPOSER_PDF,
+                "application/pdf",
+            )
+        },
+    )
+
+    assert response.status_code == 201
+    piece = response.json()
+    assert piece["title"] == "Filename Title"
+    assert piece["composer"] == "Filename Composer"
+    mock_find_composer.assert_not_called()
+
+
+def test_quick_upload_filename_without_composer_falls_through_to_heuristic(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    mock_find_composer = Mock(return_value="Should not be used")
+    monkeypatch.setattr(pieces_module, "find_composer_for_title", mock_find_composer)
+
+    response = client.post(
+        "/api/pieces/quick-upload",
+        files={"file": ("myfile.pdf", CONTENT_TITLE_AND_COMPOSER_PDF, "application/pdf")},
+    )
+
+    assert response.status_code == 201
+    piece = response.json()
+    assert piece["title"] == "Content Title"
+    assert piece["composer"] == "Content Composer"
+    mock_find_composer.assert_not_called()
+
+
+def test_quick_upload_falls_through_to_musicbrainz_when_title_and_composer_signals_absent(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    mock_find_composer = Mock(return_value="MusicBrainz Composer")
+    monkeypatch.setattr(pieces_module, "find_composer_for_title", mock_find_composer)
+    monkeypatch.setattr(
+        pieces_module, "parse_composer_title_from_filename", lambda filename: (None, None)
+    )
+
+    response = client.post(
+        "/api/pieces/quick-upload",
+        files={"file": ("blank.pdf", BLANK_PDF, "application/pdf")},
+    )
+
+    assert response.status_code == 201
+    piece = response.json()
+    assert piece["title"] == "Untitled piece"
+    assert piece["composer"] == "MusicBrainz Composer"
+    mock_find_composer.assert_called_once_with("Untitled piece")
 
 
 def test_quick_upload_fallback_chain_untitled_piece_when_title_and_filename_absent(
     client: TestClient, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(pieces_module, "find_composer_for_title", Mock(return_value=None))
-    monkeypatch.setattr(pieces_module, "_title_from_filename", lambda filename: None)
+    monkeypatch.setattr(
+        pieces_module, "parse_composer_title_from_filename", lambda filename: (None, None)
+    )
 
     response = client.post(
         "/api/pieces/quick-upload",
