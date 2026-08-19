@@ -31,6 +31,13 @@ SUGGESTED_PLAN_DUE_SOON_DAYS = 14
 SUGGESTED_PLAN_LOW_RATING_MAX = 3
 SUGGESTED_PLAN_NEGLECTED_MIN_DAYS = 14
 
+# When a piece qualifies for more than one reason, the lowest number wins: a
+# looming/overdue goal is the most actionable signal, a poor last session is more
+# urgent than mere absence, and "neglected" is the weakest, catch-all signal.
+SUGGESTED_PLAN_REASON_PRIORITY_DUE_SOON = 0
+SUGGESTED_PLAN_REASON_PRIORITY_LOW_RATED = 1
+SUGGESTED_PLAN_REASON_PRIORITY_NEGLECTED = 2
+
 
 def _to_utc_date(moment: datetime) -> date:
     if moment.tzinfo is not None:
@@ -131,7 +138,7 @@ def _build_suggested_plan(
         .limit(SUGGESTED_PLAN_LIMIT)
         .all()
     )
-    candidates: list[SuggestedPlanItem] = []
+    candidates: list[tuple[int, SuggestedPlanItem]] = []
     for piece_id, title, target_date in due_soon_rows:
         days = (target_date - today).days
         if days < 0:
@@ -140,7 +147,12 @@ def _build_suggested_plan(
             reason = "Goal due today"
         else:
             reason = f"Goal due in {days} day{'s' if days != 1 else ''}"
-        candidates.append(SuggestedPlanItem(piece_id=piece_id, piece_title=title, reason=reason))
+        candidates.append(
+            (
+                SUGGESTED_PLAN_REASON_PRIORITY_DUE_SOON,
+                SuggestedPlanItem(piece_id=piece_id, piece_title=title, reason=reason),
+            )
+        )
 
     for piece in neglected:
         if piece.last_practiced_at is None:
@@ -151,7 +163,12 @@ def _build_suggested_plan(
                 continue
             reason = f"Not practiced in {days} day{'s' if days != 1 else ''}"
         candidates.append(
-            SuggestedPlanItem(piece_id=piece.piece_id, piece_title=piece.piece_title, reason=reason)
+            (
+                SUGGESTED_PLAN_REASON_PRIORITY_NEGLECTED,
+                SuggestedPlanItem(
+                    piece_id=piece.piece_id, piece_title=piece.piece_title, reason=reason
+                ),
+            )
         )
 
     latest_session = (
@@ -181,21 +198,28 @@ def _build_suggested_plan(
     )
     for piece_id, title, rating in low_rated_rows:
         candidates.append(
-            SuggestedPlanItem(
-                piece_id=piece_id, piece_title=title, reason=f"Last session rated {rating}/5"
+            (
+                SUGGESTED_PLAN_REASON_PRIORITY_LOW_RATED,
+                SuggestedPlanItem(
+                    piece_id=piece_id, piece_title=title, reason=f"Last session rated {rating}/5"
+                ),
             )
         )
 
-    seen: set[int] = set()
-    plan: list[SuggestedPlanItem] = []
-    for item in candidates:
-        if item.piece_id in seen:
-            continue
-        seen.add(item.piece_id)
-        plan.append(item)
-        if len(plan) == SUGGESTED_PLAN_LIMIT:
-            break
-    return plan
+    # A piece can qualify for more than one reason; keep the highest-priority one
+    # (lowest number) rather than whichever happened to be built first, and keep
+    # first-seen order for the pieces themselves so results stay stable.
+    order: list[int] = []
+    best_by_piece: dict[int, tuple[int, SuggestedPlanItem]] = {}
+    for priority, item in candidates:
+        current_best = best_by_piece.get(item.piece_id)
+        if current_best is None:
+            order.append(item.piece_id)
+            best_by_piece[item.piece_id] = (priority, item)
+        elif priority < current_best[0]:
+            best_by_piece[item.piece_id] = (priority, item)
+
+    return [best_by_piece[piece_id][1] for piece_id in order[:SUGGESTED_PLAN_LIMIT]]
 
 
 @router.post("", response_model=PracticeSessionRead, status_code=201)

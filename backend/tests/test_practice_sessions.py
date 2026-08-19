@@ -2,6 +2,8 @@ from datetime import UTC, date, datetime, timedelta
 
 from fastapi.testclient import TestClient
 
+from repertoire.api.practice_sessions import SUGGESTED_PLAN_NEGLECTED_MIN_DAYS
+
 
 def _create_piece(client: TestClient, title: str) -> int:
     return client.post("/api/pieces", json={"title": title}).json()["id"]
@@ -698,16 +700,18 @@ def test_suggested_plan_flags_low_rated_last_session(client: TestClient) -> None
         "/api/practice-sessions",
         json={
             "piece_id": piece_id,
-            "practiced_at": "2026-08-01T10:00:00Z",
+            "practiced_at": _at_days_ago(6),
             "duration_minutes": 10,
             "rating": 5,
         },
     )
+    # Practiced recently enough to stay clear of the neglected threshold, so this
+    # exercises the low-rated reason in isolation from the neglected one.
     client.post(
         "/api/practice-sessions",
         json={
             "piece_id": piece_id,
-            "practiced_at": "2026-08-05T10:00:00Z",
+            "practiced_at": _at_days_ago(2),
             "duration_minutes": 10,
             "rating": 2,
         },
@@ -762,6 +766,29 @@ def test_suggested_plan_deduplicates_piece_appearing_in_multiple_reasons(
     plan = body["suggested_plan"]
 
     assert [item["piece_id"] for item in plan].count(piece_id) == 1
+
+
+def test_suggested_plan_prefers_low_rated_reason_over_neglected(client: TestClient) -> None:
+    # A piece that is both long-neglected and had a poor last session qualifies for
+    # both the "neglected" and "low-rated" reasons; the low-rated one should win
+    # since it's the more actionable signal (see issue #132).
+    piece_id = _create_piece(client, "Both neglected and low-rated")
+    client.post(
+        "/api/practice-sessions",
+        json={
+            "piece_id": piece_id,
+            "practiced_at": _at_days_ago(SUGGESTED_PLAN_NEGLECTED_MIN_DAYS + 5),
+            "duration_minutes": 10,
+            "rating": 2,
+        },
+    )
+
+    body = client.get("/api/practice-sessions/stats").json()
+    plan = body["suggested_plan"]
+    matching = [item for item in plan if item["piece_id"] == piece_id]
+
+    assert len(matching) == 1
+    assert matching[0]["reason"] == "Last session rated 2/5"
 
 
 def test_suggested_plan_capped_at_four(client: TestClient) -> None:
